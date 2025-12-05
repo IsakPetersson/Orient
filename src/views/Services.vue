@@ -852,11 +852,19 @@ export default {
   grid-row: 1;
 }
 
+.left-column .panel {
+  flex: 1;
+  min-height: 0;
+}
+
 .stats-compact {
   background: white;
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .section-title {
@@ -1036,7 +1044,7 @@ export default {
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  margin-bottom: 1rem;
+  /* margin-bottom removed to fix grid height alignment */
   display: flex;
   flex-direction: column;
 }

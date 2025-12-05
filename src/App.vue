@@ -22,42 +22,6 @@
               <span class="nav-text">Dashboard</span>
             </router-link>
           </li>
-          <li v-if="isDashboardRoute">
-            <a href="#" class="disabled sub-item">
-              <span class="nav-icon">↑</span>
-              <span class="nav-text">Kvitton & Utgifter</span>
-            </a>
-          </li>
-          <li v-if="isDashboardRoute">
-            <a href="#" class="disabled sub-item">
-              <span class="nav-icon">□</span>
-              <span class="nav-text">Intäkter & Fakturor</span>
-            </a>
-          </li>
-          <li v-if="isDashboardRoute">
-            <a href="#" class="disabled sub-item">
-              <span class="nav-icon">$</span>
-              <span class="nav-text">Swish & Betalningar</span>
-            </a>
-          </li>
-          <li v-if="isDashboardRoute">
-            <a href="#" class="disabled sub-item">
-              <span class="nav-icon">●</span>
-              <span class="nav-text">Medlemmar</span>
-            </a>
-          </li>
-          <li v-if="isDashboardRoute">
-            <a href="#" class="disabled sub-item">
-              <span class="nav-icon">◇</span>
-              <span class="nav-text">Rapporter</span>
-            </a>
-          </li>
-          <li v-if="isDashboardRoute">
-            <a href="#" class="disabled sub-item">
-              <span class="nav-icon">≡</span>
-              <span class="nav-text">Verifikationer</span>
-            </a>
-          </li>
           <li>
             <router-link to="/about" active-class="active">
               <span class="nav-icon">?</span>
