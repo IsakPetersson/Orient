@@ -8,6 +8,16 @@
             <h1>Dashboard</h1>
             <p>{{ organizationName }}</p>
           </div>
+          <div class="header-actions">
+            <button class="quick-action-card header-btn" @click="handleViewFiles">
+              <img src="../assets/images/folder-icon.png" alt="Folder" class="action-icon-img" />
+              <span class="action-text">Lagrade filer</span>
+            </button>
+            <button class="quick-action-card header-btn" @click="handleViewMembers">
+              <img src="../assets/images/members-icon.png" alt="Members" class="action-icon-img" />
+              <span class="action-text">Medlemmar</span>
+            </button>
+          </div>
         </div>
 
         <!-- Main Content Grid -->
@@ -20,7 +30,7 @@
               </div>
               <div class="quick-actions-grid" style="padding-top: 10px;">
                 <button class="quick-action-card" @click="handleAction('upload-receipt')">
-                  <span class="action-icon">↑</span>
+                  <img src="../assets/images/arrow-icon.png" alt="Upload" class="action-icon-img arrow-up" />
                   <span class="action-text">Ladda upp Kvitto</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('start-accounting')">
@@ -28,7 +38,7 @@
                   <span class="action-text">Starta Bokföring</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('download-accounting')">
-                  <span class="action-icon">↓</span>
+                  <img src="../assets/images/arrow-icon.png" alt="Download" class="action-icon-img" />
                   <span class="action-text">Ladda ner Bokföring</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('swish-payment')">
@@ -36,7 +46,7 @@
                   <span class="action-text">Swish Betalning</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('create-invoice')">
-                  <span class="action-icon">□</span>
+                  <span class="action-icon"><div class="thick-square"></div></span>
                   <span class="action-text">Skapa Faktura</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('add-member')">
@@ -184,7 +194,9 @@
           @dragleave="handleDragLeave"
           @dragenter="handleDragEnter"
         >
-          <div class="upload-icon">↑</div>
+          <div class="upload-icon">
+            <img src="../assets/images/arrow-icon.png" alt="Upload" class="action-icon-img arrow-up large-icon" />
+          </div>
           <p class="upload-text">Dra och släpp filer här</p>
           <p class="upload-subtext">eller</p>
           <input 
@@ -201,7 +213,7 @@
         <div v-if="selectedFiles.length > 0" class="file-list">
           <h3>Valda filer ({{ selectedFiles.length }})</h3>
           <div v-for="(file, index) in selectedFiles" :key="index" class="file-item">
-            <span class="file-icon">□</span>
+            <span class="file-icon"><div class="thick-square small"></div></span>
             <span class="file-name">{{ file.name }}</span>
             <span class="file-size">{{ formatFileSize(file.size) }}</span>
             <button class="remove-file-btn" @click="removeFile(index)">×</button>
@@ -588,6 +600,14 @@ export default {
       console.log('View all alerts')
       alert('Öppnar åtgärdssida (kommer snart)...')
     },
+    handleViewFiles() {
+      console.log('View stored files')
+      alert('Här hamnar alla dina uppladdade kvitton och dokument.')
+    },
+    handleViewMembers() {
+      console.log('View members')
+      alert('Här visas en lista över alla medlemmar.')
+    },
     closeUploadModal() {
       this.showUploadModal = false
       this.selectedFiles = []
@@ -783,14 +803,14 @@ export default {
 <style scoped>
 .dashboard-page {
   background-color: var(--background);
-  min-height: calc(100vh - 60px);
-  padding-top: 30px;
-  margin-bottom: 30px;
+  height: 100vh;
+  padding: 20px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .dashboard-compact {
-  height: calc(100vh - 60px);
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -813,6 +833,34 @@ export default {
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-btn {
+  flex-direction: row;
+  min-height: auto;
+  padding: 0.5rem 1rem;
+  gap: 0.75rem; 
+}
+
+.action-icon-img {
+  width: 1.25rem;
+  height: auto;
+  object-fit: contain;
+}
+
+.header-btn .action-icon {
+  font-size: 1.25rem;
+}
+
+.header-btn .action-text {
+  font-size: 0.95rem;
+  text-align: left;
 }
 
 .welcome-text h1 {
@@ -1122,7 +1170,9 @@ export default {
   overflow-y: auto;
   flex: 1;
   min-height: 0;
-  max-height: 100%;
+  /* Scrollbar styling */
+  scrollbar-width: thin;
+  padding-right: 5px;
 }
 
 .activity-row {
@@ -1568,9 +1618,100 @@ export default {
   transform: scale(1.02);
 }
 
+.upload-icon .action-icon-img.large-icon {
+  width: 4rem;
+  height: auto;
+}
+
 .upload-icon {
-  font-size: 4rem;
   margin-bottom: 1rem;
+}
+
+.arrow-up {
+  transform: rotate(180deg);
+}
+
+.thick-square {
+  width: 0.75em;
+  height: 0.75em;
+  border: 3px solid currentColor;
+  display: inline-block;
+  vertical-align: middle;
+  box-sizing: border-box;
+  margin-bottom: 0.1em;
+}
+
+.thick-square.small {
+  width: 0.8em;
+  height: 0.8em;
+  border-width: 2px;
+}
+
+.thick-circle {
+  width: 0.75em;
+  height: 0.75em;
+  border: 3px solid currentColor;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
+  box-sizing: border-box;
+  margin-bottom: 0.1em;
+}
+
+.thick-arrow {
+  position: relative;
+  display: inline-block;
+  width: 0.8em;
+  height: 0.9em;
+  vertical-align: middle;
+}
+
+.thick-arrow-up::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 0.4em solid transparent;
+  border-right: 0.4em solid transparent;
+  border-bottom: 0.4em solid currentColor;
+}
+
+.thick-arrow-up::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0.25em;
+  height: 0.5em;
+  background-color: currentColor;
+}
+
+.thick-arrow-down::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 0.4em solid transparent;
+  border-right: 0.4em solid transparent;
+  border-top: 0.4em solid currentColor;
+}
+
+.thick-arrow-down::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0.25em;
+  height: 0.5em;
+  background-color: currentColor;
 }
 
 .upload-text {

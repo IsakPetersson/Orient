@@ -25,7 +25,10 @@ body {
 
 /* Hero Section */
 .hero {
-    background: linear-gradient(135deg, var(--primary-meddark) 0%, var(--primary-medium) 100%);
+    background-image:
+        radial-gradient(rgba(255, 255, 255, 0.1) 1.5px, transparent 1.5px),
+        linear-gradient(135deg, var(--primary-meddark) 0%, var(--primary-medium) 100%);
+    background-size: 24px 24px, 100% 100%;
     min-height: 60vh;
     display: flex;
     align-items: center;
@@ -196,7 +199,10 @@ body {
 
 /* Footer */
 footer {
-    background-color: var(--primary-dark);
+    background-image:
+        radial-gradient(rgba(255, 255, 255, 0.1) 1.5px, transparent 1.5px),
+        linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+    background-size: 24px 24px, 100% 100%;
     color: var(--text-light);
     text-align: center;
     padding: 2rem;
@@ -208,7 +214,10 @@ footer p {
 
 /* Page Hero (for Services and About pages) */
 .page-hero {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+    background-image:
+        radial-gradient(rgba(255, 255, 255, 0.1) 1.5px, transparent 1.5px),
+        linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+    background-size: 24px 24px, 100% 100%;
     min-height: 50vh;
     display: flex;
     align-items: center;

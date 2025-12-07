@@ -4,7 +4,7 @@
       <div class="sidebar-header">
         <div class="logo">
           <router-link to="/">
-            <img src="./assets/images/logo.png" alt="ClubEcon Logo" class="logo-image" />
+            <img src="./assets/images/orient-logo.png" alt="Orient Logo" class="logo-image" />
           </router-link>
         </div>
       </div>
@@ -101,6 +101,8 @@ export default {
 .logo-image:hover {
   transform: scale(1.05);
 }
+
+
 
 .sidebar-nav {
   flex: 1;

@@ -3,7 +3,7 @@
     <!-- About Hero -->
     <section class="page-hero">
       <div class="hero-content">
-        <h1>Om TechshipProto</h1>
+        <h1>Om Orient</h1>
         <p class="hero-subtitle">Stärker små organisationer genom bättre ekonomihantering</p>
       </div>
     </section>
@@ -13,20 +13,17 @@
       <div class="container">
         <div class="about-content-page">
           <h2>Vårt Uppdrag</h2>
-          <p>TechshipProto skapades med ett enkelt men kraftfullt uppdrag: att ge idrottsföreningar och små organisationer tillgång till professionella ekonomiverktyg som är enkla att använda och prisvärda.</p>
+          <p>Orient skapades med ett enkelt men kraftfullt uppdrag: att ge idrottsföreningar och små organisationer tillgång till professionella ekonomiverktyg som är enkla att använda och prisvärda.</p>
           <p>Vi tror att brist på resurser inte ska stå i vägen för fantastiska organisationer som gör fantastiskt arbete. Oavsett om du driver en ungdomsidrottsliga, en amatörklubb eller en föreningsorganisation förtjänar du tillgång till samma kvalitetsverktyg som större företag använder.</p>
         </div>
       </div>
     </section>
-
-    <!-- Story Section -->
     <section class="story-section">
       <div class="container">
         <div class="about-content-page">
           <h2>Vår Historia</h2>
-          <p>Grundad 2024 uppstod TechshipProto ur en vanlig frustration: att hantera ekonomin för en liten idrottsförening var onödigt komplicerat. Kalkylblad var utspridda, kvitton försvann, och att spåra vem som betalat sina medlemsavgifter var en ständig huvudvärk.</p>
-          <p>Vi satte oss för att bygga en bättre lösning. En som skulle centralisera allt på ett ställe, göra ekonomisk uppföljning enkel och ge små organisationer de insikter de behöver för att fatta smarta beslut om sina pengar.</p>
-          <p>Idag litar hundratals föreningar på TechshipProto för att hantera sin ekonomi, spåra sina medlemmar och hålla sina organisationer igång smidigt.</p>
+          <p>Grundad 2025 under "Techship på Hetch" ur en vanlig frustration: hur komplicerad och icke-organiserad ekonomin för en liten idrottsförening var. Kalkylblad var utspridda, kvitton försvann, och svårt att veta när man skulle få löner.</p>
+          <p>Vi satte oss för att bygga en bättre lösning. En som skulle centralisera allt på ett ställe, göra ekonomisk uppföljning enkel och ge små organisationer de insikter de behöver för att fatta smarta beslut om sina pengar, oavsett vilka förutsättningar man hade.</p>
         </div>
       </div>
     </section>
@@ -60,7 +57,7 @@
     <section class="cta-section">
       <div class="container">
         <h2>Gå med i vår växande gemenskap</h2>
-        <p>Se varför föreningar över hela landet litar på TechshipProto.</p>
+        <p>Se varför föreningar över hela landet litar på Orient.</p>
         <button class="btn btn-primary">Kom Igång Idag</button>
       </div>
     </section>

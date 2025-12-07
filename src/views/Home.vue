@@ -46,7 +46,7 @@
       <div class="container">
         <div class="about-text">
           <h2>Allt-i-Ett Ekonomiplattform</h2>
-          <p>TechshipProto är byggd specifikt för idrottsföreningar och småorganisationer som behöver professionell ekonomihantering utan komplexitet. Lagra dokument, spåra intäkter från medlemsavgifter och donationer, beräkna skatter och hantera hela din medlemsdatabas.</p>
+          <p>Orient är byggd specifikt för idrottsföreningar och småorganisationer som behöver professionell ekonomihantering utan komplexitet. Lagra dokument, spåra intäkter från medlemsavgifter och donationer, beräkna skatter och hantera hela din medlemsdatabas.</p>
           <p>Från ungdomsidrottsföreningar till amatörklubbar ger vi dig verktygen du behöver för att hålla dig organiserad, regelefterlevande och ekonomiskt hälsosam.</p>
         </div>
       </div>
@@ -56,7 +56,7 @@
     <section id="contact" class="contact">
       <div class="container">
         <h2 class="section-title">Redo att Komma Igång?</h2>
-        <p class="contact-subtitle">Gå med i hundratals föreningar som hanterar sin ekonomi med TechshipProto.</p>
+        <p class="contact-subtitle">Gå med i hundratals föreningar som hanterar sin ekonomi med Orient.</p>
         <button class="btn btn-primary">Starta Gratis Provperiod</button>
       </div>
     </section>
