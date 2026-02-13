@@ -95,12 +95,94 @@
           </div>
 
           <div class="organizations-actions">
-            <button class="btn btn-primary" @click="joinOrganization">
+            <button class="btn btn-secondary" @click="showJoinModal">
               Gå med i Organisation
             </button>
-            <button class="btn btn-primary" @click="createOrganization">
+            <button class="btn btn-primary" @click="showCreateModal">
               Skapa Organisation
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Organization Modal -->
+    <div v-if="showCreateOrgModal" class="modal-overlay" @click.self="closeCreateOrgModal">
+      <div class="modal-content create-org-modal">
+        <div class="modal-header">
+          <h2>Skapa Organisation</h2>
+          <button class="close-btn" @click="closeCreateOrgModal">&times;</button>
+        </div>
+        <form @submit.prevent="submitCreateOrganization" class="modal-body">
+          <div class="form-group">
+            <label for="org-name">Organisationens namn</label>
+            <input
+              type="text"
+              id="org-name"
+              v-model="newOrgName"
+              placeholder="T.ex. Fotbollsklubben AIK"
+              required
+            />
+          </div>
+          <p v-if="createError" class="error-message">{{ createError }}</p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" @click="closeCreateOrgModal">Avbryt</button>
+            <button type="submit" class="btn btn-primary" :disabled="createLoading">
+              {{ createLoading ? 'Skapar...' : 'Skapa' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Join Organization Modal -->
+    <div v-if="showJoinOrgModal" class="modal-overlay" @click.self="closeJoinOrgModal">
+      <div class="modal-content join-org-modal">
+        <div class="modal-header">
+          <h2>Gå med i Organisation</h2>
+          <button class="close-btn" @click="closeJoinOrgModal">&times;</button>
+        </div>
+        <form @submit.prevent="submitJoinOrganization" class="modal-body">
+          <div class="form-group">
+            <label for="invite-code">Inbjödningskod</label>
+            <input
+              type="text"
+              id="invite-code"
+              v-model="inviteCode"
+              placeholder="Ange inbjödningskod"
+              required
+            />
+          </div>
+          <p v-if="joinError" class="error-message">{{ joinError }}</p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" @click="closeJoinOrgModal">Avbryt</button>
+            <button type="submit" class="btn btn-primary" :disabled="joinLoading">
+              {{ joinLoading ? 'Går med...' : 'Gå med' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Success Modal for showing invite code -->
+    <div v-if="showSuccessModal" class="modal-overlay" @click.self="closeSuccessModal">
+      <div class="modal-content success-modal">
+        <div class="modal-header">
+          <h2>Organisation Skapad!</h2>
+          <button class="close-btn" @click="closeSuccessModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="success-message">Organisation "{{ createdOrgName }}" har skapats!</p>
+          <div class="invite-code-section">
+            <label>Inbjödningskod:</label>
+            <div class="invite-code-display">
+              <code>{{ inviteCodeToShare }}</code>
+              <button type="button" class="btn btn-secondary btn-sm" @click="copyInviteCode">Kopiera</button>
+            </div>
+            <p class="invite-code-hint">Dela denna kod med andra för att bjuda in dem till organisationen.</p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-primary" @click="closeSuccessModal">Stäng</button>
           </div>
         </div>
       </div>
@@ -118,7 +200,18 @@ export default {
     return {
       user: null,
       showOrganizationsModal: false,
-      organizations: []
+      organizations: [],
+      showCreateOrgModal: false,
+      newOrgName: '',
+      createLoading: false,
+      createError: null,
+      showJoinOrgModal: false,
+      inviteCode: '',
+      joinLoading: false,
+      joinError: null,
+      showSuccessModal: false,
+      createdOrgName: '',
+      inviteCodeToShare: ''
     }
   },
   async mounted() {
@@ -153,6 +246,71 @@ export default {
     },
     async openOrganizationsModal() {
       this.showOrganizationsModal = true
+      await this.loadOrganizations()
+    },
+    closeOrganizationsModal() {
+      this.showOrganizationsModal = false
+    },
+    showCreateModal() {
+      this.showCreateOrgModal = true
+      this.newOrgName = ''
+      this.createError = null
+    },
+    closeCreateOrgModal() {
+      this.showCreateOrgModal = false
+      this.newOrgName = ''
+      this.createError = null
+    },
+    showJoinModal() {
+      this.showJoinOrgModal = true
+      this.inviteCode = ''
+      this.joinError = null
+    },
+    closeJoinOrgModal() {
+      this.showJoinOrgModal = false
+      this.inviteCode = ''
+      this.joinError = null
+    },
+    closeSuccessModal() {
+      this.showSuccessModal = false
+      this.createdOrgName = ''
+      this.inviteCodeToShare = ''
+    },
+    async submitCreateOrganization() {
+      this.createError = null
+      this.createLoading = true
+
+      try {
+        const result = await createOrg(this.newOrgName)
+        this.createdOrgName = result.organization.name
+        this.inviteCodeToShare = result.invite.code
+        this.closeCreateOrgModal()
+        this.showSuccessModal = true
+        // Refresh the organizations list
+        await this.loadOrganizations()
+      } catch (error) {
+        this.createError = error.message || 'Kunde inte skapa organisationen'
+      } finally {
+        this.createLoading = false
+      }
+    },
+    async submitJoinOrganization() {
+      this.joinError = null
+      this.joinLoading = true
+
+      try {
+        const result = await joinOrg(this.inviteCode)
+        this.closeJoinOrgModal()
+        alert(`Du har gått med i "${result.organization.name}" som ${result.role}`)
+        // Refresh the organizations list
+        await this.loadOrganizations()
+      } catch (error) {
+        this.joinError = error.message || 'Kunde inte gå med i organisationen'
+      } finally {
+        this.joinLoading = false
+      }
+    },
+    async loadOrganizations() {
       try {
         const memberships = await getUserOrganizations()
         this.organizations = memberships.map(m => ({
@@ -165,34 +323,10 @@ export default {
         this.organizations = []
       }
     },
-    closeOrganizationsModal() {
-      this.showOrganizationsModal = false
-    },
-    async joinOrganization() {
-      const code = prompt('Ange inbjödningskod:')
-      if (!code || !code.trim()) return
-
-      try {
-        const result = await joinOrg(code.trim())
-        alert(`Du har gått med i "${result.organization.name}" som ${result.role}`)
-        // Refresh the organizations list
-        await this.openOrganizationsModal()
-      } catch (error) {
-        alert(error.message || 'Kunde inte gå med i organisationen')
-      }
-    },
-    async createOrganization() {
-      const name = prompt('Ange organisationens namn:')
-      if (!name || !name.trim()) return
-
-      try {
-        const result = await createOrg(name.trim())
-        alert(`Organisation "${result.organization.name}" skapades!\n\nInbjödningskod: ${result.invite.code}\n\nDela denna kod med andra för att bjuda in dem.`)
-        // Refresh the organizations list
-        await this.openOrganizationsModal()
-      } catch (error) {
-        alert(error.message || 'Kunde inte skapa organisationen')
-      }
+    copyInviteCode() {
+      navigator.clipboard.writeText(this.inviteCodeToShare)
+        .then(() => alert('Inbjödningskod kopierad!'))
+        .catch(() => alert('Kunde inte kopiera koden'))
     }
   },
 }
@@ -622,6 +756,118 @@ export default {
   min-width: 200px;
 }
 
+/* Form Styles */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+.form-group input {
+  padding: 0.875rem;
+  border: 2px solid var(--background);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary-light);
+}
+
+.error-message {
+  color: #d32f2f;
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.modal-actions button {
+  min-width: 120px;
+}
+
+/* Create/Join Organization Modals */
+.create-org-modal,
+.join-org-modal {
+  max-width: 500px;
+}
+
+/* Success Modal */
+.success-modal {
+  max-width: 550px;
+}
+
+.success-message {
+  font-size: 1.1rem;
+  color: var(--primary-dark);
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.invite-code-section {
+  background-color: var(--background);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.invite-code-section label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.75rem;
+}
+
+.invite-code-display {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.invite-code-display code {
+  flex: 1;
+  background-color: var(--text-light);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-family: 'Courier New', monospace;
+  color: var(--primary-dark);
+  border: 2px solid var(--primary-light);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  min-width: auto;
+}
+
+.invite-code-hint {
+  font-size: 0.875rem;
+  color: var(--text-dark);
+  opacity: 0.8;
+  margin: 0;
+  line-height: 1.5;
+}
+
 @media (max-width: 768px) {
   .modal-content {
     max-width: 95%;
@@ -646,6 +892,23 @@ export default {
   .organizations-actions button {
     min-width: 100%;
   }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .modal-actions button {
+    width: 100%;
+  }
+  
+  .invite-code-display {
+    flex-direction: column;
+  }
+  
+  .invite-code-display code {
+    font-size: 1rem;
+  }
 }
 </style>
+
 
