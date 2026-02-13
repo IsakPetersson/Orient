@@ -32,13 +32,13 @@
               <span class="nav-text">Kontakt</span>
             </router-link>
           </li>
-          <li v-if="!isLoggedIn">
+          <li v-if="!user">
             <router-link to="/login" active-class="active">
               <span class="nav-icon">▶</span>
               <span class="nav-text">Logga In</span>
             </router-link>
           </li>
-          <li v-if="isLoggedIn">
+          <li v-if="user">
             <a href="#" @click.prevent="handleLogout" class="nav-link">
               <span class="nav-icon">◀</span>
               <span class="nav-text">Logga Ut</span>
@@ -46,6 +46,16 @@
           </li>
         </ul>
       </nav>
+      
+      <div v-if="user" class="user-info">
+        <div class="user-avatar">
+          <span class="avatar-initial">{{ userInitial }}</span>
+        </div>
+        <div class="user-details">
+          <div class="user-name">{{ user.name }}</div>
+          <div class="user-email">{{ user.email }}</div>
+        </div>
+      </div>
     </aside>
 
     <div class="main-content">
@@ -63,7 +73,7 @@ export default {
   name: 'App',
   data() {
     return {
-      isLoggedIn: false
+      user: null
     }
   },
   async mounted() {
@@ -77,17 +87,20 @@ export default {
   computed: {
     isDashboardRoute() {
       return this.$route.path === '/dashboard'
+    },
+    userInitial() {
+      return this.user?.name?.charAt(0).toUpperCase() || '?'
     }
   },
   methods: {
     async checkAuth() {
       const user = await getCurrentUser()
-      this.isLoggedIn = !!user
+      this.user = user
     },
     async handleLogout() {
       try {
         await logout()
-        this.isLoggedIn = false
+        this.user = null
         this.$router.push('/')
       } catch (error) {
         console.error('Logout failed:', error)
@@ -216,6 +229,56 @@ export default {
 
 .nav-text {
   font-size: clamp(0.875rem, 1.5vh, 1rem);
+}
+
+.user-info {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: clamp(1rem, 2vh, 1.5rem);
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar {
+  width: clamp(36px, 6vw, 44px);
+  height: clamp(36px, 6vw, 44px);
+  border-radius: 50%;
+  background-color: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-initial {
+  font-size: clamp(1rem, 2vh, 1.25rem);
+  font-weight: 700;
+  color: var(--text-light);
+}
+
+.user-details {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.user-name {
+  font-size: clamp(0.875rem, 1.5vh, 1rem);
+  font-weight: 600;
+  color: var(--text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email {
+  font-size: clamp(0.75rem, 1.2vh, 0.85rem);
+  color: var(--background);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .main-content {
