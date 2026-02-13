@@ -179,6 +179,7 @@
               <code>{{ inviteCodeToShare }}</code>
               <button type="button" class="btn btn-primary btn-sm" @click="copyInviteCode">Kopiera</button>
             </div>
+            <p v-if="codeCopied" class="copy-success-message">✓ Kopierad!</p>
             <p class="invite-code-hint">Dela denna kod med andra för att bjuda in dem till organisationen.</p>
           </div>
           <div class="modal-actions">
@@ -211,7 +212,8 @@ export default {
       joinError: null,
       showSuccessModal: false,
       createdOrgName: '',
-      inviteCodeToShare: ''
+      inviteCodeToShare: '',
+      codeCopied: false
     }
   },
   async mounted() {
@@ -275,6 +277,7 @@ export default {
       this.showSuccessModal = false
       this.createdOrgName = ''
       this.inviteCodeToShare = ''
+      this.codeCopied = false
     },
     async submitCreateOrganization() {
       this.createError = null
@@ -299,9 +302,8 @@ export default {
       this.joinLoading = true
 
       try {
-        const result = await joinOrg(this.inviteCode)
+        await joinOrg(this.inviteCode)
         this.closeJoinOrgModal()
-        alert(`Du har gått med i "${result.organization.name}" som ${result.role}`)
         // Refresh the organizations list
         await this.loadOrganizations()
       } catch (error) {
@@ -325,8 +327,15 @@ export default {
     },
     copyInviteCode() {
       navigator.clipboard.writeText(this.inviteCodeToShare)
-        .then(() => alert('Inbjödningskod kopierad!'))
-        .catch(() => alert('Kunde inte kopiera koden'))
+        .then(() => {
+          this.codeCopied = true
+          setTimeout(() => {
+            this.codeCopied = false
+          }, 3000)
+        })
+        .catch(() => {
+          this.codeCopied = false
+        })
     }
   },
 }
@@ -858,6 +867,25 @@ export default {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   min-width: auto;
+}
+
+.copy-success-message {
+  font-size: 0.875rem;
+  color: #2e7d32;
+  margin: 0.5rem 0 0 0;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .invite-code-hint {
