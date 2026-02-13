@@ -32,11 +32,17 @@
               <span class="nav-text">Kontakt</span>
             </router-link>
           </li>
-          <li>
+          <li v-if="!isLoggedIn">
             <router-link to="/login" active-class="active">
               <span class="nav-icon">▶</span>
               <span class="nav-text">Logga In</span>
             </router-link>
+          </li>
+          <li v-if="isLoggedIn">
+            <a href="#" @click.prevent="handleLogout" class="nav-link">
+              <span class="nav-icon">◀</span>
+              <span class="nav-text">Logga Ut</span>
+            </a>
           </li>
         </ul>
       </nav>
@@ -51,13 +57,43 @@
 </template>
 
 <script>
+import { getCurrentUser, logout } from './lib/auth'
+
 export default {
   name: 'App',
+  data() {
+    return {
+      isLoggedIn: false
+    }
+  },
+  async mounted() {
+    await this.checkAuth()
+  },
+  watch: {
+    '$route'() {
+      this.checkAuth()
+    }
+  },
   computed: {
     isDashboardRoute() {
       return this.$route.path === '/dashboard'
     }
-  }
+  },
+  methods: {
+    async checkAuth() {
+      const user = await getCurrentUser()
+      this.isLoggedIn = !!user
+    },
+    async handleLogout() {
+      try {
+        await logout()
+        this.isLoggedIn = false
+        this.$router.push('/')
+      } catch (error) {
+        console.error('Logout failed:', error)
+      }
+    }
+  },
 }
 </script>
 

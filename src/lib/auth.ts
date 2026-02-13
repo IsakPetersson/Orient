@@ -30,3 +30,24 @@ export async function register(email: string, name: string, password: string, re
     })
     return jsonOrThrow(res)
 }
+
+export async function logout(): Promise<void> {
+    const res = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+    })
+    await jsonOrThrow(res)
+}
+
+export async function getCurrentUser(): Promise<SafeUser | null> {
+    try {
+        const res = await fetch('/api/auth/me', {
+            method: 'GET',
+            credentials: 'include'
+        })
+        if (!res.ok) return null
+        return await res.json()
+    } catch {
+        return null
+    }
+}
