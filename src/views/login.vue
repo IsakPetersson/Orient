@@ -55,12 +55,73 @@
               <span>eller</span>
             </div>
 
-            <button type="button" class="btn btn-primary btn-full" @click="handleRegister" :disabled="loading">
-                {{ loading ? 'Skapar konto…' : 'Skapa Nytt Konto' }}
+            <button type="button" class="btn btn-primary btn-full" @click="handleRegister">
+              Skapa Nytt Konto
             </button>
           </form>
         </div>
       </section>
+    </div>
+
+    <!-- Registration Modal -->
+    <div v-if="showRegisterModal" class="modal-overlay" @click.self="closeRegisterModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Skapa Nytt Konto</h2>
+          <button class="close-btn" @click="closeRegisterModal">&times;</button>
+        </div>
+        <form @submit.prevent="handleRegisterSubmit" class="register-form">
+          <div class="form-group">
+            <label for="register-name">Namn</label>
+            <input
+              type="text"
+              id="register-name"
+              v-model="registerName"
+              placeholder="Ditt fullständiga namn"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="register-email">E-post</label>
+            <input
+              type="email"
+              id="register-email"
+              v-model="registerEmail"
+              placeholder="din@email.se"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="register-password">Lösenord</label>
+            <input
+              type="password"
+              id="register-password"
+              v-model="registerPassword"
+              placeholder="Välj ett starkt lösenord"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="register-confirm-password">Bekräfta Lösenord</label>
+            <input
+              type="password"
+              id="register-confirm-password"
+              v-model="registerConfirmPassword"
+              placeholder="Ange lösenordet igen"
+              required
+            />
+          </div>
+
+          <p v-if="registerError" class="error-message">{{ registerError }}</p>
+
+          <button type="submit" class="btn btn-primary btn-full" :disabled="registerLoading">
+            {{ registerLoading ? 'Skapar konto…' : 'Skapa Konto' }}
+          </button>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -76,7 +137,14 @@ export default {
       password: '',
       rememberMe: false,
       loading: false,
-      error: null
+      error: null,
+      showRegisterModal: false,
+      registerName: '',
+      registerEmail: '',
+      registerPassword: '',
+      registerConfirmPassword: '',
+      registerLoading: false,
+      registerError: null
     }
   },
   methods: {
@@ -96,21 +164,39 @@ export default {
       }
     },
 
-    async handleRegister() {
-      // Minimal registrering: vi saknar "namn" i form just nu.
-      // Så vi skapar ett default-namn baserat på email tills du lägger till ett fält.
-      this.error = null
-      this.loading = true
+    handleRegister() {
+      this.showRegisterModal = true
+    },
+
+    closeRegisterModal() {
+      this.showRegisterModal = false
+      this.registerName = ''
+      this.registerEmail = ''
+      this.registerPassword = ''
+      this.registerConfirmPassword = ''
+      this.registerError = null
+    },
+
+    async handleRegisterSubmit() {
+      this.registerError = null
+
+      // Validate passwords match
+      if (this.registerPassword !== this.registerConfirmPassword) {
+        this.registerError = 'Lösenorden matchar inte'
+        return
+      }
+
+      this.registerLoading = true
       try {
-        const defaultName = this.email.split('@')[0] || 'Användare'
-        await register(this.email, defaultName, this.password, this.rememberMe)
+        await register(this.registerEmail, this.registerName, this.registerPassword, false)
 
         // Efter register: du är inloggad (cookie sätts), skicka vidare
+        this.closeRegisterModal()
         this.$router.push('/')
       } catch (e) {
-        this.error = e?.message || 'Registreringen misslyckades'
+        this.registerError = e?.message || 'Registreringen misslyckades'
       } finally {
-        this.loading = false
+        this.registerLoading = false
       }
     }
   }
@@ -259,6 +345,86 @@ export default {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
+  }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background-color: var(--text-light);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h2 {
+  font-size: 2rem;
+  color: var(--primary-dark);
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--text-dark);
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+  color: var(--primary-dark);
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.error-message {
+  color: #d32f2f;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 1.5rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.5rem;
   }
 }
 </style>
