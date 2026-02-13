@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { prisma } from '../lib/prisma.js'
+import { requireAdminApiKey } from "../lib/auth.js";
+
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
@@ -11,6 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         if (req.method === 'POST') {
+            if (!requireAdminApiKey(req, res)) return;
             const { name, organizationId } = req.body
             if (!name || !organizationId)
                 return res.status(400).json({ error: 'Name and organizationId are required' })
