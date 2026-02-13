@@ -501,12 +501,30 @@
         </div>
       </div>
     </div>
+
+    <!-- Authentication Required Modal -->
+    <div v-if="showAuthModal" class="modal-overlay auth-modal-overlay" @click.self="goToLogin">
+      <div class="modal-content auth-modal-content">
+        <div class="auth-modal-body">
+          <div class="auth-icon">
+            <img src="../assets/images/lock.png" alt="Lock" class="auth-icon-img" />
+          </div>
+          <h2>Inloggning Krävs</h2>
+          <p>Du måste vara inloggad för att komma åt Dashboard.</p>
+          <button class="btn btn-primary btn-full" @click="goToLogin">
+            Gå till Inloggning
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template><script>
+import { getCurrentUser } from '../lib/auth'
 export default {
   name: 'Dashboard',
   data() {
     return {
+      showAuthModal: false,
       organizationName: 'Din Förening AB',
       cashAndBank: 452500,
       monthlyIncome: 128000,
@@ -572,6 +590,12 @@ export default {
         { id: 3, category: 'Tränare', amount: 15000 },
         { id: 4, category: 'Övrigt', amount: 5400 }
       ]
+    }
+  },
+  async mounted() {
+    const user = await getCurrentUser()
+    if (!user) {
+      this.showAuthModal = true
     }
   },
   computed: {
@@ -795,6 +819,9 @@ export default {
       
       alert(`Swish-betalning på ${this.swishPayment.amount.toLocaleString()} kr har begärts från ${this.swishPayment.phone}`)
       this.closeSwishModal()
+    },
+    goToLogin() {
+      this.$router.push('/login')
     }
   }
 }
@@ -1959,4 +1986,43 @@ export default {
   opacity: 0.6;
   margin-top: 0.25rem;
 }
+
+/* Authentication Modal */
+.auth-modal-overlay {
+  z-index: 3000;
+}
+
+.auth-modal-content {
+  max-width: 450px;
+  text-align: center;
+}
+
+.auth-modal-body {
+  padding: 1rem;
+}
+
+.auth-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.auth-icon-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.auth-modal-content h2 {
+  font-size: 1.75rem;
+  color: var(--primary-dark);
+  margin-bottom: 1rem;
+}
+
+.auth-modal-content p {
+  font-size: 1.1rem;
+  color: var(--text-dark);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
 </style>
+
