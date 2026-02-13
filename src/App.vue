@@ -95,7 +95,7 @@
           </div>
 
           <div class="organizations-actions">
-            <button class="btn btn-secondary" @click="showJoinModal">
+            <button class="btn btn-primary" @click="showJoinModal">
               Gå med i Organisation
             </button>
             <button class="btn btn-primary" @click="showCreateModal">
@@ -126,7 +126,7 @@
           </div>
           <p v-if="createError" class="error-message">{{ createError }}</p>
           <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" @click="closeCreateOrgModal">Avbryt</button>
+            <button type="button" class="btn btn-primary" @click="closeCreateOrgModal">Avbryt</button>
             <button type="submit" class="btn btn-primary" :disabled="createLoading">
               {{ createLoading ? 'Skapar...' : 'Skapa' }}
             </button>
@@ -155,7 +155,7 @@
           </div>
           <p v-if="joinError" class="error-message">{{ joinError }}</p>
           <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" @click="closeJoinOrgModal">Avbryt</button>
+            <button type="button" class="btn btn-primary" @click="closeJoinOrgModal">Avbryt</button>
             <button type="submit" class="btn btn-primary" :disabled="joinLoading">
               {{ joinLoading ? 'Går med...' : 'Gå med' }}
             </button>
@@ -177,7 +177,7 @@
             <label>Inbjödningskod:</label>
             <div class="invite-code-display">
               <code>{{ inviteCodeToShare }}</code>
-              <button type="button" class="btn btn-secondary btn-sm" @click="copyInviteCode">Kopiera</button>
+              <button type="button" class="btn btn-primary btn-sm" @click="copyInviteCode">Kopiera</button>
             </div>
             <p class="invite-code-hint">Dela denna kod med andra för att bjuda in dem till organisationen.</p>
           </div>
