@@ -1,18 +1,18 @@
 <template>
   <div class="login-page">
     <div class="login-container">
-      <!-- Left Column - Hero Section -->
-      <div class="hero-section">
+      <!-- Login Hero -->
+      <section class="hero login-hero">
         <div class="hero-content">
           <h1>Välkommen Tillbaka</h1>
-          <p>Logga in för att fortsätta till din dashboard</p>
+          <p class="hero-subtitle">Logga in på ditt Orient-konto</p>
         </div>
-      </div>
+      </section>
 
-      <!-- Right Column - Login Form -->
-      <div class="login-section">
-        <div class="login-card">
-          <h2>Logga In</h2>
+      <!-- Login Form Section -->
+      <section class="login-section">
+        <div class="login-form-wrapper">
+        <h2 class="login-title">Logga In</h2>
           <form @submit.prevent="handleLogin" class="login-form">
             <div class="form-group">
               <label for="email">E-post</label>
@@ -20,316 +20,411 @@
                 type="email"
                 id="email"
                 v-model="email"
+                placeholder="din@email.se"
                 required
-                placeholder="din@email.com"
               />
             </div>
+
             <div class="form-group">
               <label for="password">Lösenord</label>
               <input
                 type="password"
                 id="password"
                 v-model="password"
-                required
                 placeholder="Ange ditt lösenord"
+                required
               />
             </div>
+
             <div class="form-options">
-              <label class="checkbox-label">
+              <label class="remember-me">
                 <input type="checkbox" v-model="rememberMe" />
                 <span>Kom ihåg mig</span>
               </label>
               <a href="#" class="forgot-password">Glömt lösenord?</a>
             </div>
-            <div v-if="error" class="error-message">{{ error }}</div>
-            <button type="submit" class="btn-primary">Logga In</button>
+
+            <button type="submit" class="btn btn-primary btn-full" :disabled="loading">
+                {{ loading ? 'Loggar in…' : 'Logga In' }}
+            </button>
+
+            <p v-if="error" style="color: red; margin: 0;">{{ error }}</p>
+
+
+            <div class="login-divider">
+              <span>eller</span>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-full" @click="handleRegister">
+              Skapa Nytt Konto
+            </button>
           </form>
-          <div class="divider">
-            <span>eller</span>
-          </div>
-          <button @click="showRegisterModal = true" class="btn-secondary">
-            Skapa Nytt Konto
-          </button>
         </div>
-      </div>
+      </section>
     </div>
 
     <!-- Registration Modal -->
-    <div v-if="showRegisterModal" class="modal-overlay" @click="showRegisterModal = false">
-      <div class="modal-content" @click.stop>
+    <div v-if="showRegisterModal" class="modal-overlay" @click.self="closeRegisterModal">
+      <div class="modal-content">
         <div class="modal-header">
           <h2>Skapa Nytt Konto</h2>
-          <button class="close-btn" @click="showRegisterModal = false">&times;</button>
+          <button class="close-btn" @click="closeRegisterModal">&times;</button>
         </div>
-        <div class="modal-body">
-          <form @submit.prevent="handleRegister">
-            <div class="form-group">
-              <label for="registerName">Namn</label>
-              <input
-                type="text"
-                id="registerName"
-                v-model="registerName"
-                required
-                placeholder="Ditt namn"
-              />
-            </div>
-            <div class="form-group">
-              <label for="registerEmail">E-post</label>
-              <input
-                type="email"
-                id="registerEmail"
-                v-model="registerEmail"
-                required
-                placeholder="din@email.com"
-              />
-            </div>
-            <div class="form-group">
-              <label for="registerPassword">Lösenord</label>
-              <input
-                type="password"
-                id="registerPassword"
-                v-model="registerPassword"
-                required
-                placeholder="Välj ett lösenord"
-              />
-            </div>
-            <div class="form-group">
-              <label for="confirmPassword">Bekräfta Lösenord</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                v-model="confirmPassword"
-                required
-                placeholder="Bekräfta ditt lösenord"
-              />
-            </div>
-            <div v-if="registerError" class="error-message">{{ registerError }}</div>
-            <button type="submit" class="btn-primary">Skapa Konto</button>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Post-Registration Organization Modal -->
-    <div v-if="showPostRegisterOrgModal" class="modal-overlay" @click="skipOrganization">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Välkommen!</h2>
-          <button class="close-btn" @click="skipOrganization">&times;</button>
-        </div>
-        <div class="modal-body">
-          <p style="margin-bottom: 1.5rem; color: #555;">
-            Vill du skapa eller gå med i en organisation?
-          </p>
-          <div class="org-actions">
-            <button @click="handleCreateOrgOption" class="btn-primary">Skapa Organisation</button>
-            <button @click="handleJoinOrgOption" class="btn-secondary">Gå Med i Organisation</button>
+        <form @submit.prevent="handleRegisterSubmit" class="register-form">
+          <div class="form-group">
+            <label for="register-name">Namn</label>
+            <input
+              type="text"
+              id="register-name"
+              v-model="registerName"
+              placeholder="Ditt fullständiga namn"
+              required
+            />
           </div>
-          <button @click="skipOrganization" class="btn-skip">Hoppa över</button>
-        </div>
-      </div>
-    </div>
 
-    <!-- Create Organization Modal (Post-Register) -->
-    <div v-if="showCreateOrgModal" class="modal-overlay" @click="showCreateOrgModal = false">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Skapa Organisation</h2>
-          <button class="close-btn" @click="showCreateOrgModal = false">&times;</button>
-        </div>
-        <div class="modal-body">
-          <form @submit.prevent="handleCreateOrg">
-            <div class="form-group">
-              <label for="orgName">Organisationsnamn</label>
-              <input
-                type="text"
-                id="orgName"
-                v-model="newOrgName"
-                required
-                placeholder="Ange organisationsnamn"
-              />
-            </div>
-            <div v-if="orgError" class="error-message">{{ orgError }}</div>
-            <button type="submit" class="btn-primary">Skapa</button>
-          </form>
-        </div>
-      </div>
-    </div>
+          <div class="form-group">
+            <label for="register-email">E-post</label>
+            <input
+              type="email"
+              id="register-email"
+              v-model="registerEmail"
+              placeholder="din@email.se"
+              required
+            />
+          </div>
 
-    <!-- Join Organization Modal (Post-Register) -->
-    <div v-if="showJoinOrgModal" class="modal-overlay" @click="showJoinOrgModal = false">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Gå Med i Organisation</h2>
-          <button class="close-btn" @click="showJoinOrgModal = false">&times;</button>
-        </div>
-        <div class="modal-body">
-          <form @submit.prevent="handleJoinOrg">
-            <div class="form-group">
-              <label for="joinCode">Inbjudningskod</label>
-              <input
-                type="text"
-                id="joinCode"
-                v-model="joinCode"
-                required
-                placeholder="Ange inbjudningskod"
-              />
-            </div>
-            <div v-if="orgError" class="error-message">{{ orgError }}</div>
-            <button type="submit" class="btn-primary">Gå Med</button>
-          </form>
-        </div>
+          <div class="form-group">
+            <label for="register-password">Lösenord</label>
+            <input
+              type="password"
+              id="register-password"
+              v-model="registerPassword"
+              placeholder="Välj ett starkt lösenord"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="register-confirm-password">Bekräfta Lösenord</label>
+            <input
+              type="password"
+              id="register-confirm-password"
+              v-model="registerConfirmPassword"
+              placeholder="Ange lösenordet igen"
+              required
+            />
+          </div>
+
+          <p v-if="registerError" class="error-message">{{ registerError }}</p>
+
+          <button type="submit" class="btn btn-primary btn-full" :disabled="registerLoading">
+            {{ registerLoading ? 'Skapar konto…' : 'Skapa Konto' }}
+          </button>
+        </form>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script>
 import { login, register } from '../lib/auth'
 
-export default defineComponent({
+export default {
   name: 'LoginView',
   data() {
     return {
       email: '',
       password: '',
       rememberMe: false,
-      error: '',
+      loading: false,
+      error: null,
       showRegisterModal: false,
       registerName: '',
       registerEmail: '',
       registerPassword: '',
-      confirmPassword: '',
-      registerError: '',
-      showPostRegisterOrgModal: false,
-      showCreateOrgModal: false,
-      showJoinOrgModal: false,
-      newOrgName: '',
-      joinCode: '',
-      orgError: ''
+      registerConfirmPassword: '',
+      registerLoading: false,
+      registerError: null
     }
   },
   methods: {
     async handleLogin() {
+      this.error = null
+      this.loading = true
       try {
-        this.error = ''
         await login(this.email, this.password, this.rememberMe)
-        this.$router.push('/services')
-      } catch (err: any) {
-        this.error = err.message || 'Inloggning misslyckades'
-      }
-    },
-    async handleRegister() {
-      try {
-        this.registerError = ''
-        
-        if (this.registerPassword !== this.confirmPassword) {
-          this.registerError = 'Lösenorden matchar inte'
-          return
-        }
 
+        // Välj vart du vill skicka användaren efter login:
+        // Om du har /dashboard, byt till det.
+        this.$router.push('/')
+      } catch (e) {
+        this.error = e?.message || 'Inloggningen misslyckades'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    handleRegister() {
+      this.showRegisterModal = true
+    },
+
+    closeRegisterModal() {
+      this.showRegisterModal = false
+      this.registerName = ''
+      this.registerEmail = ''
+      this.registerPassword = ''
+      this.registerConfirmPassword = ''
+      this.registerError = null
+    },
+
+    async handleRegisterSubmit() {
+      this.registerError = null
+
+      // Validate passwords match
+      if (this.registerPassword !== this.registerConfirmPassword) {
+        this.registerError = 'Lösenorden matchar inte'
+        return
+      }
+
+      this.registerLoading = true
+      try {
         await register(this.registerEmail, this.registerName, this.registerPassword, false)
-        this.showRegisterModal = false
-        this.showPostRegisterOrgModal = true
-      } catch (err: any) {
-        this.registerError = err.message || 'Registrering misslyckades'
+
+        // Efter register: du är inloggad (cookie sätts), skicka vidare
+        this.closeRegisterModal()
+        this.$router.push('/')
+      } catch (e) {
+        this.registerError = e?.message || 'Registreringen misslyckades'
+      } finally {
+        this.registerLoading = false
       }
-    },
-    handleCreateOrgOption() {
-      this.showPostRegisterOrgModal = false
-      this.showCreateOrgModal = true
-      this.newOrgName = ''
-      this.orgError = ''
-    },
-    handleJoinOrgOption() {
-      this.showPostRegisterOrgModal = false
-      this.showJoinOrgModal = true
-      this.joinCode = ''
-      this.orgError = ''
-    },
-    async handleCreateOrg() {
-      try {
-        this.orgError = ''
-        const response = await fetch('/api/organizations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({ name: this.newOrgName })
-        })
-        
-        if (response.ok) {
-          this.showCreateOrgModal = false
-          this.$router.push('/services')
-        } else {
-          const data = await response.json()
-          this.orgError = data.error || 'Kunde inte skapa organisation'
-        }
-      } catch (error) {
-        this.orgError = 'Ett fel uppstod'
-      }
-    },
-    async handleJoinOrg() {
-      try {
-        this.orgError = ''
-        const response = await fetch('/api/organizations/join', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({ inviteCode: this.joinCode })
-        })
-        
-        if (response.ok) {
-          this.showJoinOrgModal = false
-          this.$router.push('/services')
-        } else {
-          const data = await response.json()
-          this.orgError = data.error || 'Ogiltig inbjudningskod'
-        }
-      } catch (error) {
-        this.orgError = 'Ett fel uppstod'
-      }
-    },
-    skipOrganization() {
-      this.showPostRegisterOrgModal = false
-      this.$router.push('/services')
     }
   }
-})
+}
 </script>
 
-<style scoped>
-/* ...existing code... */
 
-.btn-skip {
+<style scoped>
+.login-page {
+  min-height: 100vh;
+  background-color: var(--background);
+}
+
+.login-title {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-dark);
+}
+
+.login-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.login-hero {
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.login-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: var(--background);
+}
+
+.login-form-wrapper {
+  background-color: var(--text-light);
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   width: 100%;
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: transparent;
-  border: none;
-  color: #999;
+  max-width: 450px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: -0.5rem;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-dark);
   cursor: pointer;
-  font-size: 0.875rem;
+}
+
+.remember-me input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.forgot-password {
+  font-size: 0.9rem;
+  color: var(--primary-light);
+  text-decoration: none;
   transition: color 0.3s ease;
 }
 
-.btn-skip:hover {
-  color: #667eea;
+.forgot-password:hover {
+  color: var(--primary-medium);
+  text-decoration: underline;
 }
 
-.org-actions {
+.login-divider {
+  position: relative;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background-color: var(--background);
+}
+
+.login-divider::before {
+  left: 0;
+}
+
+.login-divider::after {
+  right: 0;
+}
+
+.login-divider span {
+  background-color: var(--text-light);
+  padding: 0 1rem;
+  color: var(--text-dark);
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-hero {
+    min-height: 50vh;
+  }
+
+  .login-hero h1 {
+    font-size: 2.5rem;
+  }
+
+  .login-section {
+    min-height: 50vh;
+  }
+
+  .login-form-wrapper {
+    padding: 2rem 1.5rem;
+    margin: 0 1rem;
+  }
+
+  .form-options {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
 }
 
-.org-actions .btn-primary,
-.org-actions .btn-secondary {
-  flex: 1;
-  min-width: 150px;
+.modal-content {
+  background-color: var(--text-light);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h2 {
+  font-size: 2rem;
+  color: var(--primary-dark);
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--text-dark);
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+  color: var(--primary-dark);
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.error-message {
+  color: #d32f2f;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 1.5rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.5rem;
+  }
 }
 </style>
