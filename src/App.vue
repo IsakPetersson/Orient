@@ -3,7 +3,7 @@
     <nav class="sidebar">
       <div class="logo-container">
         <router-link to="/" class="logo-link">
-          <img src="../assets/images/logo.png" alt="Logo" class="logo" />
+          <img src="./assets/images/logo.png" alt="Logo" class="logo" />
         </router-link>
       </div>
       <ul class="nav-links">
