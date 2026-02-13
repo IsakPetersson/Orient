@@ -17,7 +17,7 @@ async function jsonOrThrow(res: Response) {
 }
 
 export async function getUserOrganizations(): Promise<OrganizationMembership[]> {
-    const res = await fetch('/api/orgs/me', {
+    const res = await fetch('/api/orgs?action=me', {
         method: 'GET',
         credentials: 'include'
     })
@@ -25,7 +25,7 @@ export async function getUserOrganizations(): Promise<OrganizationMembership[]> 
 }
 
 export async function createOrganization(name: string): Promise<{ organization: Organization, invite: { code: string, expiresAt: string | null } }> {
-    const res = await fetch('/api/orgs/create', {
+    const res = await fetch('/api/orgs?action=create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -35,7 +35,7 @@ export async function createOrganization(name: string): Promise<{ organization: 
 }
 
 export async function joinOrganization(code: string): Promise<{ organization: Organization, role: string }> {
-    const res = await fetch('/api/orgs/join', {
+    const res = await fetch('/api/orgs?action=join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -45,7 +45,7 @@ export async function joinOrganization(code: string): Promise<{ organization: Or
 }
 
 export async function getOrganizationInvite(organizationId: number): Promise<{ code: string }> {
-    const res = await fetch('/api/orgs/invite', {
+    const res = await fetch('/api/orgs?action=invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -55,7 +55,7 @@ export async function getOrganizationInvite(organizationId: number): Promise<{ c
 }
 
 export async function deleteOrganization(organizationId: number): Promise<{ success: boolean, message: string }> {
-    const res = await fetch('/api/orgs/delete', {
+    const res = await fetch('/api/orgs?action=delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

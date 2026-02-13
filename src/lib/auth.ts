@@ -12,7 +12,7 @@ async function jsonOrThrow(res: Response) {
 }
 
 export async function login(email: string, password: string, rememberMe: boolean): Promise<SafeUser> {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch('/api/auth?action=login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -22,7 +22,7 @@ export async function login(email: string, password: string, rememberMe: boolean
 }
 
 export async function register(email: string, name: string, password: string, rememberMe: boolean): Promise<SafeUser> {
-    const res = await fetch('/api/auth/register', {
+    const res = await fetch('/api/auth?action=register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -32,7 +32,7 @@ export async function register(email: string, name: string, password: string, re
 }
 
 export async function logout(): Promise<void> {
-    const res = await fetch('/api/auth/logout', {
+    const res = await fetch('/api/auth?action=logout', {
         method: 'POST',
         credentials: 'include'
     })
@@ -41,7 +41,7 @@ export async function logout(): Promise<void> {
 
 export async function getCurrentUser(): Promise<SafeUser | null> {
     try {
-        const res = await fetch('/api/auth/me', {
+        const res = await fetch('/api/auth?action=me', {
             method: 'GET',
             credentials: 'include'
         })
