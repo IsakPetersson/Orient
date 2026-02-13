@@ -84,11 +84,26 @@
                 <p>Du är inte med i någon organisation ännu.</p>
               </div>
               <div v-else>
-                <div v-for="org in organizations" :key="org.id" class="organization-item">
+                <div 
+                  v-for="org in organizations" 
+                  :key="org.id" 
+                  class="organization-item"
+                  :class="{ 'clickable': org.role === 'OWNER', 'selected': selectedOrganization?.id === org.id }"
+                  @click="selectOrganization(org)"
+                >
                   <div class="org-info">
                     <span class="org-name">{{ org.name }}</span>
                     <span class="org-role">{{ org.role }}</span>
                   </div>
+                  <div v-if="selectedOrganization?.id === org.id && org.role === 'OWNER'" class="org-controls">
+                    <button class="btn btn-sm btn-secondary" @click.stop="copyOrganizationInvite">
+                      Kopiera Inbjudan
+                    </button>
+                    <button class="btn btn-sm btn-danger" @click.stop="openDeleteModal">
+                      Radera
+                    </button>
+                  </div>
+                  <p v-if="codeCopied && selectedOrganization?.id === org.id" class="copy-feedback">✓ Kopierad!</p>
                 </div>
               </div>
             </div>
@@ -188,12 +203,49 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="modal-overlay" @click.self="closeDeleteModal">
+      <div class="modal-content delete-modal">
+        <div class="modal-header">
+          <h2>Radera Organisation</h2>
+          <button class="close-btn" @click="closeDeleteModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="warning-message">⚠️ Du är på väg att radera organisationen <strong>{{ selectedOrganization?.name }}</strong>.</p>
+          <p class="warning-text">Denna åtgärd kan inte ångras. All data kopplad till organisationen kommer att raderas permanent.</p>
+          
+          <div class="delete-confirmation">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                v-model="deleteConfirmChecked" 
+                @change="onDeleteCheckboxChange"
+              />
+              <span>Jag förstår att denna åtgärd är permanent</span>
+            </label>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-primary" @click="closeDeleteModal">Avbryt</button>
+            <button 
+              type="button" 
+              class="btn btn-danger" 
+              @click="confirmDelete"
+              :disabled="!deleteConfirmChecked || deleteCountdown > 0 || deleteLoading"
+            >
+              {{ deleteLoading ? 'Raderar...' : deleteCountdown > 0 ? `Vänta (${deleteCountdown}s)` : 'Radera Organisation' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import { getCurrentUser, logout } from './lib/auth'
-import { getUserOrganizations, createOrganization as createOrg, joinOrganization as joinOrg } from './lib/orgs'
+import { getUserOrganizations, createOrganization as createOrg, joinOrganization as joinOrg, getOrganizationInvite, deleteOrganization as deleteOrg } from './lib/orgs'
 
 export default {
   name: 'App',
@@ -202,6 +254,7 @@ export default {
       user: null,
       showOrganizationsModal: false,
       organizations: [],
+      selectedOrganization: null,
       showCreateOrgModal: false,
       newOrgName: '',
       createLoading: false,
@@ -213,7 +266,12 @@ export default {
       showSuccessModal: false,
       createdOrgName: '',
       inviteCodeToShare: '',
-      codeCopied: false
+      codeCopied: false,
+      showDeleteModal: false,
+      deleteConfirmChecked: false,
+      deleteCountdown: 5,
+      deleteCountdownInterval: null,
+      deleteLoading: false
     }
   },
   async mounted() {
@@ -252,6 +310,7 @@ export default {
     },
     closeOrganizationsModal() {
       this.showOrganizationsModal = false
+      this.selectedOrganization = null
     },
     showCreateModal() {
       this.showCreateOrgModal = true
@@ -336,6 +395,75 @@ export default {
         .catch(() => {
           this.codeCopied = false
         })
+    },
+    selectOrganization(org) {
+      if (org.role === 'OWNER') {
+        this.selectedOrganization = this.selectedOrganization?.id === org.id ? null : org
+      }
+    },
+    async copyOrganizationInvite() {
+      if (!this.selectedOrganization) return
+      
+      try {
+        const result = await getOrganizationInvite(this.selectedOrganization.id)
+        await navigator.clipboard.writeText(result.code)
+        this.inviteCodeToShare = result.code
+        this.codeCopied = true
+        setTimeout(() => {
+          this.codeCopied = false
+        }, 3000)
+      } catch (error) {
+        console.error('Failed to copy invite code:', error)
+      }
+    },
+    openDeleteModal() {
+      this.showDeleteModal = true
+      this.deleteConfirmChecked = false
+      this.deleteCountdown = 5
+    },
+    closeDeleteModal() {
+      this.showDeleteModal = false
+      this.deleteConfirmChecked = false
+      this.deleteCountdown = 5
+      if (this.deleteCountdownInterval) {
+        clearInterval(this.deleteCountdownInterval)
+        this.deleteCountdownInterval = null
+      }
+    },
+    onDeleteCheckboxChange() {
+      if (this.deleteConfirmChecked) {
+        // Start countdown
+        this.deleteCountdown = 5
+        this.deleteCountdownInterval = setInterval(() => {
+          this.deleteCountdown--
+          if (this.deleteCountdown <= 0) {
+            clearInterval(this.deleteCountdownInterval)
+            this.deleteCountdownInterval = null
+          }
+        }, 1000)
+      } else {
+        // Stop countdown and reset
+        if (this.deleteCountdownInterval) {
+          clearInterval(this.deleteCountdownInterval)
+          this.deleteCountdownInterval = null
+        }
+        this.deleteCountdown = 5
+      }
+    },
+    async confirmDelete() {
+      if (!this.selectedOrganization || this.deleteCountdown > 0) return
+      
+      this.deleteLoading = true
+      try {
+        await deleteOrg(this.selectedOrganization.id)
+        this.closeDeleteModal()
+        this.selectedOrganization = null
+        await this.loadOrganizations()
+      } catch (error) {
+        console.error('Failed to delete organization:', error)
+      } finally {
+        this.deleteLoading = false
+      }
     }
   },
 }
@@ -721,15 +849,24 @@ export default {
   border-radius: 6px;
   padding: 1rem;
   margin-bottom: 0.75rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  cursor: default;
+}
+
+.organization-item.clickable {
   cursor: pointer;
+}
+
+.organization-item.selected {
+  background-color: #e8f4f8;
+  box-shadow: 0 0 0 2px var(--primary-light);
 }
 
 .organization-item:last-child {
   margin-bottom: 0;
 }
 
-.organization-item:hover {
+.organization-item.clickable:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -738,6 +875,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 0.5rem;
 }
 
 .org-name {
@@ -752,6 +890,26 @@ export default {
   background-color: var(--background);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
+}
+
+.org-controls {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--background);
+}
+
+.org-controls button {
+  flex: 1;
+}
+
+.copy-feedback {
+  font-size: 0.875rem;
+  color: #2e7d32;
+  margin: 0.5rem 0 0 0;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease-in;
 }
 
 .organizations-actions {
@@ -894,6 +1052,80 @@ export default {
   opacity: 0.8;
   margin: 0;
   line-height: 1.5;
+}
+
+/* Delete Modal */
+.delete-modal {
+  max-width: 550px;
+}
+
+.warning-message {
+  font-size: 1.1rem;
+  color: #d32f2f;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.warning-text {
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.delete-confirmation {
+  background-color: var(--background);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--primary-dark);
+}
+
+.checkbox-label span {
+  font-size: 0.95rem;
+  color: var(--text-dark);
+}
+
+/* Button Styles */
+.btn-secondary {
+  background-color: var(--text-dark);
+  color: var(--text-light);
+}
+
+.btn-secondary:hover {
+  background-color: #555;
+}
+
+.btn-danger {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #b71c1c;
+}
+
+.btn-danger:disabled {
+  background-color: #e57373;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 @media (max-width: 768px) {

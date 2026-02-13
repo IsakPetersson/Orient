@@ -123,11 +123,119 @@
         </form>
       </div>
     </div>
+
+    <!-- Organization Setup Modal (after registration) -->
+    <div v-if="showOrgSetupModal" class="modal-overlay" @click.self="skipOrgSetup">
+      <div class="modal-content org-setup-modal">
+        <div class="modal-header">
+          <h2>Välkommen!</h2>
+          <button class="close-btn" @click="skipOrgSetup">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="welcome-message">Ditt konto har skapats! Vill du gå med i en organisation eller skapa en ny?</p>
+          <div class="org-setup-actions">
+            <button class="btn btn-secondary btn-full" @click="openJoinOrgFromSetup">
+              Gå med i Organisation
+            </button>
+            <button class="btn btn-primary btn-full" @click="openCreateOrgFromSetup">
+              Skapa Organisation
+            </button>
+            <button class="btn-link" @click="skipOrgSetup">
+              Hoppa över
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Organization Modal -->
+    <div v-if="showCreateOrgModal" class="modal-overlay" @click.self="closeCreateOrgModal">
+      <div class="modal-content create-org-modal">
+        <div class="modal-header">
+          <h2>Skapa Organisation</h2>
+          <button class="close-btn" @click="closeCreateOrgModal">&times;</button>
+        </div>
+        <form @submit.prevent="submitCreateOrganization" class="modal-body-form">
+          <div class="form-group">
+            <label for="org-name">Organisationens namn</label>
+            <input
+              type="text"
+              id="org-name"
+              v-model="newOrgName"
+              placeholder="T.ex. Fotbollsklubben AIK"
+              required
+            />
+          </div>
+          <p v-if="createError" class="error-message">{{ createError }}</p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" @click="closeCreateOrgModal">Avbryt</button>
+            <button type="submit" class="btn btn-primary" :disabled="createLoading">
+              {{ createLoading ? 'Skapar...' : 'Skapa' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Join Organization Modal -->
+    <div v-if="showJoinOrgModal" class="modal-overlay" @click.self="closeJoinOrgModal">
+      <div class="modal-content join-org-modal">
+        <div class="modal-header">
+          <h2>Gå med i Organisation</h2>
+          <button class="close-btn" @click="closeJoinOrgModal">&times;</button>
+        </div>
+        <form @submit.prevent="submitJoinOrganization" class="modal-body-form">
+          <div class="form-group">
+            <label for="invite-code">Inbjödningskod</label>
+            <input
+              type="text"
+              id="invite-code"
+              v-model="inviteCode"
+              placeholder="Ange inbjödningskod"
+              required
+            />
+          </div>
+          <p v-if="joinError" class="error-message">{{ joinError }}</p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" @click="closeJoinOrgModal">Avbryt</button>
+            <button type="submit" class="btn btn-primary" :disabled="joinLoading">
+              {{ joinLoading ? 'Går med...' : 'Gå med' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Success Modal for showing invite code -->
+    <div v-if="showSuccessModal" class="modal-overlay" @click.self="closeSuccessModal">
+      <div class="modal-content success-modal">
+        <div class="modal-header">
+          <h2>Organisation Skapad!</h2>
+          <button class="close-btn" @click="closeSuccessModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="success-message">Organisation "{{ createdOrgName }}" har skapats!</p>
+          <div class="invite-code-section">
+            <label>Inbjödningskod:</label>
+            <div class="invite-code-display">
+              <code>{{ inviteCodeToShare }}</code>
+              <button type="button" class="btn btn-secondary btn-sm" @click="copyInviteCode">Kopiera</button>
+            </div>
+            <p v-if="codeCopied" class="copy-success-message">✓ Kopierad!</p>
+            <p class="invite-code-hint">Dela denna kod med andra för att bjuda in dem till organisationen.</p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-primary" @click="closeSuccessModal">Fortsätt</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import { login, register } from '../lib/auth'
+import { createOrganization as createOrg, joinOrganization as joinOrg } from '../lib/orgs'
 
 export default {
   name: 'LoginView',
@@ -144,7 +252,20 @@ export default {
       registerPassword: '',
       registerConfirmPassword: '',
       registerLoading: false,
-      registerError: null
+      registerError: null,
+      showOrgSetupModal: false,
+      showCreateOrgModal: false,
+      newOrgName: '',
+      createLoading: false,
+      createError: null,
+      showJoinOrgModal: false,
+      inviteCode: '',
+      joinLoading: false,
+      joinError: null,
+      showSuccessModal: false,
+      createdOrgName: '',
+      inviteCodeToShare: '',
+      codeCopied: false
     }
   },
   methods: {
@@ -190,14 +311,98 @@ export default {
       try {
         await register(this.registerEmail, this.registerName, this.registerPassword, false)
 
-        // Efter register: du är inloggad (cookie sätts), skicka vidare
+        // After register: show organization setup modal
         this.closeRegisterModal()
-        this.$router.push('/')
+        this.showOrgSetupModal = true
       } catch (e) {
         this.registerError = e?.message || 'Registreringen misslyckades'
       } finally {
         this.registerLoading = false
       }
+    },
+
+    skipOrgSetup() {
+      this.showOrgSetupModal = false
+      this.$router.push('/')
+    },
+
+    openJoinOrgFromSetup() {
+      this.showOrgSetupModal = false
+      this.showJoinOrgModal = true
+      this.inviteCode = ''
+      this.joinError = null
+    },
+
+    openCreateOrgFromSetup() {
+      this.showOrgSetupModal = false
+      this.showCreateOrgModal = true
+      this.newOrgName = ''
+      this.createError = null
+    },
+
+    closeCreateOrgModal() {
+      this.showCreateOrgModal = false
+      this.newOrgName = ''
+      this.createError = null
+    },
+
+    closeJoinOrgModal() {
+      this.showJoinOrgModal = false
+      this.inviteCode = ''
+      this.joinError = null
+    },
+
+    closeSuccessModal() {
+      this.showSuccessModal = false
+      this.createdOrgName = ''
+      this.inviteCodeToShare = ''
+      this.codeCopied = false
+      this.$router.push('/')
+    },
+
+    async submitCreateOrganization() {
+      this.createError = null
+      this.createLoading = true
+
+      try {
+        const result = await createOrg(this.newOrgName)
+        this.createdOrgName = result.organization.name
+        this.inviteCodeToShare = result.invite.code
+        this.closeCreateOrgModal()
+        this.showSuccessModal = true
+      } catch (error) {
+        this.createError = error.message || 'Kunde inte skapa organisationen'
+      } finally {
+        this.createLoading = false
+      }
+    },
+
+    async submitJoinOrganization() {
+      this.joinError = null
+      this.joinLoading = true
+
+      try {
+        await joinOrg(this.inviteCode)
+        this.closeJoinOrgModal()
+        this.$router.push('/')
+      } catch (error) {
+        this.joinError = error.message || 'Kunde inte gå med i organisationen'
+      } finally {
+        this.joinLoading = false
+      }
+    },
+
+    copyInviteCode() {
+      navigator.clipboard.writeText(this.inviteCodeToShare)
+        .then(() => {
+          this.codeCopied = true
+          setTimeout(() => {
+            this.codeCopied = false
+          }, 3000)
+        })
+        .catch(() => {
+          this.codeCopied = false
+        })
     }
   }
 }

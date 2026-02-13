@@ -43,3 +43,23 @@ export async function joinOrganization(code: string): Promise<{ organization: Or
     })
     return jsonOrThrow(res)
 }
+
+export async function getOrganizationInvite(organizationId: number): Promise<{ code: string }> {
+    const res = await fetch('/api/orgs/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ organizationId })
+    })
+    return jsonOrThrow(res)
+}
+
+export async function deleteOrganization(organizationId: number): Promise<{ success: boolean, message: string }> {
+    const res = await fetch('/api/orgs/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ organizationId })
+    })
+    return jsonOrThrow(res)
+}
