@@ -14,6 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'POST') {
+      if (!requireAdminApiKey(req, res)) return;
       const { email, name, password } = req.body
 
       if (!email || !name || !password) {
