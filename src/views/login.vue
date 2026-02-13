@@ -66,7 +66,7 @@
 </template>
 
 <script>
-import { login, register } from '@/lib/auth'
+import { login, register } from '../lib/auth'
 
 export default {
   name: 'LoginView',
