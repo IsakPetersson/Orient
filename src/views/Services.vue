@@ -1,6 +1,12 @@
 <template>
   <div class="dashboard-page">
-    <section class="dashboard-compact">
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Laddar dashboard...</p>
+    </div>
+    
+    <section v-else class="dashboard-compact">
       <div class="container-full">
         <!-- Header -->
         <div class="header-bar">
@@ -520,18 +526,23 @@
   </div>
 </template><script>
 import { getCurrentUser } from '../lib/auth'
+import { getUserOrganizations } from '../lib/orgs'
+import { getDashboardData, createTransaction, createAccount } from '../lib/dashboard'
+
 export default {
   name: 'Dashboard',
   data() {
     return {
       showAuthModal: false,
-      organizationName: 'Din Förening AB',
-      cashAndBank: 452500,
-      monthlyIncome: 128000,
-      monthlyExpenses: 83400,
-      totalMembers: 127,
-      paidMembers: 102,
-      unpaidMembers: 25,
+      loading: true,
+      organizationId: null,
+      organizationName: '',
+      cashAndBank: 0,
+      monthlyIncome: 0,
+      monthlyExpenses: 0,
+      totalMembers: 0,
+      paidMembers: 0,
+      unpaidMembers: 0,
       showUploadModal: false,
       isDragging: false,
       selectedFiles: [],
@@ -566,37 +577,21 @@ export default {
         amount: 0,
         description: ''
       },
-      recentTransactions: [
-        { id: 1, type: 'income', description: 'Medlemsavgifter - December', amount: 32000, date: '1 Dec 2025' },
-        { id: 2, type: 'expense', description: 'Utrustning', amount: 8500, date: '30 Nov 2025' },
-        { id: 3, type: 'income', description: 'Sponsring - Lokalt företag', amount: 50000, date: '28 Nov 2025' },
-        { id: 4, type: 'expense', description: 'Lokalhyra', amount: 12000, date: '27 Nov 2025' },
-        { id: 5, type: 'income', description: 'Tävlingsavgifter', amount: 24000, date: '25 Nov 2025' }
-      ],
-      alerts: [
-        { id: 1, type: 'warning', message: '25 medlemmar har ej betalat avgift' },
-        { id: 2, type: 'info', message: '3 kvitton väntar på godkännande' },
-        { id: 3, type: 'warning', message: '5 omatchade Swish-betalningar' }
-      ],
-      incomeBreakdown: [
-        { id: 1, category: 'Medlemsavgifter', amount: 72000 },
-        { id: 2, category: 'Sponsring', amount: 40000 },
-        { id: 3, category: 'Tävlingsavgifter', amount: 12000 },
-        { id: 4, category: 'Övrigt', amount: 4000 }
-      ],
-      expenseBreakdown: [
-        { id: 1, category: 'Lokalhyra', amount: 35000 },
-        { id: 2, category: 'Utrustning', amount: 28000 },
-        { id: 3, category: 'Tränare', amount: 15000 },
-        { id: 4, category: 'Övrigt', amount: 5400 }
-      ]
+      recentTransactions: [],
+      alerts: [],
+      incomeBreakdown: [],
+      expenseBreakdown: [],
+      accounts: []
     }
   },
   async mounted() {
     const user = await getCurrentUser()
     if (!user) {
       this.showAuthModal = true
+      return
     }
+    
+    await this.loadDashboard()
   },
   computed: {
     monthlyResult() {
@@ -604,6 +599,63 @@ export default {
     }
   },
   methods: {
+    async loadDashboard() {
+      try {
+        this.loading = true
+        
+        // Get user's organizations
+        const memberships = await getUserOrganizations()
+        if (memberships.length === 0) {
+          alert('Du är inte med i någon organisation. Gå till Organisationer för att gå med eller skapa en.')
+          return
+        }
+        
+        // Use the first organization (in the future, let user select)
+        this.organizationId = memberships[0].organization.id
+        
+        // Fetch dashboard data
+        const data = await getDashboardData(this.organizationId)
+        
+        // If no accounts exist, create a default one
+        if (data.accounts.length === 0) {
+          await createAccount(this.organizationId, 'Huvudkonto')
+          // Re-fetch data after creating account
+          const updatedData = await getDashboardData(this.organizationId)
+          this.updateDashboardState(updatedData)
+        } else {
+          this.updateDashboardState(data)
+        }
+      } catch (error) {
+        console.error('Failed to load dashboard:', error)
+        alert('Kunde inte ladda dashboard-data')
+      } finally {
+        this.loading = false
+      }
+    },
+    updateDashboardState(data) {
+      // Update state with real data
+      this.organizationName = data.organization.name
+      this.cashAndBank = data.financialSummary.totalBalance
+      this.monthlyIncome = data.financialSummary.monthlyIncome
+      this.monthlyExpenses = data.financialSummary.monthlyExpenses
+      this.totalMembers = data.members.total
+      this.paidMembers = data.members.paid
+      this.unpaidMembers = data.members.unpaid
+      this.recentTransactions = data.recentTransactions
+      this.incomeBreakdown = data.incomeBreakdown
+      this.expenseBreakdown = data.expenseBreakdown
+      this.accounts = data.accounts
+      
+      // Set default alerts if needed
+      this.alerts = []
+      if (this.unpaidMembers > 0) {
+        this.alerts.push({
+          id: 1,
+          type: 'warning',
+          message: `${this.unpaidMembers} medlemmar har ej betalat avgift`
+        })
+      }
+    },
     handleAction(action) {
       console.log('Action:', action)
       if (action === 'upload-receipt') {
@@ -719,43 +771,38 @@ export default {
         notes: ''
       }
     },
-    registerIncome() {
-      console.log('Registering income:', this.newIncome)
-      
-      // Update monthly income
-      this.monthlyIncome += this.newIncome.amount
-      
-      // Update cash and bank
-      this.cashAndBank += this.newIncome.amount
-      
-      // Add to recent transactions
-      const formattedDate = new Date(this.newIncome.date).toLocaleDateString('sv-SE', { 
-        day: 'numeric', 
-        month: 'short', 
-        year: 'numeric' 
-      })
-      this.recentTransactions.unshift({
-        id: Date.now(),
-        type: 'income',
-        description: this.newIncome.description,
-        amount: this.newIncome.amount,
-        date: formattedDate
-      })
-      
-      // Update income breakdown
-      const existingCategory = this.incomeBreakdown.find(item => item.category === this.newIncome.category)
-      if (existingCategory) {
-        existingCategory.amount += this.newIncome.amount
-      } else {
-        this.incomeBreakdown.push({
-          id: Date.now(),
-          category: this.newIncome.category,
-          amount: this.newIncome.amount
-        })
+    async registerIncome() {
+      try {
+        if (!this.organizationId) {
+          alert('Ingen organisation vald')
+          return
+        }
+        
+        // Get or create a default account
+        let accountId = this.accounts[0]?.id
+        if (!accountId) {
+          alert('Inget konto hittat. Skapa ett konto först.')
+          return
+        }
+        
+        // Create transaction in database (positive for income)
+        await createTransaction(
+          this.organizationId,
+          accountId,
+          this.newIncome.amount, // positive amount for income
+          this.newIncome.description,
+          this.newIncome.category
+        )
+        
+        alert(`Intäkt på ${this.newIncome.amount.toLocaleString()} kr har registrerats!`)
+        this.closeIncomeModal()
+        
+        // Reload dashboard data
+        await this.loadDashboard()
+      } catch (error) {
+        console.error('Failed to register income:', error)
+        alert('Kunde inte registrera intäkt')
       }
-      
-      alert(`Intäkt på ${this.newIncome.amount.toLocaleString()} kr har registrerats!`)
-      this.closeIncomeModal()
     },
     closeExpenseModal() {
       this.showExpenseModal = false
@@ -767,43 +814,38 @@ export default {
         notes: ''
       }
     },
-    registerExpense() {
-      console.log('Registering expense:', this.newExpense)
-      
-      // Update monthly expenses
-      this.monthlyExpenses += this.newExpense.amount
-      
-      // Update cash and bank
-      this.cashAndBank -= this.newExpense.amount
-      
-      // Add to recent transactions
-      const formattedDate = new Date(this.newExpense.date).toLocaleDateString('sv-SE', { 
-        day: 'numeric', 
-        month: 'short', 
-        year: 'numeric' 
-      })
-      this.recentTransactions.unshift({
-        id: Date.now(),
-        type: 'expense',
-        description: this.newExpense.description,
-        amount: this.newExpense.amount,
-        date: formattedDate
-      })
-      
-      // Update expense breakdown
-      const existingCategory = this.expenseBreakdown.find(item => item.category === this.newExpense.category)
-      if (existingCategory) {
-        existingCategory.amount += this.newExpense.amount
-      } else {
-        this.expenseBreakdown.push({
-          id: Date.now(),
-          category: this.newExpense.category,
-          amount: this.newExpense.amount
-        })
+    async registerExpense() {
+      try {
+        if (!this.organizationId) {
+          alert('Ingen organisation vald')
+          return
+        }
+        
+        // Get or create a default account
+        let accountId = this.accounts[0]?.id
+        if (!accountId) {
+          alert('Inget konto hittat. Skapa ett konto först.')
+          return
+        }
+        
+        // Create transaction in database (negative for expense)
+        await createTransaction(
+          this.organizationId,
+          accountId,
+          -this.newExpense.amount, // negative amount for expense
+          this.newExpense.description,
+          this.newExpense.category
+        )
+        
+        alert(`Utgift på ${this.newExpense.amount.toLocaleString()} kr har registrerats!`)
+        this.closeExpenseModal()
+        
+        // Reload dashboard data
+        await this.loadDashboard()
+      } catch (error) {
+        console.error('Failed to register expense:', error)
+        alert('Kunde inte registrera utgift')
       }
-      
-      alert(`Utgift på ${this.newExpense.amount.toLocaleString()} kr har registrerats!`)
-      this.closeExpenseModal()
     },
     closeSwishModal() {
       this.showSwishModal = false
@@ -834,6 +876,31 @@ export default {
   padding: 20px;
   overflow: hidden;
   box-sizing: border-box;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-dark);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--background);
+  border-top-color: var(--primary-dark);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .dashboard-compact {
