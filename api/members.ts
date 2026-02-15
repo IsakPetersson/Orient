@@ -5,10 +5,6 @@ import { getOrgIdFromHeader, requireOrgMember } from '../lib/org.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
-        if (req.method !== 'GET') {
-            return res.status(405).json({ error: 'Method not allowed' })
-        }
-
         const userId = requireAuth(req, res)
         if (!userId) return
 
@@ -20,48 +16,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const membership = await requireOrgMember(req, res, userId, organizationId)
         if (!membership) return
 
-        // Check if user is owner
-        const userMembership = await prisma.organizationMembership.findFirst({
-            where: {
-                userId,
-                organizationId,
-                role: 'OWNER'
-            }
-        })
+        // GET - Retrieve members
+        if (req.method === 'GET') {
+            // Check if user is owner
+            const userMembership = await prisma.organizationMembership.findFirst({
+                where: {
+                    userId,
+                    organizationId,
+                    role: 'OWNER'
+                }
+            })
 
-        if (!userMembership) {
-            return res.status(403).json({ error: 'Only organization owners can view members' })
+            if (!userMembership) {
+                return res.status(403).json({ error: 'Only organization owners can view members' })
+            }
+
+            // Get all members of the organization
+            const members = await prisma.member.findMany({
+                where: { organizationId },
+                orderBy: { createdAt: 'desc' }
+            })
+
+            return res.status(200).json(members)
         }
 
-        // Get all members of the organization
-        const members = await prisma.organizationMembership.findMany({
-            where: { organizationId },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        email: true,
-                        name: true,
-                        createdAt: true
-                    }
-                }
-            },
-            orderBy: { createdAt: 'asc' }
-        })
+        // POST - Create new member
+        if (req.method === 'POST') {
+            const { name, email, phone, type, fee, paid } = req.body ?? {}
 
-        const formattedMembers = members.map(m => ({
-            id: m.id,
-            role: m.role,
-            joinedAt: m.createdAt,
-            user: {
-                id: m.user.id,
-                name: m.user.name,
-                email: m.user.email,
-                createdAt: m.user.createdAt
+            if (!name || !email || !type || fee === undefined) {
+                return res.status(400).json({ error: 'Name, email, type, and fee are required' })
             }
-        }))
 
-        return res.status(200).json(formattedMembers)
+            const member = await prisma.member.create({
+                data: {
+                    name: String(name),
+                    email: String(email),
+                    phone: phone ? String(phone) : null,
+                    type: String(type),
+                    fee: Number(fee),
+                    paid: Boolean(paid),
+                    organizationId
+                }
+            })
+
+            return res.status(201).json(member)
+        }
+
+        return res.status(405).json({ error: 'Method not allowed' })
     } catch (error) {
         console.error('Members API error:', error)
         return res.status(500).json({ error: 'Internal server error' })

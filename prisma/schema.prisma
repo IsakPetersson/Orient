@@ -32,6 +32,7 @@ model Organization {
   memberships OrganizationMembership[]
   accounts    Account[]
   invites     OrganizationInvite[]
+  members     Member[]
 }
 
 model OrganizationMembership {
@@ -89,4 +90,20 @@ model Transaction {
   account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([accountId])
+}
+
+model Member {
+  id             Int          @id @default(autoincrement())
+  name           String
+  email          String
+  phone          String?
+  type           String       // 'regular', 'youth', 'senior', 'family', etc.
+  fee            Float
+  paid           Boolean      @default(false)
+  organizationId Int
+  createdAt      DateTime     @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }

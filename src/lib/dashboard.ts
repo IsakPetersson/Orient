@@ -97,14 +97,14 @@ export async function createAccount(organizationId: number, name: string): Promi
 
 export type OrganizationMember = {
     id: number
-    role: string
-    joinedAt: string
-    user: {
-        id: number
-        name: string
-        email: string
-        createdAt: string
-    }
+    name: string
+    email: string
+    phone: string | null
+    type: string
+    fee: number
+    paid: boolean
+    organizationId: number
+    createdAt: string
 }
 
 export async function getOrganizationMembers(organizationId: number): Promise<OrganizationMember[]> {
@@ -114,6 +114,29 @@ export async function getOrganizationMembers(organizationId: number): Promise<Or
         headers: {
             'x-org-id': String(organizationId)
         }
+    })
+    return jsonOrThrow(res)
+}
+
+export async function createMember(
+    organizationId: number,
+    memberData: {
+        name: string
+        email: string
+        phone?: string
+        type: string
+        fee: number
+        paid: boolean
+    }
+): Promise<OrganizationMember> {
+    const res = await fetch('/api/members', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-org-id': String(organizationId)
+        },
+        body: JSON.stringify(memberData)
     })
     return jsonOrThrow(res)
 }

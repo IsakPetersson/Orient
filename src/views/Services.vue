@@ -22,7 +22,9 @@
                 {{ org.organization.name }}
               </option>
             </select>
-            <p v-else>{{ organizationName }}</p>
+          </div>
+          <div class="org-name" v-if="userOrganizations.length <= 1">
+            <p>{{ organizationName }}</p>
           </div>
           <div class="header-actions">
             <button class="quick-action-card header-btn" @click="handleViewFiles">
@@ -209,17 +211,18 @@
           <div v-else class="members-list">
             <div v-for="member in members" :key="member.id" class="member-item">
               <div class="member-avatar">
-                <span class="avatar-initial">{{ member.user.name.charAt(0).toUpperCase() }}</span>
+                <span class="avatar-initial">{{ member.name.charAt(0).toUpperCase() }}</span>
               </div>
               <div class="member-info">
-                <div class="member-name">{{ member.user.name }}</div>
-                <div class="member-email">{{ member.user.email }}</div>
+                <div class="member-name">{{ member.name }}</div>
+                <div class="member-email">{{ member.email }}</div>
+                <div class="member-meta">{{ member.type }} • {{ member.fee }} kr/år</div>
               </div>
-              <div class="member-role-badge" :class="member.role.toLowerCase()">
-                {{ member.role }}
+              <div class="member-status-badge" :class="{ 'paid': member.paid, 'unpaid': !member.paid }">
+                {{ member.paid ? 'Betald' : 'Obetald' }}
               </div>
               <div class="member-joined">
-                Gick med {{ formatDate(member.joinedAt) }}
+                Medlem sedan {{ formatDate(member.createdAt) }}
               </div>
             </div>
           </div>
@@ -572,7 +575,7 @@
 </template><script>
 import { getCurrentUser } from '../lib/auth'
 import { getUserOrganizations } from '../lib/orgs'
-import { getDashboardData, createTransaction, createAccount, getOrganizationMembers } from '../lib/dashboard'
+import { getDashboardData, createTransaction, createAccount, getOrganizationMembers, createMember } from '../lib/dashboard'
 
 export default {
   name: 'Dashboard',
@@ -828,20 +831,41 @@ export default {
         paid: false
       }
     },
-    addMember() {
-      console.log('Adding member:', this.newMember)
-      // Here you would typically send the member data to a backend server
-      
-      // Update member counts
-      this.totalMembers++
-      if (this.newMember.paid) {
-        this.paidMembers++
-      } else {
-        this.unpaidMembers++
+    async addMember() {
+      try {
+        if (!this.organizationId) {
+          alert('Ingen organisation vald')
+          return
+        }
+
+        await createMember(this.organizationId, {
+          name: this.newMember.name,
+          email: this.newMember.email,
+          phone: this.newMember.phone || undefined,
+          type: this.newMember.type,
+          fee: this.newMember.fee,
+          paid: this.newMember.paid
+        })
+        
+        // Update member counts
+        this.totalMembers++
+        if (this.newMember.paid) {
+          this.paidMembers++
+        } else {
+          this.unpaidMembers++
+        }
+        
+        // Reload members list if it's currently being viewed
+        if (this.showMembersModal) {
+          this.members = await getOrganizationMembers(this.organizationId)
+        }
+        
+        alert(`Medlem ${this.newMember.name} har lagts till!`)
+        this.closeAddMemberModal()
+      } catch (error) {
+        console.error('Failed to add member:', error)
+        alert('Kunde inte lägga till medlem')
       }
-      
-      alert(`Medlem ${this.newMember.name} har lagts till!`)
-      this.closeAddMemberModal()
     },
     closeIncomeModal() {
       this.showIncomeModal = false
@@ -1039,6 +1063,12 @@ export default {
   text-align: left;
 }
 
+.welcome-text {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .welcome-text h1 {
   font-size: 1.625rem;
   color: var(--primary-dark);
@@ -1046,6 +1076,12 @@ export default {
   line-height: 1.2;
 }
 
+.org-name {
+  display: flex;
+  align-items: center;
+}
+
+.org-name p,
 .welcome-text p {
   font-size: 1rem;
   color: var(--text-dark);
@@ -1057,13 +1093,13 @@ export default {
   padding: 0.5rem 1rem;
   border: 2px solid var(--background);
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-family: inherit;
   color: var(--text-dark);
   background-color: var(--text-light);
   cursor: pointer;
   transition: border-color 0.3s ease;
-  max-width: 300px;
+  max-width: 250px;
 }
 
 .org-selector:focus {
@@ -2259,9 +2295,17 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-bottom: 0.25rem;
 }
 
-.member-role-badge {
+.member-meta {
+  font-size: 0.75rem;
+  color: var(--text-dark);
+  opacity: 0.6;
+  text-transform: capitalize;
+}
+
+.member-status-badge {
   padding: 0.375rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -2271,24 +2315,14 @@ export default {
   flex-shrink: 0;
 }
 
-.member-role-badge.owner {
-  background: #fef3c7;
-  color: #92400e;
+.member-status-badge.paid {
+  background: #d1fae5;
+  color: #065f46;
 }
 
-.member-role-badge.admin {
-  background: #ddd6fe;
-  color: #5b21b6;
-}
-
-.member-role-badge.member {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.member-role-badge.viewer {
-  background: #e5e7eb;
-  color: #374151;
+.member-status-badge.unpaid {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .member-joined {
