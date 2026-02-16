@@ -75,7 +75,7 @@ export async function loadSwishConfig(organizationId: number): Promise<SwishConf
  */
 function sanitizeSwishMessage(message: string | undefined): string | undefined {
     if (!message) return undefined;
-    
+
     // Replace Swedish characters with ASCII equivalents
     return message
         .replace(/å/g, 'a')

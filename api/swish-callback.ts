@@ -8,13 +8,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        // Get payment reference from query
-        const { ref } = req.query;
-
-        if (!ref || typeof ref !== 'string') {
-            return res.status(400).json({ error: 'Missing payment reference' });
-        }
-
         // Parse callback payload
         const payload = req.body;
 
@@ -23,21 +16,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const {
-            id,
             payeePaymentReference,
-            paymentReference,
-            callbackUrl,
-            payerAlias,
-            payeeAlias,
-            amount,
-            currency,
-            message,
             status,
-            dateCreated,
-            datePaid,
             errorCode,
             errorMessage,
+            amount: amountStr,
+            message: messageStr,
+            payerAlias,
         } = payload;
+
+        if (!payeePaymentReference) {
+            return res.status(400).json({ error: 'Missing payment reference in body' });
+        }
+
+        const ref = payeePaymentReference;
 
         // Find payment request - validates this is a legitimate callback
         const paymentRequest = await prisma.swishPaymentRequest.findUnique({

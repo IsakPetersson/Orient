@@ -129,7 +129,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     : 'http://localhost:3000';
 
             // Shorten callback URL - use payment reference as token
-            const callbackUrl = `${baseUrl}/api/swish-callback?ref=${payeePaymentReference}`;
+            const callbackUrl = `${baseUrl}/api/swish-callback`;
 
             // Create payment request in Swish
             let swishResponse;
