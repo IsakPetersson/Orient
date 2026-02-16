@@ -216,9 +216,9 @@
         <div class="modal-body">
           <p class="success-message">Organisation "{{ createdOrgName }}" har skapats!</p>
           <div class="invite-code-section">
-            <label>Inbjödningskod:</label>
+            <label>Inbjödningskod: </label>
+            <code>{{ inviteCodeToShare }}</code>
             <div class="invite-code-display">
-              <code>{{ inviteCodeToShare }}</code>
               <button type="button" class="btn btn-primary btn-sm btn-kopiera" @click="copyInviteCode">Kopiera</button>
             </div>
             <p v-if="codeCopied" class="copy-success-message">✓ Kopierad!</p>
