@@ -3,5 +3,8 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
     plugins: [vue()],
-    assetsInclude: ['**/*.html']
+    build: {
+        outDir: 'dist',
+        emptyOutDir: true
+    }
 })
