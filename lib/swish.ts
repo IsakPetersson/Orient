@@ -102,15 +102,21 @@ export async function createPaymentRequest(
 
     const url = `${baseUrl}/api/v2/paymentrequests/${instructionUUID}`;
 
-    const requestBody = {
+    // Build request body - only include message if provided
+    const requestBody: any = {
         payeeAlias: params.payeeAlias,
         payerAlias: params.payerAlias,
         amount: params.amount,
         currency: params.currency || 'SEK',
-        message: sanitizeSwishMessage(params.message),
         payeePaymentReference: params.payeePaymentReference,
         callbackUrl: params.callbackUrl,
     };
+
+    // Only include message if it exists
+    const sanitizedMessage = sanitizeSwishMessage(params.message);
+    if (sanitizedMessage) {
+        requestBody.message = sanitizedMessage;
+    }
 
     return new Promise((resolve, reject) => {
         const options: https.RequestOptions = {
