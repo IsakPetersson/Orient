@@ -27,9 +27,9 @@
             <p>{{ organizationName }}</p>
           </div>
           <div class="header-actions">
-            <button class="quick-action-card header-btn" @click="handleViewFiles">
-              <img src="../assets/images/folder-icon.png" alt="Folder" class="action-icon-img" />
-              <span class="action-text">Lagrade filer</span>
+            <button class="quick-action-card header-btn" @click="handleViewSwishStatus">
+              <span class="action-icon">⇄</span>
+              <span class="action-text">Swish Status</span>
             </button>
             <button class="quick-action-card header-btn" @click="handleViewMembers">
               <img src="../assets/images/members-icon.png" alt="Members" class="action-icon-img" />
@@ -724,6 +724,42 @@
         </div>
       </div>
     </div>
+
+    <!-- Swish Status Modal -->
+    <div v-if="showSwishStatusModal" class="modal-overlay" @click="closeSwishStatusModal">
+      <div class="modal-content modal-lg" @click.stop>
+        <div class="modal-header">
+          <h2>Swish Betalningar</h2>
+          <button class="close-btn" @click="closeSwishStatusModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="swishRequests.length === 0" class="no-members">
+            <p>Inga Swish-förfrågningar hittades.</p>
+          </div>
+          <div v-else class="members-list">
+            <div v-for="req in swishRequests" :key="req.id" class="member-item">
+              <div class="member-info">
+                <div class="member-name">{{ req.message || 'Swish Betalning' }}</div>
+                <div class="member-email">{{ req.payerAlias }}</div>
+                <div class="member-meta">{{ new Date(req.createdAt).toLocaleString('sv-SE') }}</div>
+              </div>
+              <div class="member-status-badge" 
+                   :class="{ 
+                     'paid': req.status === 'PAID', 
+                     'unpaid': req.status === 'DECLINED' || req.status === 'ERROR' || req.status === 'CANCELLED',
+                     'pending': req.status === 'PENDING' || req.status === 'CREATED'
+                   }"
+                   :style="req.status === 'PENDING' || req.status === 'CREATED' ? 'background-color: #fef3c7; color: #92400e;' : ''">
+                {{ translateSwishStatus(req.status) }} <span v-if="req.amount">({{ req.amount }} kr)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-btn" @click="closeSwishStatusModal">Stäng</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template><script>
 import { getCurrentUser } from '../lib/auth'
@@ -780,6 +816,8 @@ export default {
         date: new Date().toISOString().split('T')[0],
         notes: ''
       },
+      showSwishStatusModal: false,
+      swishRequests: [],
       showSwishModal: false,
       swishPayment: {
         phone: '',
@@ -904,9 +942,32 @@ export default {
       console.log('View all alerts')
       alert('Öppnar åtgärdssida (kommer snart)...')
     },
-    handleViewFiles() {
-      console.log('View stored files')
-      alert('Här hamnar alla dina uppladdade kvitton och dokument.')
+    async handleViewSwishStatus() {
+      this.showSwishStatusModal = true
+      try {
+        const response = await fetch('/api/swish-requests', {
+          headers: { 'x-org-id': String(this.organizationId) }
+        })
+        if (!response.ok) throw new Error('Failed to fetch requests')
+        this.swishRequests = await response.json()
+      } catch (error) {
+        console.error('Error fetching Swish requests:', error)
+        alert('Kunde inte hämta Swish-förfrågningar')
+      }
+    },
+    closeSwishStatusModal() {
+      this.showSwishStatusModal = false
+    },
+    translateSwishStatus(status) {
+      const map = {
+        'PAID': 'Betald',
+        'DECLINED': 'Nekad',
+        'ERROR': 'Fel',
+        'PENDING': 'Väntar',
+        'CREATED': 'Skapad',
+        'CANCELLED': 'Avbruten'
+      }
+      return map[status] || status
     },
     async handleViewMembers() {      
       try {
