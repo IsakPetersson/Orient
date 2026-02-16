@@ -63,6 +63,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return res.status(400).json({ error: 'passphrase is required' });
             }
 
+            // Check if encryption key is available
+            if (!process.env.PLATFORM_ENCRYPTION_KEY_BASE64) {
+                console.error('PLATFORM_ENCRYPTION_KEY_BASE64 is not set!');
+                return res.status(500).json({ 
+                    error: 'Server configuration error', 
+                    details: 'Encryption key not configured on server. Please contact support.' 
+                });
+            }
+
             // Decode certificate from base64
             const certificateBuffer = Buffer.from(certificateBase64, 'base64');
 
@@ -72,19 +81,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
 
             // Encrypt certificate and passphrase
+            console.log('Starting encryption...');
             const {
                 ciphertext: p12Ciphertext,
                 iv: p12Iv,
                 tag: p12Tag,
             } = encryptBytes(certificateBuffer);
+            console.log('Certificate encrypted successfully');
 
             const {
                 ciphertext: passCiphertext,
                 iv: passIv,
                 tag: passTag,
             } = encryptString(passphrase);
+            console.log('Passphrase encrypted successfully');
 
             // Store encrypted configuration (convert Buffer to Uint8Array for Prisma)
+            console.log('Saving to database...');
             await prisma.organization.update({
                 where: { id: organizationId },
                 data: {
@@ -109,6 +122,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (error) {
         console.error('Error in swish-config API:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        // Return more detailed error for debugging
+        const errorMessage = error instanceof Error ? `${error.message}\n${error.stack}` : 'Internal server error';
+        console.error('Error details:', errorMessage);
+        return res.status(500).json({ 
+            error: 'Internal server error', 
+            details: error instanceof Error ? error.message : 'Unknown error',
+            stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined
+        });
     }
 }

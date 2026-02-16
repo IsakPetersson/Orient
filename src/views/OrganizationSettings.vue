@@ -411,7 +411,8 @@ export default {
         
         if (!response.ok) {
           const error = await response.json()
-          throw new Error(error.error || 'Failed to save Swish configuration')
+          const errorMsg = error.details || error.error || 'Failed to save Swish configuration'
+          throw new Error(errorMsg)
         }
         
         alert('Swish-konfiguration sparad!')
