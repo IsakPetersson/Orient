@@ -103,8 +103,12 @@ export async function createPaymentRequest(
     const url = `${baseUrl}/api/v2/paymentrequests/${instructionUUID}`;
 
     // Build request body - only include message if provided
+    // In TEST mode, we must use the specific Swish test merchant number '1231181189'
+    // regardless of what is configured, as the test certificates are bound to this number.
+    const effectivePayeeAlias = config.mode === 'TEST' ? '1231181189' : params.payeeAlias;
+
     const requestBody: any = {
-        payeeAlias: params.payeeAlias,
+        payeeAlias: effectivePayeeAlias,
         payerAlias: params.payerAlias,
         amount: params.amount,
         currency: params.currency || 'SEK',
