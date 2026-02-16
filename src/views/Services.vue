@@ -1402,6 +1402,11 @@ export default {
 
 .header-btn .action-icon {
   font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .header-btn .action-text {
