@@ -573,6 +573,7 @@ export default {
 
 .danger-zone {
   border: 2px solid #fee;
+  margin-top: 3rem;
 }
 
 .danger-zone h2 {
