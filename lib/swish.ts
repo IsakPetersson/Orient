@@ -113,6 +113,7 @@ export async function createPaymentRequest(
             merchantNumber: config.merchantNumber,
             payerAlias: params.payerAlias,
             amount: params.amount,
+            requestBody,
         });
 
         const req = https.request(url, options, (res) => {
@@ -123,6 +124,12 @@ export async function createPaymentRequest(
             });
 
             res.on('end', () => {
+                console.log('Swish API response:', {
+                    statusCode: res.statusCode,
+                    headers: res.headers,
+                    body: data,
+                });
+
                 if (res.statusCode === 201) {
                     const location = res.headers['location'];
                     if (!location) {
@@ -140,10 +147,18 @@ export async function createPaymentRequest(
                     // Parse error response
                     try {
                         const errorData = JSON.parse(data);
-                        const errorMsg = errorData[0]?.errorMessage || errorData[0]?.errorCode || 'Unknown error';
-                        const additionalInfo = errorData[0]?.additionalInformation || '';
-                        reject(new Error(`Swish API error (${res.statusCode}): ${errorMsg}${additionalInfo ? ' - ' + additionalInfo : ''}`));
+                        console.error('Swish API error details:', errorData);
+                        
+                        // Extract all error information
+                        const errors = Array.isArray(errorData) ? errorData : [errorData];
+                        const errorMessages = errors.map(e => {
+                            const parts = [e.errorCode, e.errorMessage, e.additionalInformation].filter(Boolean);
+                            return parts.join(' - ');
+                        }).join('; ');
+                        
+                        reject(new Error(`Swish API error (${res.statusCode}): ${errorMessages || 'Unknown error'}`));
                     } catch {
+                        console.error('Failed to parse Swish error response:', data);
                         reject(new Error(`Swish API error (${res.statusCode}): ${data || 'Unknown error'}`));
                     }
                 }
