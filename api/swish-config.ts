@@ -66,9 +66,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // Check if encryption key is available
             if (!process.env.PLATFORM_ENCRYPTION_KEY_BASE64) {
                 console.error('PLATFORM_ENCRYPTION_KEY_BASE64 is not set!');
-                return res.status(500).json({ 
-                    error: 'Server configuration error', 
-                    details: 'Encryption key not configured on server. Please contact support.' 
+                return res.status(500).json({
+                    error: 'Server configuration error',
+                    details: 'Encryption key not configured on server. Please contact support.'
                 });
             }
 
@@ -125,8 +125,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Return more detailed error for debugging
         const errorMessage = error instanceof Error ? `${error.message}\n${error.stack}` : 'Internal server error';
         console.error('Error details:', errorMessage);
-        return res.status(500).json({ 
-            error: 'Internal server error', 
+        return res.status(500).json({
+            error: 'Internal server error',
             details: error instanceof Error ? error.message : 'Unknown error',
             stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined
         });

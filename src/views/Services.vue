@@ -1343,7 +1343,10 @@ export default {
 
         if (!response.ok) {
           const error = await response.json()
-          throw new Error(error.error || 'Kunde inte skapa betalningsbegäran')
+          // Show detailed error message if available
+          const errorMsg = error.message || error.error || 'Kunde inte skapa betalningsbegäran'
+          console.error('Swish API error details:', error)
+          throw new Error(errorMsg)
         }
 
         const paymentRequest = await response.json()
@@ -1353,7 +1356,7 @@ export default {
         this.closeSwishModal()
         
         // Reload data to show updated information
-        await this.loadDashboardData()
+        await this.loadDashboard()
       } catch (error) {
         console.error('Failed to request Swish payment:', error)
         alert(`Fel vid betalningsbegäran: ${error.message}`)
