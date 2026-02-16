@@ -98,7 +98,8 @@ export async function createPaymentRequest(
 
     // Generate instruction UUID for the request
     const crypto = await import('node:crypto');
-    const instructionUUID = crypto.randomUUID().toUpperCase();
+    // Swish v2 requires 32-character UUID without hyphens
+    const instructionUUID = crypto.randomUUID().replace(/-/g, '').toUpperCase();
 
     const url = `${baseUrl}/api/v2/paymentrequests/${instructionUUID}`;
 
@@ -114,12 +115,12 @@ export async function createPaymentRequest(
         currency: params.currency || 'SEK',
         payeePaymentReference: params.payeePaymentReference,
         callbackUrl: params.callbackUrl,
+        message: params.message ? sanitizeSwishMessage(params.message) : '',
     };
 
-    // Only include message if it exists
-    const sanitizedMessage = sanitizeSwishMessage(params.message);
-    if (sanitizedMessage) {
-        requestBody.message = sanitizedMessage;
+    // Remove empty message if present
+    if (!requestBody.message) {
+        delete requestBody.message;
     }
 
     return new Promise((resolve, reject) => {
