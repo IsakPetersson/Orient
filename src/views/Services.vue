@@ -605,6 +605,20 @@
               ></textarea>
               <small class="char-count">{{ swishPayment.description.length }}/50 tecken</small>
             </div>
+            <div class="form-group">
+              <label for="swishAccount">Boka till konto (valfritt)</label>
+              <select 
+                id="swishAccount" 
+                v-model="swishPayment.bookAccountId"
+                class="form-select"
+              >
+                <option :value="null">-- Boka inte automatiskt --</option>
+                <option v-for="account in accounts" :key="account.id" :value="account.id">
+                  {{ account.name }}
+                </option>
+              </select>
+              <small class="setting-hint">Om vald kommer betalningen automatiskt bokas som en transaktion när den är genomförd.</small>
+            </div>
           </form>
         </div>
         <div class="modal-footer">
@@ -770,7 +784,8 @@ export default {
       swishPayment: {
         phone: '',
         amount: 0,
-        description: ''
+        description: '',
+        bookAccountId: null
       },
       recentTransactions: [],
       alerts: [],
@@ -1305,14 +1320,44 @@ export default {
       this.swishPayment = {
         phone: '',
         amount: 0,
-        description: ''
+        description: '',
+        bookAccountId: null
       }
     },
-    requestSwishPayment() {
-      console.log('Requesting Swish payment:', this.swishPayment)
-      // Here you would typically integrate with Swish API
-      
-      this.closeSwishModal()
+    async requestSwishPayment() {
+      try {
+        const response = await fetch('/api/swish-requests', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-org-id': this.organizationId
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            payerPhone: this.swishPayment.phone,
+            amount: this.swishPayment.amount.toFixed(2),
+            message: this.swishPayment.description,
+            bookAccountId: this.swishPayment.bookAccountId || null
+          })
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Kunde inte skapa betalningsbegäran')
+        }
+
+        const paymentRequest = await response.json()
+        
+        alert(`Swish-betalning begärd från ${this.swishPayment.phone} för ${this.swishPayment.amount} kr`)
+        
+        this.closeSwishModal()
+        
+        // Reload data to show updated information
+        await this.loadDashboardData()
+      } catch (error) {
+        console.error('Failed to request Swish payment:', error)
+        alert(`Fel vid betalningsbegäran: ${error.message}`)
+      }
     },
     goToLogin() {
       this.$router.push('/login')

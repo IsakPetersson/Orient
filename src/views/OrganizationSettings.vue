@@ -91,18 +91,80 @@
         <!-- Swish Settings -->
         <div class="settings-section">
           <h2>Swish Inställningar</h2>
+          
+          <!-- Configuration Status -->
+          <div v-if="swishConfigLoaded" class="config-status">
+            <div v-if="swishConfig.certificateConfigured" class="status-badge success">
+              ✓ Swish konfigurerat ({{ swishConfig.mode }})
+            </div>
+            <div v-else class="status-badge warning">
+              ⚠ Swish ej konfigurerat
+            </div>
+          </div>
+
           <div class="setting-item">
-            <label for="swishNumber">Swish-nummer (Handelsnummer)</label>
+            <label for="swishMerchantNumber">Swish-nummer (Handelsnummer)</label>
             <input 
               type="text" 
-              id="swishNumber" 
+              id="swishMerchantNumber" 
               v-model="swishMerchantNumber" 
               class="setting-input"
               placeholder="123 456 7890"
-              pattern="[0-9\s]*"
+              :disabled="savingSwish"
             />
             <p class="setting-hint">
-              Detta är ditt företags Swish-nummer för Swish Handel. Du måste ha ett avtal med Swish Commerce för att använda denna funktion.
+              Ditt företags Swish-nummer för Swish Handel.
+            </p>
+          </div>
+
+          <div class="setting-item">
+            <label for="swishMode">Miljö</label>
+            <select 
+              id="swishMode" 
+              v-model="swishMode" 
+              class="setting-input"
+              :disabled="savingSwish"
+            >
+              <option value="TEST">Test (MSS)</option>
+              <option value="PROD">Produktion</option>
+            </select>
+            <p class="setting-hint">
+              Välj TEST för att använda Swish testmiljö (MSS), eller PROD för riktiga betalningar.
+            </p>
+          </div>
+
+          <div class="setting-item">
+            <label for="swishCertificate">Swish .p12 Certifikat</label>
+            <input 
+              type="file" 
+              id="swishCertificate" 
+              ref="swishCertFile"
+              accept=".p12,.pfx"
+              @change="handleCertificateSelect"
+              class="file-input"
+              :disabled="savingSwish"
+            />
+            <p class="setting-hint">
+              Ladda upp det .p12-certifikat du har fått från din bank för Swish Commerce.
+            </p>
+            <p v-if="certificateFile" class="file-selected">
+              Vald fil: {{ certificateFile.name }}
+            </p>
+          </div>
+
+          <div class="setting-item">
+            <label for="swishPassphrase">Certifikatslösenord</label>
+            <input 
+              type="password" 
+              id="swishPassphrase" 
+              v-model="swishPassphrase" 
+              class="setting-input"
+              placeholder="Lösenord för .p12-certifikatet"
+              :disabled="savingSwish"
+              autocomplete="new-password"
+            />
+            <p class="setting-hint">
+              Lösenordet som skyddar ditt .p12-certifikat.
             </p>
           </div>
           
@@ -110,21 +172,21 @@
             <h3>Så här aktiverar du Swish-betalningar:</h3>
             <ol>
               <li>Se till att din organisation har ett <strong>Swish Commerce</strong>-avtal med din bank</li>
-              <li>Hämta ditt <strong>företags Swish-nummer</strong> (handelsnummer) från din bank</li>
-              <li>Ange Swish-numret ovan</li>
-              <li>Spara inställningarna</li>
+              <li>Hämta ditt <strong>Swish-nummer</strong> (handelsnummer) från din bank</li>
+              <li>Hämta ditt <strong>.p12-certifikat och lösenord</strong> från din bank</li>
+              <li>Fyll i informationen ovan och klicka på "Spara Swish-konfiguration"</li>
             </ol>
             <p class="note">
-              <strong>Obs:</strong> I denna version hanterar vi endast Swish-numret. Fullständig integration med Swish API (inklusive certifikat) kommer i framtida versioner.
+              <strong>Obs:</strong> Certifikatet och lösenordet lagras krypterat i databasen.
             </p>
           </div>
 
           <button 
             class="btn btn-primary save-btn" 
-            @click="saveSettings"
-            :disabled="saving"
+            @click="saveSwishConfig"
+            :disabled="savingSwish || !canSaveSwishConfig"
           >
-            {{ saving ? 'Sparar...' : 'Spara Inställningar' }}
+            {{ savingSwish ? 'Sparar...' : 'Spara Swish-konfiguration' }}
           </button>
         </div>
 
@@ -169,9 +231,15 @@ export default {
       showNoOrgModal: false,
       loading: true,
       saving: false,
+      savingSwish: false,
       organizationId: null,
       organizationName: '',
       swishMerchantNumber: '',
+      swishMode: 'TEST',
+      swishPassphrase: '',
+      certificateFile: null,
+      swishConfig: null,
+      swishConfigLoaded: false,
       userOrganizations: [],
       currentUserRole: '',
       inviteCode: '',
@@ -181,6 +249,12 @@ export default {
   computed: {
     hasPermission() {
       return this.currentUserRole === 'OWNER' || this.currentUserRole === 'ADMIN'
+    },
+    canSaveSwishConfig() {
+      return this.swishMerchantNumber.trim() && 
+             this.swishMode && 
+             this.certificateFile && 
+             this.swishPassphrase.trim()
     }
   },
   async mounted() {
@@ -237,6 +311,9 @@ export default {
         const inviteData = await getOrganizationInvite(this.organizationId)
         this.inviteCode = inviteData.code
         
+        // Load Swish configuration status
+        await this.loadSwishConfig()
+        
         this.loading = false
       } catch (error) {
         console.error('Failed to load settings:', error)
@@ -244,37 +321,116 @@ export default {
         alert('Kunde inte ladda inställningar')
       }
     },
-    async saveSettings() {
+    async loadSwishConfig() {
+      try {
+        const response = await fetch('/api/swish-config', {
+          method: 'GET',
+          headers: {
+            'x-org-id': this.organizationId
+          },
+          credentials: 'include'
+        })
+        
+        if (response.ok) {
+          this.swishConfig = await response.json()
+          this.swishConfigLoaded = true
+          
+          // Pre-fill merchant number and mode if configured
+          if (this.swishConfig.merchantNumber) {
+            this.swishMerchantNumber = this.swishConfig.merchantNumber
+          }
+          if (this.swishConfig.mode) {
+            this.swishMode = this.swishConfig.mode
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load Swish config:', error)
+      }
+    },
+    handleCertificateSelect(event) {
+      const file = event.target.files[0]
+      if (file) {
+        // Validate file extension
+        if (!file.name.endsWith('.p12') && !file.name.endsWith('.pfx')) {
+          alert('Vänligen välj en .p12 eller .pfx fil')
+          event.target.value = ''
+          return
+        }
+        
+        // Validate file size (max 50KB)
+        if (file.size > 50 * 1024) {
+          alert('Certifikatfilen är för stor (max 50KB)')
+          event.target.value = ''
+          return
+        }
+        
+        this.certificateFile = file
+      }
+    },
+    async saveSwishConfig() {
       if (!this.hasPermission) {
         alert('Du har inte behörighet att ändra inställningar')
         return
       }
 
+      if (!this.canSaveSwishConfig) {
+        alert('Vänligen fyll i alla obligatoriska fält')
+        return
+      }
+
       try {
-        this.saving = true
+        this.savingSwish = true
         
-        const response = await fetch('/api/orgs?action=updateSettings', {
-          method: 'PATCH',
+        // Read certificate file as base64
+        const reader = new FileReader()
+        const certificateBase64 = await new Promise((resolve, reject) => {
+          reader.onload = () => {
+            const arrayBuffer = reader.result
+            const bytes = new Uint8Array(arrayBuffer)
+            const binary = bytes.reduce((acc, byte) => acc + String.fromCharCode(byte), '')
+            resolve(btoa(binary))
+          }
+          reader.onerror = reject
+          reader.readAsArrayBuffer(this.certificateFile)
+        })
+        
+        const response = await fetch('/api/swish-config', {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'x-org-id': this.organizationId
           },
           credentials: 'include',
           body: JSON.stringify({
-            swishMerchantNumber: this.swishMerchantNumber.trim() || null
+            merchantNumber: this.swishMerchantNumber.trim(),
+            mode: this.swishMode,
+            certificateBase64,
+            passphrase: this.swishPassphrase
           })
         })
         
         if (!response.ok) {
-          throw new Error('Failed to save settings')
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to save Swish configuration')
         }
         
-        alert('Inställningar sparade!')
-        this.saving = false
+        alert('Swish-konfiguration sparad!')
+        
+        // Clear sensitive fields
+        this.swishPassphrase = ''
+        this.certificateFile = null
+        if (this.$refs.swishCertFile) {
+          this.$refs.swishCertFile.value = ''
+        }
+        
+        // Reload config status
+        await this.loadSwishConfig()
+        
+        this.savingSwish = false
       } catch (error) {
-        console.error('Failed to save settings:', error)
-        alert('Kunde inte spara inställningar')
-        this.saving = false
+        console.error('Failed to save Swish config:', error)
+        alert(`Kunde inte spara Swish-konfiguration: ${error.message}`)
+        this.savingSwish = false
       }
     },
     async onOrganizationChange() {
@@ -689,5 +845,60 @@ export default {
   .copy-btn {
     width: 100%;
   }
+}
+
+/* Swish Configuration Styles */
+.config-status {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--background);
+  border-radius: 6px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.status-badge.success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.status-badge.warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.file-input {
+  padding: 0.5rem;
+  border: 2px dashed var(--primary-light);
+  border-radius: 6px;
+  background: var(--background);
+  cursor: pointer;
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+.file-input:hover:not(:disabled) {
+  background: #f0f9ff;
+  border-color: var(--primary-medium);
+}
+
+.file-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.file-selected {
+  margin-top: 0.5rem;
+  color: var(--primary-dark);
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 </style>

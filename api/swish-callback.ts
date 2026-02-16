@@ -1,0 +1,107 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { prisma } from '../lib/prisma.js';
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+    // Only accept POST requests
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    try {
+        // Validate callback secret
+        const { secret, ref } = req.query;
+        const expectedSecret = process.env.SWISH_CALLBACK_SECRET;
+
+        if (!expectedSecret) {
+            console.error('SWISH_CALLBACK_SECRET not configured');
+            return res.status(500).json({ error: 'Server configuration error' });
+        }
+
+        if (!secret || secret !== expectedSecret) {
+            console.error('Invalid callback secret');
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        if (!ref || typeof ref !== 'string') {
+            return res.status(400).json({ error: 'Missing payment reference' });
+        }
+
+        // Parse callback payload
+        const payload = req.body;
+
+        if (!payload || typeof payload !== 'object') {
+            return res.status(400).json({ error: 'Invalid request body' });
+        }
+
+        const {
+            id,
+            payeePaymentReference,
+            paymentReference,
+            callbackUrl,
+            payerAlias,
+            payeeAlias,
+            amount,
+            currency,
+            message,
+            status,
+            dateCreated,
+            datePaid,
+            errorCode,
+            errorMessage,
+        } = payload;
+
+        // Find payment request
+        const paymentRequest = await prisma.swishPaymentRequest.findUnique({
+            where: { payeePaymentReference: ref },
+            include: {
+                bookAccount: true,
+            },
+        });
+
+        if (!paymentRequest) {
+            console.error(`Payment request not found: ${ref}`);
+            return res.status(404).json({ error: 'Payment request not found' });
+        }
+
+        // Check if callback already processed (idempotent handling)
+        if (paymentRequest.callbackReceivedAt) {
+            console.log(`Callback already processed for reference: ${ref}`);
+            return res.status(200).json({ message: 'Callback already processed' });
+        }
+
+        // Update payment request status
+        const updateData: any = {
+            status: status || 'UNKNOWN',
+            callbackReceivedAt: new Date(),
+            errorCode: errorCode || null,
+            errorMessage: errorMessage || null,
+        };
+
+        // If payment is PAID and bookAccountId is set, create transaction
+        if (status === 'PAID' && paymentRequest.bookAccountId && !paymentRequest.transactionId) {
+            const transaction = await prisma.transaction.create({
+                data: {
+                    accountId: paymentRequest.bookAccountId,
+                    amount: parseFloat(paymentRequest.amount),
+                    description: paymentRequest.message || `Swish payment from ${paymentRequest.payerAlias}`,
+                    category: 'Swish Payment',
+                },
+            });
+
+            updateData.transactionId = transaction.id;
+        }
+
+        // Update payment request
+        await prisma.swishPaymentRequest.update({
+            where: { id: paymentRequest.id },
+            data: updateData,
+        });
+
+        // Return success response quickly
+        return res.status(200).json({ message: 'Callback processed successfully' });
+    } catch (error) {
+        console.error('Error processing Swish callback:', error);
+        // Still return 200 to avoid Swish retrying on our internal errors
+        return res.status(200).json({ message: 'Error logged, callback acknowledged' });
+    }
+}
