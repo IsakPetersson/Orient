@@ -71,6 +71,23 @@ export async function loadSwishConfig(organizationId: number): Promise<SwishConf
 }
 
 /**
+ * Sanitize message for Swish API - replace Swedish characters
+ */
+function sanitizeSwishMessage(message: string | undefined): string | undefined {
+    if (!message) return undefined;
+    
+    // Replace Swedish characters with ASCII equivalents
+    return message
+        .replace(/å/g, 'a')
+        .replace(/ä/g, 'a')
+        .replace(/ö/g, 'o')
+        .replace(/Å/g, 'A')
+        .replace(/Ä/g, 'A')
+        .replace(/Ö/g, 'O')
+        .substring(0, 50); // Max 50 characters
+}
+
+/**
  * Create a Swish payment request using mTLS authentication
  */
 export async function createPaymentRequest(
@@ -78,11 +95,11 @@ export async function createPaymentRequest(
     params: CreatePaymentRequestParams
 ): Promise<SwishPaymentResponse> {
     const baseUrl = config.mode === 'TEST' ? SWISH_BASE_URL_TEST : SWISH_BASE_URL_PROD;
-    
+
     // Generate instruction UUID for the request
     const crypto = await import('node:crypto');
     const instructionUUID = crypto.randomUUID().toUpperCase();
-    
+
     const url = `${baseUrl}/api/v2/paymentrequests/${instructionUUID}`;
 
     const requestBody = {
@@ -90,7 +107,7 @@ export async function createPaymentRequest(
         payerAlias: params.payerAlias,
         amount: params.amount,
         currency: params.currency || 'SEK',
-        message: params.message,
+        message: sanitizeSwishMessage(params.message),
         payeePaymentReference: params.payeePaymentReference,
         callbackUrl: params.callbackUrl,
     };
@@ -148,14 +165,14 @@ export async function createPaymentRequest(
                     try {
                         const errorData = JSON.parse(data);
                         console.error('Swish API error details:', errorData);
-                        
+
                         // Extract all error information
                         const errors = Array.isArray(errorData) ? errorData : [errorData];
                         const errorMessages = errors.map(e => {
                             const parts = [e.errorCode, e.errorMessage, e.additionalInformation].filter(Boolean);
                             return parts.join(' - ');
                         }).join('; ');
-                        
+
                         reject(new Error(`Swish API error (${res.statusCode}): ${errorMessages || 'Unknown error'}`));
                     } catch {
                         console.error('Failed to parse Swish error response:', data);
