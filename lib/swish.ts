@@ -78,7 +78,12 @@ export async function createPaymentRequest(
     params: CreatePaymentRequestParams
 ): Promise<SwishPaymentResponse> {
     const baseUrl = config.mode === 'TEST' ? SWISH_BASE_URL_TEST : SWISH_BASE_URL_PROD;
-    const url = `${baseUrl}/api/v2/paymentrequests`;
+    
+    // Generate instruction UUID for the request
+    const crypto = await import('node:crypto');
+    const instructionUUID = crypto.randomUUID().toUpperCase();
+    
+    const url = `${baseUrl}/api/v2/paymentrequests/${instructionUUID}`;
 
     const requestBody = {
         payeeAlias: params.payeeAlias,
@@ -102,6 +107,14 @@ export async function createPaymentRequest(
             rejectUnauthorized: config.mode === 'PROD',
         };
 
+        console.log('Creating Swish payment request:', {
+            url,
+            mode: config.mode,
+            merchantNumber: config.merchantNumber,
+            payerAlias: params.payerAlias,
+            amount: params.amount,
+        });
+
         const req = https.request(url, options, (res) => {
             let data = '';
 
@@ -116,8 +129,8 @@ export async function createPaymentRequest(
                         return reject(new Error('Missing Location header in Swish response'));
                     }
 
-                    // Extract payment ID from Location header
-                    const id = location.split('/').pop() || '';
+                    // Extract payment ID from Location header (use instructionUUID)
+                    const id = location.split('/').pop() || instructionUUID;
 
                     resolve({
                         location: Array.isArray(location) ? location[0] : location,
@@ -127,10 +140,11 @@ export async function createPaymentRequest(
                     // Parse error response
                     try {
                         const errorData = JSON.parse(data);
-                        const errorMsg = errorData[0]?.errorMessage || 'Unknown error';
-                        reject(new Error(`Swish API error (${res.statusCode}): ${errorMsg}`));
+                        const errorMsg = errorData[0]?.errorMessage || errorData[0]?.errorCode || 'Unknown error';
+                        const additionalInfo = errorData[0]?.additionalInformation || '';
+                        reject(new Error(`Swish API error (${res.statusCode}): ${errorMsg}${additionalInfo ? ' - ' + additionalInfo : ''}`));
                     } catch {
-                        reject(new Error(`Swish API error (${res.statusCode}): ${data}`));
+                        reject(new Error(`Swish API error (${res.statusCode}): ${data || 'Unknown error'}`));
                     }
                 }
             });
