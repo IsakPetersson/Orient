@@ -8,19 +8,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        // Validate callback secret
-        const { secret, ref } = req.query;
-        const expectedSecret = process.env.SWISH_CALLBACK_SECRET;
-
-        if (!expectedSecret) {
-            console.error('SWISH_CALLBACK_SECRET not configured');
-            return res.status(500).json({ error: 'Server configuration error' });
-        }
-
-        if (!secret || secret !== expectedSecret) {
-            console.error('Invalid callback secret');
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
+        // Get payment reference from query
+        const { ref } = req.query;
 
         if (!ref || typeof ref !== 'string') {
             return res.status(400).json({ error: 'Missing payment reference' });
@@ -50,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             errorMessage,
         } = payload;
 
-        // Find payment request
+        // Find payment request - validates this is a legitimate callback
         const paymentRequest = await prisma.swishPaymentRequest.findUnique({
             where: { payeePaymentReference: ref },
             include: {

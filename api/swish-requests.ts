@@ -112,19 +112,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // Normalize phone number
             const normalizedPhone = normalizePhoneNumber(payerPhone);
 
-            // Generate unique payment reference
+            // Generate unique payment reference (max 35 chars, alphanumeric)
             const payeePaymentReference = crypto.randomUUID().replace(/-/g, '').toUpperCase().slice(0, 35);
 
-            // Build callback URL
+            // Build callback URL - use production URL and shorter format
             const callbackSecret = process.env.SWISH_CALLBACK_SECRET;
             if (!callbackSecret) {
                 throw new Error('SWISH_CALLBACK_SECRET not configured');
             }
 
-            const baseUrl = process.env.VERCEL_URL
-                ? `https://${process.env.VERCEL_URL}`
-                : 'http://localhost:3000';
-            const callbackUrl = `${baseUrl}/api/swish-callback?secret=${encodeURIComponent(callbackSecret)}&ref=${payeePaymentReference}`;
+            // Use production domain if available, otherwise Vercel URL
+            const baseUrl = process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL
+                ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+                : process.env.VERCEL_URL
+                    ? `https://${process.env.VERCEL_URL}`
+                    : 'http://localhost:3000';
+            
+            // Shorten callback URL - use payment reference as token
+            const callbackUrl = `${baseUrl}/api/swish-callback?ref=${payeePaymentReference}`;
 
             // Create payment request in Swish
             let swishResponse;
