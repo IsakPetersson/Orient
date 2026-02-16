@@ -219,7 +219,7 @@
             <label>Inbjödningskod:</label>
             <div class="invite-code-display">
               <code>{{ inviteCodeToShare }}</code>
-              <button type="button" class="btn btn-primary btn-sm" @click="copyInviteCode">Kopiera</button>
+              <button type="button" class="btn btn-primary btn-sm btn-kopiera" @click="copyInviteCode">Kopiera</button>
             </div>
             <p v-if="codeCopied" class="copy-success-message">✓ Kopierad!</p>
             <p class="invite-code-hint">Dela denna kod med andra för att bjuda in dem till organisationen.</p>
@@ -635,6 +635,10 @@ export default {
   color: #d32f2f;
   margin: 0;
   font-size: 0.9rem;
+}
+
+.btn-kopiera {
+  padding-left: 0.75rem;
 }
 
 .btn-link {
