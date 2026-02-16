@@ -653,6 +653,17 @@ export default {
   text-decoration: underline;
 }
 
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.modal-actions button {
+  min-width: 120px;
+}
+
 @media (max-width: 768px) {
   .modal-content {
     padding: 1.5rem;
