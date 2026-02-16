@@ -970,7 +970,7 @@ export default {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
-  margin-top: 1.5rem;
+  margin-top: 3rem;
 }
 
 .modal-actions button {
