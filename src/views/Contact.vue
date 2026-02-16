@@ -128,7 +128,6 @@ export default {
   methods: {
     handleSubmit() {
       console.log('Form submitted:', this.form)
-      alert('Tack för ditt meddelande! Vi återkommer till dig snart.')
       this.form = {
         name: '',
         email: '',

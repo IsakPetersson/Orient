@@ -26,6 +26,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return await handleInvite(userId, req, res)
             case 'delete':
                 return await handleDelete(userId, req, res)
+            case 'updateRole':
+                return await handleUpdateRole(userId, req, res)
+            case 'removeMember':
+                return await handleRemoveMember(userId, req, res)
+            case 'getDetails':
+                return await handleGetDetails(userId, req, res)
+            case 'updateSettings':
+                return await handleUpdateSettings(userId, req, res)
             default:
                 return res.status(404).json({ error: 'Not found' })
         }
@@ -252,5 +260,233 @@ async function handleDelete(userId: number, req: VercelRequest, res: VercelRespo
     return res.status(200).json({
         success: true,
         message: `Organization "${membership.organization.name}" deleted successfully`
+    })
+}
+
+async function handleUpdateRole(userId: number, req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'PATCH') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const orgId = req.headers['x-org-id']
+    const organizationId = orgId ? Number(orgId) : null
+
+    if (!organizationId) {
+        return res.status(400).json({ error: 'Organization ID required in x-org-id header' })
+    }
+
+    const { membershipId, role } = req.body ?? {}
+
+    if (!membershipId || !role) {
+        return res.status(400).json({ error: 'Membership ID and role are required' })
+    }
+
+    // Verify the requester is an owner
+    const requesterMembership = await prisma.organizationMembership.findFirst({
+        where: {
+            userId,
+            organizationId,
+            role: 'OWNER'
+        }
+    })
+
+    if (!requesterMembership) {
+        return res.status(403).json({ error: 'Only organization owners can update roles' })
+    }
+
+    // Verify the target membership exists and is in the same org
+    const targetMembership = await prisma.organizationMembership.findFirst({
+        where: {
+            id: Number(membershipId),
+            organizationId
+        }
+    })
+
+    if (!targetMembership) {
+        return res.status(404).json({ error: 'Membership not found' })
+    }
+
+    // Prevent changing owner's role
+    if (targetMembership.role === 'OWNER') {
+        return res.status(403).json({ error: 'Cannot change owner role' })
+    }
+
+    // Validate the new role
+    const validRoles = ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER']
+    if (!validRoles.includes(role)) {
+        return res.status(400).json({ error: 'Invalid role' })
+    }
+
+    // Update the role
+    const updated = await prisma.organizationMembership.update({
+        where: { id: Number(membershipId) },
+        data: { role },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    createdAt: true
+                }
+            }
+        }
+    })
+
+    return res.status(200).json({
+        success: true,
+        membership: {
+            id: updated.id,
+            role: updated.role,
+            joinedAt: updated.createdAt,
+            user: updated.user
+        }
+    })
+}
+
+async function handleRemoveMember(userId: number, req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'DELETE') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const orgId = req.headers['x-org-id']
+    const organizationId = orgId ? Number(orgId) : null
+
+    if (!organizationId) {
+        return res.status(400).json({ error: 'Organization ID required in x-org-id header' })
+    }
+
+    const { membershipId } = req.body ?? {}
+
+    if (!membershipId) {
+        return res.status(400).json({ error: 'Membership ID is required' })
+    }
+
+    // Verify the requester is an owner
+    const requesterMembership = await prisma.organizationMembership.findFirst({
+        where: {
+            userId,
+            organizationId,
+            role: 'OWNER'
+        }
+    })
+
+    if (!requesterMembership) {
+        return res.status(403).json({ error: 'Only organization owners can remove members' })
+    }
+
+    // Verify the target membership exists and is in the same org
+    const targetMembership = await prisma.organizationMembership.findFirst({
+        where: {
+            id: Number(membershipId),
+            organizationId
+        }
+    })
+
+    if (!targetMembership) {
+        return res.status(404).json({ error: 'Membership not found' })
+    }
+
+    // Prevent removing owner
+    if (targetMembership.role === 'OWNER') {
+        return res.status(403).json({ error: 'Cannot remove organization owner' })
+    }
+
+    // Remove the membership
+    await prisma.organizationMembership.delete({
+        where: { id: Number(membershipId) }
+    })
+
+    return res.status(200).json({
+        success: true,
+        message: 'Member removed successfully'
+    })
+}
+
+async function handleGetDetails(userId: number, req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const { organizationId } = req.body ?? {}
+    if (!organizationId) {
+        return res.status(400).json({ error: 'Organization ID is required' })
+    }
+
+    // Verify the user is a member
+    const membership = await prisma.organizationMembership.findFirst({
+        where: {
+            userId,
+            organizationId: Number(organizationId)
+        }
+    })
+
+    if (!membership) {
+        return res.status(403).json({ error: 'Not a member of this organization' })
+    }
+
+    const organization = await prisma.organization.findUnique({
+        where: { id: Number(organizationId) },
+        select: {
+            id: true,
+            name: true,
+            swishMerchantNumber: true,
+            createdAt: true
+        }
+    })
+
+    if (!organization) {
+        return res.status(404).json({ error: 'Organization not found' })
+    }
+
+    return res.status(200).json({ organization })
+}
+
+async function handleUpdateSettings(userId: number, req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'PATCH') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const orgId = req.headers['x-org-id']
+    const organizationId = orgId ? Number(orgId) : null
+
+    if (!organizationId) {
+        return res.status(400).json({ error: 'Organization ID required in x-org-id header' })
+    }
+
+    // Verify the requester is an owner or admin
+    const membership = await prisma.organizationMembership.findFirst({
+        where: {
+            userId,
+            organizationId,
+            role: {
+                in: ['OWNER', 'ADMIN']
+            }
+        }
+    })
+
+    if (!membership) {
+        return res.status(403).json({ error: 'Only organization owners and admins can update settings' })
+    }
+
+    const { swishMerchantNumber } = req.body ?? {}
+
+    // Update the organization
+    const updated = await prisma.organization.update({
+        where: { id: organizationId },
+        data: {
+            swishMerchantNumber: swishMerchantNumber || null
+        },
+        select: {
+            id: true,
+            name: true,
+            swishMerchantNumber: true,
+            createdAt: true
+        }
+    })
+
+    return res.status(200).json({
+        success: true,
+        organization: updated
     })
 }

@@ -49,10 +49,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             orderBy: { createdAt: 'desc' }
         })
 
-        // Get members count
-        const membersCount = await prisma.organizationMembership.count({
-            where: { organizationId }
+        // Get club members count and payment status
+        const allMembers = await prisma.member.findMany({
+            where: { organizationId },
+            select: { paid: true }
         })
+
+        const membersCount = allMembers.length
+        const paidMembersCount = allMembers.filter(m => m.paid).length
+        const unpaidMembersCount = allMembers.filter(m => !m.paid).length
 
         // Calculate financial summary
         const now = new Date()
@@ -135,9 +140,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             expenseBreakdown,
             members: {
                 total: membersCount,
-                // These would need additional fields in the schema to track
-                paid: 0,
-                unpaid: 0
+                paid: paidMembersCount,
+                unpaid: unpaidMembersCount
             }
         })
     } catch (error) {

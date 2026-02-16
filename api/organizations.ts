@@ -7,7 +7,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         if (req.method === 'GET') {
             const organizations = await prisma.organization.findMany({
-                include: { users: true, accounts: true },
+                include: { memberships: true, accounts: true },
             })
             return res.status(200).json(organizations)
         }

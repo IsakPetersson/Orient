@@ -93,7 +93,7 @@
                 >
                   <div class="org-info">
                     <span class="org-name">{{ org.name }}</span>
-                    <span class="org-role">{{ org.role }}</span>
+                    <span class="org-role">{{ translateRole(org.role) }}</span>
                   </div>
                   <div v-if="selectedOrganization?.id === org.id && org.role === 'OWNER'" class="org-controls">
                     <button class="btn btn-sm btn-secondary" @click.stop="copyOrganizationInvite">
@@ -291,6 +291,15 @@ export default {
     }
   },
   methods: {
+    translateRole(role) {
+      const translations = {
+        'OWNER': 'Ägare',
+        'ADMIN': 'Administratör',
+        'MEMBER': 'Medlem',
+        'VIEWER': 'Granskare'
+      }
+      return translations[role] || role
+    },
     async checkAuth() {
       const user = await getCurrentUser()
       this.user = user

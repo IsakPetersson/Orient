@@ -6,7 +6,7 @@
       <p>Laddar dashboard...</p>
     </div>
     
-    <section v-else class="dashboard-compact">
+    <section v-else-if="!showNoOrgModal && !showAuthModal" class="dashboard-compact">
       <div class="container-full">
         <!-- Header -->
         <div class="header-bar">
@@ -34,6 +34,10 @@
             <button class="quick-action-card header-btn" @click="handleViewMembers">
               <img src="../assets/images/members-icon.png" alt="Members" class="action-icon-img" />
               <span class="action-text">Medlemmar</span>
+            </button>
+            <button class="quick-action-card header-btn" @click="handleViewSettings" v-if="currentUserRole === 'OWNER' || currentUserRole === 'ADMIN'">
+              <span class="action-icon">⚙</span>
+              <span class="action-text">Inställningar</span>
             </button>
           </div>
         </div>
@@ -205,24 +209,66 @@
           <button class="close-btn" @click="closeMembersModal">×</button>
         </div>
         <div class="modal-body">
-          <div v-if="members.length === 0" class="no-members">
-            <p>Inga medlemmar hittades.</p>
+          <!-- Team Members Section -->
+          <div class="members-section">
+            <h3 class="section-title">Teammedlemmar ({{ teamMembers.length }})</h3>
+            <div v-if="teamMembers.length === 0" class="no-members">
+              <p>Inga teammedlemmar hittades.</p>
+            </div>
+            <div v-else class="members-list">
+              <div v-for="member in teamMembers" :key="'team-' + member.id" class="member-item">
+                <div class="member-avatar">
+                  <span class="avatar-initial">{{ member.user.name.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div class="member-info">
+                  <div class="member-name">{{ member.user.name }}</div>
+                  <div class="member-email">{{ member.user.email }}</div>
+                </div>
+                <div class="member-role-badge" :class="member.role.toLowerCase()">
+                  {{ translateRole(member.role) }}
+                </div>
+                <div class="member-joined">
+                  Gick med {{ formatDate(member.joinedAt) }}
+                </div>
+                <div v-if="currentUserRole === 'OWNER' && member.role !== 'OWNER'" class="member-actions">
+                  <button class="action-btn promote-btn" @click="promoteMember(member)" :title="member.role === 'ADMIN' ? 'Degradera' : 'Befördra'">
+                    {{ member.role === 'ADMIN' ? '▼' : '▲' }}
+                  </button>
+                  <button class="action-btn remove-btn" @click="removeTeamMember(member)" title="Ta bort">
+                    ×
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div v-else class="members-list">
-            <div v-for="member in members" :key="member.id" class="member-item">
-              <div class="member-avatar">
-                <span class="avatar-initial">{{ member.name.charAt(0).toUpperCase() }}</span>
-              </div>
-              <div class="member-info">
-                <div class="member-name">{{ member.name }}</div>
-                <div class="member-email">{{ member.email }}</div>
-                <div class="member-meta">{{ member.type }} • {{ member.fee }} kr/år</div>
-              </div>
-              <div class="member-status-badge" :class="{ 'paid': member.paid, 'unpaid': !member.paid }">
-                {{ member.paid ? 'Betald' : 'Obetald' }}
-              </div>
-              <div class="member-joined">
-                Medlem sedan {{ formatDate(member.createdAt) }}
+
+          <!-- Club Members Section -->
+          <div class="members-section">
+            <h3 class="section-title">Klubbmedlemmar ({{ clubMembers.length }})</h3>
+            <div v-if="clubMembers.length === 0" class="no-members">
+              <p>Inga klubbmedlemmar hittades.</p>
+            </div>
+            <div v-else class="members-list">
+              <div v-for="member in clubMembers" :key="'club-' + member.id" class="member-item" @click="viewClubMemberDetails(member)" style="cursor: pointer;">
+                <div class="member-avatar">
+                  <span class="avatar-initial">{{ member.name.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div class="member-info">
+                  <div class="member-name">{{ member.name }}</div>
+                  <div class="member-email">{{ member.email }}</div>
+                  <div class="member-meta">{{ translateMemberType(member.type) }} • {{ member.fee }} kr/år</div>
+                </div>
+                <div class="member-status-badge" :class="{ 'paid': member.paid, 'unpaid': !member.paid }">
+                  {{ member.paid ? 'Betald' : 'Obetald' }}
+                </div>
+                <div class="member-joined">
+                  Medlem sedan {{ formatDate(member.createdAt) }}
+                </div>
+                <div v-if="currentUserRole === 'OWNER'" class="member-actions" @click.stop>
+                  <button class="action-btn remove-btn" @click="removeClubMember(member)" title="Ta bort">
+                    ×
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -537,12 +583,24 @@
             </div>
             <div class="form-group">
               <label for="swishDescription">Beskrivning *</label>
+              <div class="preset-buttons">
+                <button 
+                  type="button"
+                  v-for="preset in descriptionPresets" 
+                  :key="preset" 
+                  class="preset-btn"
+                  @click="setDescriptionPreset(preset)"
+                  :class="{ active: swishPayment.description === preset }"
+                >
+                  {{ preset }}
+                </button>
+              </div>
               <textarea 
                 id="swishDescription" 
                 v-model="swishPayment.description"
                 required
                 rows="3"
-                placeholder="T.ex. Medlemsavgift 2025, Träningsavgift"
+                placeholder="Välj en förinställning eller skriv egen text"
                 maxlength="50"
               ></textarea>
               <small class="char-count">{{ swishPayment.description.length }}/50 tecken</small>
@@ -571,6 +629,87 @@
         </div>
       </div>
     </div>
+
+    <!-- No Organization Modal -->
+    <div v-if="showNoOrgModal" class="modal-overlay auth-modal-overlay">
+      <div class="modal-content auth-modal-content">
+        <div class="auth-modal-body">
+          <div class="auth-icon">
+            <img src="../assets/images/members-icon.png" alt="Organization" class="auth-icon-img" />
+          </div>
+          <h2>Ingen Organisation</h2>
+          <p>Du är inte med i någon organisation. Gå till Organisationer för att gå med eller skapa en.</p>
+          <button class="btn btn-primary btn-full" @click="$router.push('/')">
+            Gå till Startsidan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Club Member Detail Modal -->
+    <div v-if="showClubMemberDetailModal && selectedClubMember" class="modal-overlay" @click="closeClubMemberDetailModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>Medlemsdetaljer</h2>
+          <button class="close-btn" @click="closeClubMemberDetailModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="member-detail-section">
+            <div class="member-detail-avatar">
+              <span class="avatar-initial-large">{{ selectedClubMember.name.charAt(0).toUpperCase() }}</span>
+            </div>
+            <h3 class="member-detail-name">{{ selectedClubMember.name }}</h3>
+          </div>
+
+          <div class="member-detail-info">
+            <div class="detail-row">
+              <span class="detail-label">E-post:</span>
+              <span class="detail-value">{{ selectedClubMember.email }}</span>
+            </div>
+            <div v-if="selectedClubMember.phone" class="detail-row">
+              <span class="detail-label">Telefon:</span>
+              <span class="detail-value">{{ selectedClubMember.phone }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Medlemstyp:</span>
+              <span class="detail-value">{{ translateMemberType(selectedClubMember.type) }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Årsavgift:</span>
+              <span class="detail-value">{{ selectedClubMember.fee }} kr</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Medlem sedan:</span>
+              <span class="detail-value">{{ formatDate(selectedClubMember.createdAt) }}</span>
+            </div>
+          </div>
+
+          <div class="payment-status-section">
+            <h4>Betalningsstatus</h4>
+            <div class="payment-toggle">
+              <label class="toggle-label">
+                <input 
+                  type="checkbox" 
+                  v-model="selectedClubMember.paid" 
+                  @change="togglePaymentStatus"
+                  :disabled="currentUserRole !== 'OWNER' && currentUserRole !== 'ADMIN'"
+                />
+                <span class="toggle-slider"></span>
+                <span class="toggle-text">
+                  {{ selectedClubMember.paid ? 'Betald' : 'Obetald' }}
+                </span>
+              </label>
+            </div>
+            <p class="payment-note" v-if="currentUserRole !== 'OWNER' && currentUserRole !== 'ADMIN'">
+              Endast ägare och administratörer kan ändra betalningsstatus.
+            </p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" @click="closeClubMemberDetailModal">Stäng</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template><script>
 import { getCurrentUser } from '../lib/auth'
@@ -582,13 +721,17 @@ export default {
   data() {
     return {
       showAuthModal: false,
+      showNoOrgModal: false,
       loading: true,
       organizationId: null,
       organizationName: '',
       userOrganizations: [],
       currentUserRole: '',
       showMembersModal: false,
-      members: [],
+      teamMembers: [],
+      clubMembers: [],
+      showClubMemberDetailModal: false,
+      selectedClubMember: null,
       cashAndBank: 0,
       monthlyIncome: 0,
       monthlyExpenses: 0,
@@ -633,7 +776,15 @@ export default {
       alerts: [],
       incomeBreakdown: [],
       expenseBreakdown: [],
-      accounts: []
+      accounts: [],
+      descriptionPresets: [
+        'Medlemsavgift',
+        'Tävlingsavgift',
+        'Träningsavgift',
+        'Lokalhyra',
+        'Utrustning',
+        'Sponsring'
+      ]
     }
   },
   async mounted() {
@@ -658,7 +809,8 @@ export default {
         // Get user's organizations
         const memberships = await getUserOrganizations()
         if (memberships.length === 0) {
-          alert('Du är inte med i någon organisation. Gå till Organisationer för att gå med eller skapa en.')
+          this.showNoOrgModal = true
+          this.loading = false
           return
         }
         
@@ -741,22 +893,184 @@ export default {
       console.log('View stored files')
       alert('Här hamnar alla dina uppladdade kvitton och dokument.')
     },
-    async handleViewMembers() {
-      if (this.currentUserRole !== 'OWNER') {
-        alert('Endast organisationens ägare kan se medlemslistan.')
-        return
-      }
-      
+    async handleViewMembers() {      
       try {
-        this.members = await getOrganizationMembers(this.organizationId)
+        const response = await getOrganizationMembers(this.organizationId)
+        this.teamMembers = response.teamMembers
+        this.clubMembers = response.clubMembers
         this.showMembersModal = true
       } catch (error) {
         console.error('Failed to load members:', error)
         alert('Kunde inte ladda medlemmar')
       }
     },
+    handleViewSettings() {
+      this.$router.push('/settings')
+    },
     closeMembersModal() {
       this.showMembersModal = false
+    },
+    async promoteMember(member) {
+      // Toggle between MEMBER, VIEWER, and ADMIN roles
+      let newRole
+      if (member.role === 'VIEWER') {
+        newRole = 'MEMBER'
+      } else if (member.role === 'MEMBER') {
+        newRole = 'ADMIN'
+      } else if (member.role === 'ADMIN') {
+        newRole = 'MEMBER'
+      }
+
+      if (!confirm(`Är du säker på att du vill ändra rollen för ${member.user.name} från ${this.translateRole(member.role)} till ${this.translateRole(newRole)}?`)) {
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/orgs?action=updateRole`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-org-id': this.organizationId
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            membershipId: member.id,
+            role: newRole
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to update role')
+        }
+
+        // Reload members
+        await this.handleViewMembers()
+      } catch (error) {
+        console.error('Failed to update role:', error)
+        alert('Kunde inte uppdatera rollen')
+      }
+    },
+    async removeTeamMember(member) {
+      if (!confirm(`Är du säker på att du vill ta bort ${member.user.name} från organisationen? Detta kan inte ångras.`)) {
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/orgs?action=removeMember`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-org-id': this.organizationId
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            membershipId: member.id
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to remove team member')
+        }
+
+        // Reload members
+        await this.handleViewMembers()
+      } catch (error) {
+        console.error('Failed to remove team member:', error)
+        alert('Kunde inte ta bort teammedlemmen')
+      }
+    },
+    async removeClubMember(member) {
+      if (!confirm(`Är du säker på att du vill ta bort ${member.name} från medlemslistan? Detta kan inte ångras.`)) {
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/members?id=${member.id}`, {
+          method: 'DELETE',
+          headers: {
+            'x-org-id': this.organizationId
+          },
+          credentials: 'include'
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to remove club member')
+        }
+
+        // Reload members
+        await this.handleViewMembers()
+      } catch (error) {
+        console.error('Failed to remove club member:', error)
+        alert('Kunde inte ta bort klubbmedlemmen')
+      }
+    },
+    viewClubMemberDetails(member) {
+      this.selectedClubMember = { ...member }
+      this.showClubMemberDetailModal = true
+    },
+    closeClubMemberDetailModal() {
+      this.showClubMemberDetailModal = false
+      this.selectedClubMember = null
+    },
+    async togglePaymentStatus() {
+      if (this.currentUserRole !== 'OWNER' && this.currentUserRole !== 'ADMIN') {
+        alert('Endast ägare och administratörer kan ändra betalningsstatus')
+        this.selectedClubMember.paid = !this.selectedClubMember.paid
+        return
+      }
+
+      const wasPaid = !this.selectedClubMember.paid // Previous state before toggle
+      const nowPaid = this.selectedClubMember.paid // New state after toggle
+
+      try {
+        const response = await fetch(`/api/members?id=${this.selectedClubMember.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-org-id': this.organizationId
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            paid: this.selectedClubMember.paid
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to update payment status')
+        }
+
+        // If changed from unpaid to paid, create an income transaction
+        if (!wasPaid && nowPaid && this.accounts.length > 0) {
+          const accountId = this.accounts[0].id
+          await createTransaction(
+            this.organizationId,
+            accountId,
+            this.selectedClubMember.fee,
+            `Medlemsavgift - ${this.selectedClubMember.name}`,
+            'Medlemsavgifter'
+          )
+        }
+
+        // Update the member in the clubMembers list
+        const memberIndex = this.clubMembers.findIndex(m => m.id === this.selectedClubMember.id)
+        if (memberIndex !== -1) {
+          this.clubMembers[memberIndex].paid = this.selectedClubMember.paid
+        }
+
+        // Reload dashboard to update member counts and financial data
+        const data = await getDashboardData(this.organizationId)
+        this.paidMembers = data.members.paid
+        this.unpaidMembers = data.members.unpaid
+        this.cashAndBank = data.financialSummary.totalBalance
+        this.monthlyIncome = data.financialSummary.monthlyIncome
+        this.recentTransactions = data.recentTransactions
+        this.incomeBreakdown = data.incomeBreakdown
+      } catch (error) {
+        console.error('Failed to update payment status:', error)
+        alert('Kunde inte uppdatera betalningsstatus')
+        // Revert the change
+        this.selectedClubMember.paid = !this.selectedClubMember.paid
+      }
     },
     async onOrganizationChange() {
       await this.loadDashboard()
@@ -814,10 +1128,27 @@ export default {
         day: 'numeric' 
       })
     },
+    translateRole(role) {
+      const translations = {
+        'OWNER': 'Ägare',
+        'ADMIN': 'Administratör',
+        'MEMBER': 'Medlem',
+        'VIEWER': 'Granskare'
+      }
+      return translations[role] || role
+    },
+    translateMemberType(type) {
+      const translations = {
+        'regular': 'Ordinarie',
+        'youth': 'Ungdom',
+        'senior': 'Senior',
+        'family': 'Familj'
+      }
+      return translations[type] || type
+    },
     uploadFiles() {
       console.log('Uploading files:', this.selectedFiles)
       // Here you would typically send files to a backend server
-      alert(`${this.selectedFiles.length} fil(er) laddades upp!`)
       this.closeUploadModal()
     },
     closeAddMemberModal() {
@@ -847,20 +1178,35 @@ export default {
           paid: this.newMember.paid
         })
         
-        // Update member counts
-        this.totalMembers++
-        if (this.newMember.paid) {
-          this.paidMembers++
-        } else {
-          this.unpaidMembers++
+        // If member is added as paid, create an income transaction
+        if (this.newMember.paid && this.accounts.length > 0) {
+          const accountId = this.accounts[0].id
+          await createTransaction(
+            this.organizationId,
+            accountId,
+            this.newMember.fee,
+            `Medlemsavgift - ${this.newMember.name}`,
+            'Medlemsavgifter'
+          )
         }
+        
+        // Reload dashboard to get updated member counts and transactions
+        const data = await getDashboardData(this.organizationId)
+        this.totalMembers = data.members.total
+        this.paidMembers = data.members.paid
+        this.unpaidMembers = data.members.unpaid
+        this.cashAndBank = data.financialSummary.totalBalance
+        this.monthlyIncome = data.financialSummary.monthlyIncome
+        this.recentTransactions = data.recentTransactions
+        this.incomeBreakdown = data.incomeBreakdown
         
         // Reload members list if it's currently being viewed
         if (this.showMembersModal) {
-          this.members = await getOrganizationMembers(this.organizationId)
+          const response = await getOrganizationMembers(this.organizationId)
+          this.teamMembers = response.teamMembers
+          this.clubMembers = response.clubMembers
         }
         
-        alert(`Medlem ${this.newMember.name} har lagts till!`)
         this.closeAddMemberModal()
       } catch (error) {
         console.error('Failed to add member:', error)
@@ -900,7 +1246,6 @@ export default {
           this.newIncome.category
         )
         
-        alert(`Intäkt på ${this.newIncome.amount.toLocaleString()} kr har registrerats!`)
         this.closeIncomeModal()
         
         // Reload dashboard data
@@ -943,7 +1288,6 @@ export default {
           this.newExpense.category
         )
         
-        alert(`Utgift på ${this.newExpense.amount.toLocaleString()} kr har registrerats!`)
         this.closeExpenseModal()
         
         // Reload dashboard data
@@ -952,6 +1296,9 @@ export default {
         console.error('Failed to register expense:', error)
         alert('Kunde inte registrera utgift')
       }
+    },
+    setDescriptionPreset(preset) {
+      this.swishPayment.description = preset
     },
     closeSwishModal() {
       this.showSwishModal = false
@@ -965,7 +1312,6 @@ export default {
       console.log('Requesting Swish payment:', this.swishPayment)
       // Here you would typically integrate with Swish API
       
-      alert(`Swish-betalning på ${this.swishPayment.amount.toLocaleString()} kr har begärts från ${this.swishPayment.phone}`)
       this.closeSwishModal()
     },
     goToLogin() {
@@ -2185,6 +2531,37 @@ export default {
   color: #94a3b8;
 }
 
+.preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.preset-btn {
+  padding: 0.5rem 1rem;
+  background: var(--background);
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--primary-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-btn:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-light);
+  color: white;
+}
+
+.preset-btn.active {
+  background: var(--primary-light);
+  border-color: var(--primary-light);
+  color: white;
+}
+
 .char-count {
   display: block;
   text-align: right;
@@ -2235,6 +2612,23 @@ export default {
 /* Members Modal */
 .members-modal {
   max-width: 800px;
+}
+
+.members-section {
+  margin-bottom: 2rem;
+}
+
+.members-section:last-child {
+  margin-bottom: 0;
+}
+
+.members-section .section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-bottom: 1rem;
+  padding-left: 1rem;
+  border-left: 4px solid var(--primary);
 }
 
 .members-list {
@@ -2295,7 +2689,6 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-bottom: 0.25rem;
 }
 
 .member-meta {
@@ -2303,6 +2696,7 @@ export default {
   color: var(--text-dark);
   opacity: 0.6;
   text-transform: capitalize;
+  margin-top: 0.25rem;
 }
 
 .member-status-badge {
@@ -2325,6 +2719,36 @@ export default {
   color: #991b1b;
 }
 
+.member-role-badge {
+  padding: 0.375rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.member-role-badge.owner {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.member-role-badge.admin {
+  background: #ddd6fe;
+  color: #5b21b6;
+}
+
+.member-role-badge.member {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.member-role-badge.viewer {
+  background: #e5e7eb;
+  color: #374151;
+}
+
 .member-joined {
   font-size: 0.875rem;
   color: var(--text-dark);
@@ -2344,4 +2768,196 @@ export default {
   margin: 0;
   font-size: 1rem;
 }
+
+.member-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.promote-btn {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.promote-btn:hover {
+  background: #bfdbfe;
+  transform: translateY(-2px);
+}
+
+.remove-btn {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.remove-btn:hover {
+  background: #fecaca;
+  transform: scale(1.1);
+}
+
+/* Club Member Detail Modal */
+.member-detail-section {
+  text-align: center;
+  padding: 1.5rem 0;
+  border-bottom: 2px solid var(--background);
+  margin-bottom: 1.5rem;
+}
+
+.member-detail-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.avatar-initial-large {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-light);
+}
+
+.member-detail-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin: 0;
+}
+
+.member-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--background);
+  border-radius: 6px;
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--primary-dark);
+}
+
+.payment-status-section {
+  background: var(--background);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.payment-status-section h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.payment-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  position: relative;
+}
+
+.toggle-label input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  width: 60px;
+  height: 32px;
+  background-color: #fee2e2;
+  border-radius: 16px;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background-color: #991b1b;
+  border-radius: 50%;
+  top: 4px;
+  left: 4px;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.toggle-label input[type="checkbox"]:checked + .toggle-slider {
+  background-color: #d1fae5;
+}
+
+.toggle-label input[type="checkbox"]:checked + .toggle-slider::before {
+  transform: translateX(28px);
+  background-color: #065f46;
+}
+
+.toggle-label input[type="checkbox"]:disabled + .toggle-slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggle-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
+.payment-note {
+  font-size: 0.875rem;
+  color: var(--text-dark);
+  opacity: 0.7;
+  text-align: center;
+  margin: 0;
+  font-style: italic;
+}
 </style>
+

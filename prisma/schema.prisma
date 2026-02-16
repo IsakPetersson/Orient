@@ -25,9 +25,10 @@ model User {
 }
 
 model Organization {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
+  id                  Int      @id @default(autoincrement())
+  name                String
+  swishMerchantNumber String?
+  createdAt           DateTime @default(now())
 
   memberships OrganizationMembership[]
   accounts    Account[]

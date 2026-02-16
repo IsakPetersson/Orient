@@ -4,6 +4,7 @@ import About from '../views/About.vue'
 import Services from '../views/Services.vue'
 import Contact from '../views/Contact.vue'
 import Login from '../views/login.vue'
+import OrganizationSettings from '../views/OrganizationSettings.vue'
 
 const routes = [
     {
@@ -30,6 +31,11 @@ const routes = [
         path: '/login',
         name: 'Login',
         component: Login
+    },
+    {
+        path: '/settings',
+        name: 'OrganizationSettings',
+        component: OrganizationSettings
     }
 ]
 
