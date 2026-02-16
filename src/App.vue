@@ -923,7 +923,7 @@ export default {
 
 .organizations-actions {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   flex-wrap: wrap;
 }
 

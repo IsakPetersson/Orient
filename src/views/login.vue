@@ -620,7 +620,7 @@ export default {
 .org-setup-actions {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-top: 2rem;
 }
 
