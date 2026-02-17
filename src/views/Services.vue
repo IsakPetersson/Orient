@@ -584,7 +584,7 @@
                 class="form-select"
               >
                 <option value="">-- Välj medlem --</option>
-                <option v-for="member in clubMembers" :key="member.id" :value="member.phone">
+                <option v-for="member in clubMembers" :key="member.id" :value="member.id">
                   {{ member.name }} ({{ member.phone || 'Inget nummer' }})
                 </option>
               </select>
@@ -853,7 +853,8 @@ export default {
         phone: '',
         amount: 0,
         description: '',
-        bookAccountId: null
+        bookAccountId: null,
+        memberId: null
       },
       recentTransactions: [],
       alerts: [],
@@ -953,9 +954,15 @@ export default {
       }
     },
     onSwishMemberSelect(event) {
-      const phone = event.target.value
-      if (phone) {
-        this.swishPayment.phone = phone
+      const memberId = parseInt(event.target.value)
+      if (memberId) {
+        const member = this.clubMembers.find(m => m.id === memberId)
+        if (member && member.phone) {
+          this.swishPayment.phone = member.phone
+          this.swishPayment.memberId = member.id
+        }
+      } else {
+        this.swishPayment.memberId = null
       }
     },
     async handleAction(action) {
@@ -1067,7 +1074,8 @@ export default {
               payerPhone: member.phone,
               amount: String(member.fee), // Ensure string
               message: 'Medlemsavgift',
-              bookAccountId: defaultAccountId
+              bookAccountId: defaultAccountId,
+              memberId: member.id
             })
           })
 
@@ -1107,6 +1115,7 @@ export default {
       // Pre-fill Swish modal data
       this.swishPayment = {
         phone: member.phone,
+        memberId: member.id,
         amount: member.fee, // Use member's annual fee as default amount
         description: 'Medlemsavgift',
         bookAccountId: this.accounts.length > 0 ? this.accounts[0].id : null
@@ -1526,7 +1535,8 @@ export default {
             payerPhone: this.swishPayment.phone,
             amount: this.swishPayment.amount.toFixed(2),
             message: this.swishPayment.description,
-            bookAccountId: this.swishPayment.bookAccountId || null
+            bookAccountId: this.swishPayment.bookAccountId || null,
+            memberId: this.swishPayment.memberId || null
           })
         })
 

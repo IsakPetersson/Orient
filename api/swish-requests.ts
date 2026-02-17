@@ -72,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // POST: Create new payment request
         if (req.method === 'POST') {
-            const { payerPhone, amount, message, bookAccountId } = req.body;
+            const { payerPhone, amount, message, bookAccountId, memberId } = req.body;
 
             // Validate required fields
             if (!payerPhone || typeof payerPhone !== 'string') {
@@ -87,6 +87,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const amountNum = parseFloat(amount);
             if (isNaN(amountNum) || amountNum <= 0) {
                 return res.status(400).json({ error: 'Invalid amount' });
+            }
+
+            // Validate memberId if provided
+            if (memberId) {
+                const member = await prisma.member.findFirst({
+                    where: { id: memberId, organizationId }
+                });
+                if (!member) {
+                    return res.status(400).json({ error: 'Invalid memberId or member not in organization' });
+                }
             }
 
             // Validate bookAccountId if provided
@@ -156,6 +166,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 data: {
                     organizationId,
                     createdByUserId: userId,
+                    memberId: memberId || null,
                     payeeAlias: swishConfig.merchantNumber,
                     payerAlias: normalizedPhone,
                     amount: amount,

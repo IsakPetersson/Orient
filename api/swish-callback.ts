@@ -59,17 +59,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
 
         // If payment is PAID and bookAccountId is set, create transaction
-        if (status === 'PAID' && paymentRequest.bookAccountId && !paymentRequest.transactionId) {
-            const transaction = await prisma.transaction.create({
-                data: {
-                    accountId: paymentRequest.bookAccountId,
-                    amount: parseFloat(paymentRequest.amount),
-                    description: paymentRequest.message || `Swish payment from ${paymentRequest.payerAlias}`,
-                    category: 'Swish Payment',
-                },
-            });
+        if (status === 'PAID') {
+            if (paymentRequest.bookAccountId && !paymentRequest.transactionId) {
+                const transaction = await prisma.transaction.create({
+                    data: {
+                        accountId: paymentRequest.bookAccountId,
+                        amount: parseFloat(paymentRequest.amount),
+                        description: paymentRequest.message || `Swish payment from ${paymentRequest.payerAlias}`,
+                        category: 'Swish Payment',
+                    },
+                });
 
-            updateData.transactionId = transaction.id;
+                updateData.transactionId = transaction.id;
+            }
+
+            // Update member paid status if linked
+            if (paymentRequest.memberId) {
+                await prisma.member.update({
+                    where: { id: paymentRequest.memberId },
+                    data: { paid: true }
+                });
+            }
         }
 
         // Update payment request

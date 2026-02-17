@@ -13,7 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -29,7 +28,7 @@ model Organization {
   id                  Int      @id @default(autoincrement())
   name                String
   swishMerchantNumber String?
-  swishMode           String?  // "TEST" | "PROD"
+  swishMode           String? // "TEST" | "PROD"
   swishP12Ciphertext  Bytes?
   swishP12Iv          Bytes?
   swishP12Tag         Bytes?
@@ -38,19 +37,19 @@ model Organization {
   swishPassTag        Bytes?
   createdAt           DateTime @default(now())
 
-  memberships     OrganizationMembership[]
-  accounts        Account[]
-  invites         OrganizationInvite[]
-  members         Member[]
-  swishRequests   SwishPaymentRequest[]
+  memberships   OrganizationMembership[]
+  accounts      Account[]
+  invites       OrganizationInvite[]
+  members       Member[]
+  swishRequests SwishPaymentRequest[]
 }
 
 model OrganizationMembership {
-  id             Int          @id @default(autoincrement())
+  id             Int      @id @default(autoincrement())
   userId         Int
   organizationId Int
-  role           OrgRole      @default(MEMBER)
-  createdAt      DateTime     @default(now())
+  role           OrgRole  @default(MEMBER)
+  createdAt      DateTime @default(now())
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -80,14 +79,14 @@ model OrganizationInvite {
 }
 
 model Account {
-  id             Int          @id @default(autoincrement())
+  id             Int      @id @default(autoincrement())
   name           String
   organizationId Int
-  createdAt      DateTime     @default(now())
+  createdAt      DateTime @default(now())
 
-  organization          Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  transactions          Transaction[]
-  swishPaymentRequests  SwishPaymentRequest[]
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transactions         Transaction[]
+  swishPaymentRequests SwishPaymentRequest[]
 }
 
 model Transaction {
@@ -105,43 +104,45 @@ model Transaction {
 }
 
 model Member {
-  id             Int          @id @default(autoincrement())
+  id             Int      @id @default(autoincrement())
   name           String
   email          String
   phone          String?
-  type           String       // 'regular', 'youth', 'senior', 'family', etc.
+  type           String // 'regular', 'youth', 'senior', 'family', etc.
   fee            Float
-  paid           Boolean      @default(false)
+  paid           Boolean  @default(false)
   organizationId Int
-  createdAt      DateTime     @default(now())
+  createdAt      DateTime @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
+  swishPaymentRequests SwishPaymentRequest[]
   @@index([organizationId])
 }
 
 model SwishPaymentRequest {
-  id                     String    @id @default(cuid())
-  organizationId         Int
-  createdByUserId        Int
-  payeeAlias             String    // Merchant number
-  payerAlias             String    // Phone number
-  amount                 String    // Keep as string to match Swish API
-  currency               String    @default("SEK")
-  message                String?
-  payeePaymentReference  String    @unique
-  swishLocation          String?
-  status                 String    @default("CREATED") // CREATED,PENDING,PAID,DECLINED,ERROR,CANCELLED
-  errorCode              String?
-  errorMessage           String?
-  callbackReceivedAt     DateTime?
-  bookAccountId          Int?      // Optional account to book transaction to
-  transactionId          Int?      @unique // Reference to created transaction (if booked)
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
+  id                    String    @id @default(cuid())
+  organizationId        Int
+  createdByUserId       Int
+  memberId              Int?
+  payeeAlias            String // Merchant number
+  payerAlias            String // Phone number
+  amount                String // Keep as string to match Swish API
+  currency              String    @default("SEK")
+  message               String?
+  payeePaymentReference String    @unique
+  swishLocation         String?
+  status                String    @default("CREATED") // CREATED,PENDING,PAID,DECLINED,ERROR,CANCELLED
+  errorCode             String?
+  errorMessage          String?
+  callbackReceivedAt    DateTime?
+  bookAccountId         Int? // Optional account to book transaction to
+  transactionId         Int?      @unique // Reference to created transaction (if booked)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy    User         @relation(fields: [createdByUserId], references: [id])
+  member       Member?      @relation(fields: [memberId], references: [id])
   bookAccount  Account?     @relation(fields: [bookAccountId], references: [id])
   transaction  Transaction? @relation(fields: [transactionId], references: [id])
 
