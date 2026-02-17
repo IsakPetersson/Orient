@@ -208,7 +208,7 @@
     <div v-if="showCustomAlert" class="modal-overlay alert-modal-overlay" @click.self="showCustomAlert = false">
       <div class="modal-content alert-modal-content">
         <div class="alert-header-centered">
-          <div class="alert-icon-circle" :class="customAlertType">
+          <div class="alert-icon-circle" :class="customAlertType === 'show-settings-link' ? 'warning' : customAlertType">
             <span v-if="customAlertType === 'success'">✓</span>
             <span v-else-if="customAlertType === 'error'">✕</span>
             <span v-else>!</span>
@@ -219,7 +219,10 @@
           <p style="white-space: pre-line;">{{ customAlertMessage }}</p>
         </div>
         <div class="modal-footer centered">
-          <button class="btn btn-primary btn-lg" @click="showCustomAlert = false">OK</button>
+          <button v-if="customAlertType === 'show-settings-link'" class="btn btn-primary btn-lg" @click="$router.push('/settings')">Gå till Inställningar</button>
+          <button :class="['btn', 'btn-lg', customAlertType === 'show-settings-link' ? 'btn-secondary' : 'btn-primary']" @click="showCustomAlert = false">
+            {{ customAlertType === 'show-settings-link' ? 'Avbryt' : 'OK' }}
+          </button>
         </div>
       </div>
     </div>
@@ -1131,53 +1134,98 @@ export default {
       )
     },
     async processUnpaidRequests(unpaidMembers, defaultAccountId) {
+      if (this.unpaidMembers === 0) {
+        this.showAlert('Inga obetalda', 'Det finns inga obetalda medlemmar att skicka till.', 'info');
+        return;
+      }
+      
+      this.closeMembersModal() // Close members modal first
       this.loading = true
+      
       let successCount = 0
-
       let failCount = 0
       const errors = []
+      let configError = null
 
-      for (const member of unpaidMembers) {
-        try {
-          const response = await fetch('/api/swish-requests', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-org-id': String(this.organizationId)
-            },
-            body: JSON.stringify({
-              payerPhone: member.phone,
-              amount: String(member.fee), // Ensure string
-              message: 'Medlemsavgift',
-              bookAccountId: defaultAccountId,
-              memberId: member.id
+      try {
+        for (const member of unpaidMembers) {
+          try {
+            const response = await fetch('/api/swish-requests', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-org-id': String(this.organizationId)
+              },
+              body: JSON.stringify({
+                payerPhone: member.phone,
+                amount: String(member.fee), // Ensure string
+                message: 'Medlemsavgift',
+                bookAccountId: defaultAccountId,
+                memberId: member.id
+              })
             })
-          })
 
-          if (response.ok) {
-            successCount++
-          } else {
-            const errorText = await response.text()
-            console.error(`Failed to request from ${member.name}:`, errorText)
-            errors.push(`${member.name}: ${errorText}`)
+            if (response.ok) {
+              successCount++
+            } else {
+              let errorText = await response.text()
+              let errorMessage = errorText
+              
+              try {
+                const errorObj = JSON.parse(errorText)
+                errorMessage = errorObj.message || errorObj.error || errorText
+              } catch (e) {
+                // Not JSON
+              }
+              
+              console.error(`Failed to request from ${member.name}:`, errorMessage)
+              
+              // Check for configuration error
+              if (errorMessage.includes('Swish is not fully configured')) {
+                configError = errorMessage
+                // Don't count this one as failed yet, stop immediately
+                break 
+              }
+              
+              errors.push(`${member.name}: ${errorMessage}`)
+              failCount++
+            }
+          } catch (error) {
+            console.error(`Error requesting from ${member.name}:`, error)
+            errors.push(`${member.name}: ${error.message}`)
             failCount++
           }
-        } catch (error) {
-          console.error(`Error requesting from ${member.name}:`, error)
-          errors.push(`${member.name}: ${error.message}`)
-          failCount++
         }
+      } finally {
+        this.loading = false
       }
-
-      this.loading = false
+      
+      if (configError) {
+        // If some requests succeeded before error, reload dashboard
+        if (successCount > 0) {
+          await this.loadDashboard()
+        }
+        this.showAlert('Swish ej konfigurerat', configError, 'show-settings-link')
+        return
+      }
       
       let message = `Klar! Skickade ${successCount} förfrågningar.`
       if (failCount > 0) {
-        message += `\n\nMisslyckades med ${failCount} förfrågningar. Se konsolen för detaljer.`
+        message += `\n\nMisslyckades med ${failCount} förfrågningar.`
+        
+        // Add sample errors to message
+        if (errors.length > 0) {
+          const sampleErrors = errors.slice(0, 3).join('\n');
+          message += `\n\nExempel på fel:\n${sampleErrors}`;
+          
+          if (errors.length > 3) {
+            message += `\n...och ${errors.length - 3} till.`;
+          }
+        }
       }
       
       this.showAlert(failCount > 0 ? 'Slutfört med fel' : 'Klart!', message, failCount > 0 ? 'warning' : 'success')
-      this.closeMembersModal()
+      this.loadDashboard() // Refresh data
     },
     requestPaymentForMember(member) {
       if (!member.phone) {
