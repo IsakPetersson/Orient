@@ -431,7 +431,7 @@ export default {
       try {
         this.downloadingSie = true
         
-        const response = await fetch(`/api/accounting?action=export-sie`, {
+        const response = await fetch(`/api/finance?action=sie`, {
           method: 'GET',
           headers: {
             'x-org-id': String(this.organizationId)
@@ -474,7 +474,7 @@ export default {
     },
     async loadSwishConfig() {
       try {
-        const response = await fetch('/api/swish-config', {
+        const response = await fetch('/api/swish?action=config', {
           method: 'GET',
           headers: {
             'x-org-id': this.organizationId
@@ -545,7 +545,7 @@ export default {
           reader.readAsArrayBuffer(this.certificateFile)
         })
         
-        const response = await fetch('/api/swish-config', {
+        const response = await fetch('/api/swish?action=config', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

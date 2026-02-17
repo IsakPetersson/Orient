@@ -1055,7 +1055,7 @@ export default {
     async handleViewSwishStatus() {
       this.showSwishStatusModal = true
       try {
-        const response = await fetch('/api/swish-requests', {
+        const response = await fetch('/api/swish?action=requests', {
           headers: { 'x-org-id': String(this.organizationId) }
         })
         if (!response.ok) throw new Error('Failed to fetch requests')
@@ -1150,7 +1150,7 @@ export default {
       try {
         for (const member of unpaidMembers) {
           try {
-            const response = await fetch('/api/swish-requests', {
+            const response = await fetch('/api/swish?action=requests', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -1668,7 +1668,7 @@ export default {
     },
     async processSwishPayment() {
       try {
-        const response = await fetch('/api/swish-requests', {
+        const response = await fetch('/api/swish?action=requests', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

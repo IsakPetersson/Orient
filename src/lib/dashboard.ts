@@ -55,7 +55,7 @@ async function jsonOrThrow(res: Response) {
 }
 
 export async function getDashboardData(organizationId: number): Promise<DashboardData> {
-    const res = await fetch('/api/dashboard', {
+    const res = await fetch('/api/finance?action=dashboard', {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -72,7 +72,7 @@ export async function createTransaction(
     description: string,
     category: string
 ): Promise<any> {
-    const res = await fetch('/api/transactions', {
+    const res = await fetch('/api/finance?action=transactions', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -85,7 +85,7 @@ export async function createTransaction(
 }
 
 export async function createAccount(organizationId: number, name: string): Promise<any> {
-    const res = await fetch('/api/accounts', {
+    const res = await fetch('/api/finance?action=accounts', {
         method: 'POST',
         credentials: 'include',
         headers: {
