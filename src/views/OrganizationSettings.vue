@@ -105,7 +105,7 @@
           <div class="setting-item">
             <div class="label-row">
               <label for="swishMerchantNumber">Swish-nummer (Handelsnummer)</label>
-              <button class="help-link" @click="showMerchantGuide = true">Så gör ni</button>
+              <button class="help-link" @click="showMerchantGuide = true">Guide</button>
             </div>
             <input 
               type="text" 
@@ -139,7 +139,7 @@
           <div class="setting-item">
             <div class="label-row">
               <label for="swishCertificate">Swish .p12 Certifikat</label>
-              <button class="help-link" @click="showCertificateGuide = true">Detta gör ni bara en gång</button>
+              <button class="help-link" @click="showCertificateGuide = true">Guide</button>
             </div>
             <input 
               type="file" 
@@ -251,30 +251,50 @@
     <div v-if="showCertificateGuide" class="modal-overlay help-modal-overlay" @click.self="showCertificateGuide = false">
       <div class="modal-content help-modal-content">
         <div class="help-modal-header">
-          <h2>Detta gör ni bara en gång</h2>
+          <h2>Hjälp med Certifikat</h2>
           <button class="close-btn" @click="showCertificateGuide = false">×</button>
         </div>
         <div class="help-modal-body">
-          <p>För att systemet ska kunna prata säkert med Swish krävs ett digitalt certifikat. Detta behöver genereras och laddas upp en gång (giltighetstid oftast 2 år).</p>
+          <p>För att systemet ska kunna prata säkert med Swish krävs ett digitalt certifikat (en säkerhetsfil). Detta behöver bara göras en gång, men kan upplevas krångligt om man inte är van vid datorer.</p>
           
-          <h3>1. Skapa en CSR-fil</h3>
-          <p>Använd OpenSSL (i terminalen) för att skapa en privat nyckel och en förfrågan (CSR):</p>
-          <code style="display:block; background:#f5f5f5; padding:10px; border-radius:4px; font-family:monospace; margin-bottom:1rem; word-break:break-all;">
-            openssl req -new -newkey rsa:2048 -nodes -keyout swish.key -out swish.csr
-          </code>
-          
-          <h3>2. Signera hos Swish</h3>
-          <p>Logga in på <strong>Swish Certificate Management</strong> (banken ger länk). Ladda upp din <code>swish.csr</code>-fil. När den är godkänd, ladda ner certifikatet (t.ex. <code>swish_signed.pem</code>).</p>
-          
-          <h3>3. Skapa .p12-filen</h3>
-          <p>Nu ska du paketera nyckeln och det signerade certifikatet till en enda fil:</p>
-          <code style="display:block; background:#f5f5f5; padding:10px; border-radius:4px; font-family:monospace; margin-bottom:1rem; word-break:break-all;">
-            openssl pkcs12 -export -out swish_certificate.p12 -inkey swish.key -in swish_signed.pem
-          </code>
-          <p>Du kommer bli ombedd att välja ett export-lösenord. <strong>Notera detta lösenord!</strong></p>
-          
-          <h3>4. Ladda upp</h3>
-          <p>Ladda upp <code>swish_certificate.p12</code> här i formuläret och ange lösenordet du valde i steget ovan.</p>
+          <div style="background-color: #f0f9ff; border-left: 4px solid #0284c7; padding: 1rem; margin-bottom: 2rem;">
+            <h3 style="margin-top: 0; color: #0284c7;">Alternativ 1: Ta hjälp (Rekommenderas)</h3>
+            <p>Har ni någon tekniskt kunnig i föreningen? Be denne hjälpa er. Kopiera texten nedan och skicka till den personen:</p>
+            <textarea readonly style="width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: none; font-size: 0.9em;">Hej! Vi behöver hjälp att ta fram ett TLS-certifikat för Swish Handel till föreningen. Vi behöver generera en CSR, signera den hos Swish (via banken), och sedan paketera ihop nyckeln och certifikatet till en .p12-fil (PKCS#12) och lösenordsskydda den. Kan du hjälpa oss med det?</textarea>
+          </div>
+
+          <h3 style="color: #666;">Alternativ 2: Gör det själv</h3>
+          <p>Om du vill göra det själv behöver du använda din dator. Följ dessa steg noga:</p>
+
+          <ol style="padding-left: 1.5rem;">
+            <li style="margin-bottom: 1rem;">
+              <strong>Logga in på banken:</strong> Gå till din internetbank företag och leta upp "Swish Handel" eller "Swish Företag". Där brukar det finnas en länk till "Certifikatshanterare" (Certificate Management).
+            </li>
+            <li style="margin-bottom: 1rem;">
+              <strong>Skapa filen:</strong> Ofta har banken en guide för hur man skapar certifikatet. De kan ibland hjälpa till via telefon. Målet är att du ska ha en fil på din dator som slutar på <strong>.p12</strong> eller <strong>.pfx</strong>.
+            </li>
+            <li style="margin-bottom: 1rem;">
+              <strong>Lösenord:</strong> När filen skapas får man välja ett lösenord. Det är mycket viktigt att du kommer ihåg detta!
+            </li>
+            <li>
+              <strong>Ladda upp:</strong> När du har filen på din dator, klicka på "Välj fil" här bakom och ladda upp den. Skriv sedan in lösenordet.
+            </li>
+          </ol>
+
+          <details style="margin-top: 2rem; cursor: pointer;">
+            <summary style="color: #666; font-weight: 500;">Visa tekniska instruktioner (för experter)</summary>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+              <p>Om du använder terminalen (OpenSSL):</p>
+              <code style="display:block; background:#f5f5f5; padding:10px; border-radius:4px; font-family:monospace; margin-bottom:1rem; word-break:break-all; font-size: 0.85em;">
+                openssl req -new -newkey rsa:2048 -nodes -keyout swish.key -out swish.csr
+              </code>
+              <p>Ladda upp CSR hos Swish, hämta PEM-filen, och kör sedan:</p>
+              <code style="display:block; background:#f5f5f5; padding:10px; border-radius:4px; font-family:monospace; margin-bottom:1rem; word-break:break-all; font-size: 0.85em;">
+                openssl pkcs12 -export -out swish_certificate.p12 -inkey swish.key -in swish_signed.pem
+              </code>
+            </div>
+          </details>
+
         </div>
         <div class="help-modal-footer">
           <button class="btn btn-primary" @click="showCertificateGuide = false">Jag förstår</button>
