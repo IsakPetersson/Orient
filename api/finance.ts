@@ -130,18 +130,19 @@ async function handleDashboard(req: VercelRequest, res: VercelResponse, organiza
         }, {} as Record<string, number>)
 
     // Transform logic specific for frontend dashboard consumption
-    const incomeBreakdown = Object.entries(incomeByCategory).map(([name, value]) => ({ name, value }))
-    const expenseBreakdown = Object.entries(expensesByCategory).map(([name, value]) => ({ name, value }))
+    const incomeBreakdown = Object.entries(incomeByCategory).map(([category, amount], index) => ({ id: `inc-${index}`, category, amount }))
+    const expenseBreakdown = Object.entries(expensesByCategory).map(([category, amount], index) => ({ id: `exp-${index}`, category, amount }))
 
     // Recent transactions (last 5)
     const recentTransactions = allTransactions.slice(0, 5).map(t => ({
         id: t.id,
-        date: t.createdAt,
+        date: t.createdAt.toISOString().split('T')[0],
         description: t.description || 'Transaktion',
         amount: t.amount,
         type: t.amount >= 0 ? 'income' : 'expense',
         status: 'completed',
-        voucher: `${t.voucherSeries}${t.voucherNumber}`
+        voucherSeries: t.voucherSeries,
+        voucherNumber: t.voucherNumber
     }))
 
     return res.status(200).json({
