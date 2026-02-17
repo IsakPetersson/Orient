@@ -987,6 +987,10 @@ export default {
             // Don't block opening the modal if fetching fails
           }
         }
+        // Set default account for booking so transaction is created automatically
+        if (this.accounts.length > 0) {
+          this.swishPayment.bookAccountId = this.accounts[0].id
+        }
         this.showSwishModal = true
       } else {
         alert(`Funktionen "${action}" kommer snart!`)
