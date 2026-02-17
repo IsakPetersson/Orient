@@ -46,6 +46,7 @@ export async function loadSwishConfig(organizationId: number): Promise<SwishConf
     });
 
     if (!org || !org.swishMerchantNumber || !org.swishMode || !org.swishP12Ciphertext) {
+        console.warn(`Swish config missing for org ${organizationId}: MerchantNumber=${!!org?.swishMerchantNumber}, Mode=${!!org?.swishMode}, Cert=${!!org?.swishP12Ciphertext}`);
         return null;
     }
 

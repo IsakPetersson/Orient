@@ -224,6 +224,25 @@
       </div>
     </div>
 
+    <!-- Confirmation Modal -->
+    <div v-if="showConfirmModal" class="modal-overlay alert-modal-overlay" @click.self="showConfirmModal = false">
+      <div class="modal-content alert-modal-content">
+        <div class="alert-header-centered">
+          <div class="alert-icon-circle warning">
+            <span>?</span>
+          </div>
+          <h2>{{ customAlertTitle }}</h2>
+        </div>
+        <div class="alert-body-centered">
+          <p style="white-space: pre-line;">{{ customAlertMessage }}</p>
+        </div>
+        <div class="modal-footer centered" style="gap: 1rem;">
+          <button class="btn cancel-btn" @click="showConfirmModal = false">Avbryt</button>
+          <button class="btn btn-primary" @click="handleConfirm">Bekräfta</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Members Modal -->
     <div v-if="showMembersModal" class="modal-overlay" @click="closeMembersModal">
       <div class="modal-content members-modal" @click.stop>
@@ -833,6 +852,8 @@ export default {
       showMembersModal: false,
       // Custom Alert State
       showCustomAlert: false,
+      showConfirmModal: false,
+      confirmCallback: null,
       customAlertTitle: '',
       customAlertMessage: '',
       customAlertType: 'info', // 'info', 'success', 'error', 'warning'
@@ -1078,6 +1099,18 @@ export default {
       this.customAlertType = type
       this.showCustomAlert = true
     },
+    showConfirm(title, message, callback) {
+      this.customAlertTitle = title
+      this.customAlertMessage = message
+      this.confirmCallback = callback
+      this.showConfirmModal = true
+    },
+    handleConfirm() {
+      this.showConfirmModal = false
+      if (this.confirmCallback) {
+        this.confirmCallback()
+      }
+    },
     async requestAllUnpaid() {
       const unpaidMembers = this.clubMembers.filter(m => !m.paid && m.phone)
       
@@ -1088,17 +1121,21 @@ export default {
 
       const totalAmount = unpaidMembers.reduce((sum, m) => sum + m.fee, 0)
       
-      if (!confirm(`Vill du skicka ${unpaidMembers.length} Swish-förfrågningar för totalt ${totalAmount} kr?\n\nDetta kommer att skicka en begäran till varje obetald medlem med registrerat telefonnummer.`)) {
-        return
-      }
-
+      this.showConfirm(
+        'Skicka betalningsförfrågningar?',
+        `Detta skickar ${unpaidMembers.length} Swish-förfrågningar för totalt ${totalAmount} kr.\n\nEn begäran skickas till varje obetald medlem med registrerat telefonnummer.`,
+        async () => {
+          const defaultAccountId = this.accounts.length > 0 ? this.accounts[0].id : null
+          await this.processUnpaidRequests(unpaidMembers, defaultAccountId)
+        }
+      )
+    },
+    async processUnpaidRequests(unpaidMembers, defaultAccountId) {
       this.loading = true
       let successCount = 0
+
       let failCount = 0
       const errors = []
-
-      // Prepare request options
-      const defaultAccountId = this.accounts.length > 0 ? this.accounts[0].id : null
 
       for (const member of unpaidMembers) {
         try {
@@ -1172,88 +1209,94 @@ export default {
         newRole = 'MEMBER'
       }
 
-      if (!confirm(`Är du säker på att du vill ändra rollen för ${member.user.name} från ${this.translateRole(member.role)} till ${this.translateRole(newRole)}?`)) {
-        return
-      }
+      this.showConfirm(
+        'Ändra roll?',
+        `Är du säker på att du vill ändra rollen för ${member.user.name} från ${this.translateRole(member.role)} till ${this.translateRole(newRole)}?`,
+        async () => {
+          try {
+            const response = await fetch(`/api/orgs?action=updateRole`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-org-id': this.organizationId
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                membershipId: member.id,
+                role: newRole
+              })
+            })
 
-      try {
-        const response = await fetch(`/api/orgs?action=updateRole`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-org-id': this.organizationId
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            membershipId: member.id,
-            role: newRole
-          })
-        })
+            if (!response.ok) {
+              throw new Error('Failed to update role')
+            }
 
-        if (!response.ok) {
-          throw new Error('Failed to update role')
+            // Reload members
+            await this.handleViewMembers()
+          } catch (error) {
+            console.error('Failed to update role:', error)
+            this.showAlert('Fel', 'Kunde inte uppdatera rollen', 'error')
+          }
         }
-
-        // Reload members
-        await this.handleViewMembers()
-      } catch (error) {
-        console.error('Failed to update role:', error)
-        this.showAlert('Fel', 'Kunde inte uppdatera rollen', 'error')
-      }
+      )
     },
     async removeTeamMember(member) {
-      if (!confirm(`Är du säker på att du vill ta bort ${member.user.name} från organisationen? Detta kan inte ångras.`)) {
-        return
-      }
+      this.showConfirm(
+        'Ta bort medlem?',
+        `Är du säker på att du vill ta bort ${member.user.name} från organisationen? Detta kan inte ångras.`,
+        async () => {
+          try {
+            const response = await fetch(`/api/orgs?action=removeMember`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-org-id': this.organizationId
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                membershipId: member.id
+              })
+            })
 
-      try {
-        const response = await fetch(`/api/orgs?action=removeMember`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-org-id': this.organizationId
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            membershipId: member.id
-          })
-        })
+            if (!response.ok) {
+              throw new Error('Failed to remove team member')
+            }
 
-        if (!response.ok) {
-          throw new Error('Failed to remove team member')
+            // Reload members
+            await this.handleViewMembers()
+          } catch (error) {
+            console.error('Failed to remove team member:', error)
+            this.showAlert('Fel', 'Kunde inte ta bort teammedlemmen', 'error')
+          }
         }
-
-        // Reload members
-        await this.handleViewMembers()
-      } catch (error) {
-        console.error('Failed to remove team member:', error)
-        this.showAlert('Fel', 'Kunde inte ta bort teammedlemmen', 'error')
-      }
+      )
     },
     async removeClubMember(member) {
-      if (!confirm(`Är du säker på att du vill ta bort ${member.name} från medlemslistan? Detta kan inte ångras.`)) {
-        return
-      }
+      this.showConfirm(
+        'Ta bort medlem?',
+        `Är du säker på att du vill ta bort ${member.name} från medlemslistan? Detta kan inte ångras.`,
+        async () => {
+          try {
+            const response = await fetch(`/api/members?id=${member.id}`, {
+              method: 'DELETE',
+              headers: {
+                'x-org-id': this.organizationId
+              },
+              credentials: 'include'
+            })
 
-      try {
-        const response = await fetch(`/api/members?id=${member.id}`, {
-          method: 'DELETE',
-          headers: {
-            'x-org-id': this.organizationId
-          },
-          credentials: 'include'
-        })
+            if (!response.ok) {
+              throw new Error('Failed to remove club member')
+            }
 
-        if (!response.ok) {
-          throw new Error('Failed to remove club member')
+            // Reload members
+            await this.handleViewMembers()
+          } catch (error) {
+            console.error('Failed to remove club member:', error)
+            this.showAlert('Fel', 'Kunde inte ta bort klubbmedlemmen', 'error')
+          }
         }
-
-        // Reload members
-        await this.handleViewMembers()
-      } catch (error) {
-        console.error('Failed to remove club member:', error)
-        this.showAlert('Fel', 'Kunde inte ta bort klubbmedlemmen', 'error')
-      }
+      )
     },
     viewClubMemberDetails(member) {
       this.selectedClubMember = { ...member }
@@ -1561,6 +1604,21 @@ export default {
       }
     },
     async requestSwishPayment() {
+      // Validate phone number
+      if (!this.swishPayment.phone) {
+        this.showAlert('Saknar uppgifter', 'Vänligen ange ett telefonnummer.', 'warning');
+        return;
+      }
+
+      this.showConfirm(
+        'Skicka betalningsförfrågan?',
+        `Är du säker på att du vill skicka en Swish-förfrågan till ${this.swishPayment.phone} på ${this.swishPayment.amount} kr?`,
+        async () => {
+          await this.processSwishPayment();
+        }
+      );
+    },
+    async processSwishPayment() {
       try {
         const response = await fetch('/api/swish-requests', {
           method: 'POST',

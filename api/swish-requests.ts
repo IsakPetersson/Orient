@@ -116,7 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // Load Swish configuration
             const swishConfig = await loadSwishConfig(organizationId);
             if (!swishConfig) {
-                return res.status(400).json({ error: 'Swish not configured for this organization' });
+                return res.status(400).json({ error: 'Swish is not fully configured. Please go to Settings > Swish Settings and ensure you have entered a Merchant Number and uploaded a valid .p12 certificate.' });
             }
 
             // Normalize phone number
