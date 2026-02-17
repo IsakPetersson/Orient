@@ -201,6 +201,26 @@
       </div>
     </section>
 
+    <!-- Custom Alert Modal -->
+    <div v-if="showCustomAlert" class="modal-overlay alert-modal-overlay" @click.self="showCustomAlert = false">
+      <div class="modal-content alert-modal-content">
+        <div class="alert-header-centered">
+          <div class="alert-icon-circle" :class="customAlertType">
+            <span v-if="customAlertType === 'success'">✓</span>
+            <span v-else-if="customAlertType === 'error'">✕</span>
+            <span v-else>!</span>
+          </div>
+          <h2>{{ customAlertTitle }}</h2>
+        </div>
+        <div class="alert-body-centered">
+          <p style="white-space: pre-line;">{{ customAlertMessage }}</p>
+        </div>
+        <div class="modal-footer centered">
+          <button class="btn btn-primary btn-lg" @click="showCustomAlert = false">OK</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Members Modal -->
     <div v-if="showMembersModal" class="modal-overlay" @click="closeMembersModal">
       <div class="modal-content members-modal" @click.stop>
@@ -808,6 +828,11 @@ export default {
       userOrganizations: [],
       currentUserRole: '',
       showMembersModal: false,
+      // Custom Alert State
+      showCustomAlert: false,
+      customAlertTitle: '',
+      customAlertMessage: '',
+      customAlertType: 'info', // 'info', 'success', 'error', 'warning'
       teamMembers: [],
       clubMembers: [],
       showClubMemberDetailModal: false,
@@ -1044,11 +1069,17 @@ export default {
     closeMembersModal() {
       this.showMembersModal = false
     },
+    showAlert(title, message, type = 'info') {
+      this.customAlertTitle = title
+      this.customAlertMessage = message
+      this.customAlertType = type
+      this.showCustomAlert = true
+    },
     async requestAllUnpaid() {
       const unpaidMembers = this.clubMembers.filter(m => !m.paid && m.phone)
       
       if (unpaidMembers.length === 0) {
-        alert('Inga obetalda medlemmar med telefonnummer hittades.')
+        this.showAlert('Inga mottagare', 'Inga obetalda medlemmar med telefonnummer hittades.', 'warning')
         return
       }
 
@@ -1105,12 +1136,12 @@ export default {
         message += `\n\nMisslyckades med ${failCount} förfrågningar. Se konsolen för detaljer.`
       }
       
-      alert(message)
+      this.showAlert(failCount > 0 ? 'Slutfört med fel' : 'Klart!', message, failCount > 0 ? 'warning' : 'success')
       this.closeMembersModal()
     },
     requestPaymentForMember(member) {
       if (!member.phone) {
-        alert('Denna medlem har inget telefonnummer registrerat.');
+        this.showAlert('Saknar uppgifter', 'Denna medlem har inget telefonnummer registrerat.', 'warning');
         return;
       }
       
@@ -1164,7 +1195,7 @@ export default {
         await this.handleViewMembers()
       } catch (error) {
         console.error('Failed to update role:', error)
-        alert('Kunde inte uppdatera rollen')
+        this.showAlert('Fel', 'Kunde inte uppdatera rollen', 'error')
       }
     },
     async removeTeamMember(member) {
@@ -1193,7 +1224,7 @@ export default {
         await this.handleViewMembers()
       } catch (error) {
         console.error('Failed to remove team member:', error)
-        alert('Kunde inte ta bort teammedlemmen')
+        this.showAlert('Fel', 'Kunde inte ta bort teammedlemmen', 'error')
       }
     },
     async removeClubMember(member) {
@@ -1218,7 +1249,7 @@ export default {
         await this.handleViewMembers()
       } catch (error) {
         console.error('Failed to remove club member:', error)
-        alert('Kunde inte ta bort klubbmedlemmen')
+        this.showAlert('Fel', 'Kunde inte ta bort klubbmedlemmen', 'error')
       }
     },
     viewClubMemberDetails(member) {
@@ -1231,7 +1262,7 @@ export default {
     },
     async togglePaymentStatus() {
       if (this.currentUserRole !== 'OWNER' && this.currentUserRole !== 'ADMIN') {
-        alert('Endast ägare och administratörer kan ändra betalningsstatus')
+        this.showAlert('Ingen behörighet', 'Endast ägare och administratörer kan ändra betalningsstatus', 'error')
         this.selectedClubMember.paid = !this.selectedClubMember.paid
         return
       }
@@ -1284,7 +1315,7 @@ export default {
         this.incomeBreakdown = data.incomeBreakdown
       } catch (error) {
         console.error('Failed to update payment status:', error)
-        alert('Kunde inte uppdatera betalningsstatus')
+        this.showAlert('Fel', 'Kunde inte uppdatera betalningsstatus', 'error')
         // Revert the change
         this.selectedClubMember.paid = !this.selectedClubMember.paid
       }
@@ -1554,7 +1585,7 @@ export default {
 
         const paymentRequest = await response.json()
         
-        alert(`Swish-betalning begärd från ${this.swishPayment.phone} för ${this.swishPayment.amount} kr`)
+        this.showAlert('Betalning skickad!', `Swish-betalning begärd från ${this.swishPayment.phone} för ${this.swishPayment.amount} kr`, 'success')
         
         this.closeSwishModal()
         
@@ -1562,7 +1593,7 @@ export default {
         await this.loadDashboard()
       } catch (error) {
         console.error('Failed to request Swish payment:', error)
-        alert(`Fel vid betalningsbegäran: ${error.message}`)
+        this.showAlert('Fel vid betalning', `Fel vid betalningsbegäran: ${error.message}`, 'error')
       }
     },
     goToLogin() {
@@ -3214,6 +3245,76 @@ export default {
   text-align: center;
   margin: 0;
   font-style: italic;
+}
+
+/* Custom Alert Modal Styles */
+.alert-modal-overlay {
+  z-index: 2000;
+}
+
+.alert-modal-content {
+  max-width: 400px;
+  text-align: center;
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.alert-header-centered {
+  padding: 2rem 2rem 1rem;
+}
+
+.alert-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.alert-icon-circle.success {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.alert-icon-circle.error {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.alert-icon-circle.info {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+.alert-icon-circle.warning {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.alert-body-centered {
+  padding: 0 2rem 1rem;
+}
+
+.alert-body-centered p {
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 1.1rem;
+}
+
+.modal-footer.centered {
+  justify-content: center;
+  padding: 1.5rem 2rem 2rem;
+  border-top: none;
+}
+
+.btn-lg {
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
 }
 </style>
 
