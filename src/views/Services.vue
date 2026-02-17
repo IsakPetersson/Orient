@@ -244,7 +244,17 @@
 
           <!-- Club Members Section -->
           <div class="members-section">
-            <h3 class="section-title">Klubbmedlemmar ({{ clubMembers.length }})</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3 class="section-title" style="margin-bottom: 0;">Klubbmedlemmar ({{ clubMembers.length }})</h3>
+              <button 
+                v-if="currentUserRole === 'OWNER' && clubMembers.some(m => !m.paid && m.phone)" 
+                class="btn btn-sm btn-primary" 
+                @click="requestAllUnpaid"
+                style="font-size: 0.8rem; padding: 4px 8px;"
+              >
+                Begär från alla obetalda
+              </button>
+            </div>
             <div v-if="clubMembers.length === 0" class="no-members">
               <p>Inga klubbmedlemmar hittades.</p>
             </div>
@@ -264,7 +274,16 @@
                 <div class="member-joined">
                   Medlem sedan {{ formatDate(member.createdAt) }}
                 </div>
-                <div v-if="currentUserRole === 'OWNER'" class="member-actions" @click.stop>
+                <div class="header-actions" v-if="currentUserRole === 'OWNER'" @click.stop>
+                   <button 
+                     v-if="!member.paid && member.phone" 
+                     class="action-btn" 
+                     @click="requestPaymentForMember(member)" 
+                     title="Begär Swish-betalning"
+                     style="margin-right: 5px; background: none; border: none; font-size: 1.2rem; cursor: pointer;"
+                   >
+                     $
+                   </button>
                   <button class="action-btn remove-btn" @click="removeClubMember(member)" title="Ta bort">
                     ×
                   </button>
@@ -557,7 +576,19 @@
           <button class="close-btn" @click="closeSwishModal">×</button>
         </div>
         <div class="modal-body">
-          <form @submit.prevent="requestSwishPayment">
+            <div class="form-group">
+              <label for="swishMember">Välj medlem (fyller i telefonnummer)</label>
+              <select 
+                id="swishMember" 
+                @change="onSwishMemberSelect($event)"
+                class="form-select"
+              >
+                <option value="">-- Välj medlem --</option>
+                <option v-for="member in clubMembers" :key="member.id" :value="member.phone">
+                  {{ member.name }} ({{ member.phone || 'Inget nummer' }})
+                </option>
+              </select>
+            </div>
             <div class="form-group">
               <label for="swishPhone">Telefonnummer *</label>
               <input 
@@ -619,7 +650,6 @@
               </select>
               <small class="setting-hint">Om vald kommer betalningen automatiskt bokas som en transaktion när den är genomförd.</small>
             </div>
-          </form>
         </div>
         <div class="modal-footer">
           <button class="cancel-btn" @click="closeSwishModal">Avbryt</button>
@@ -922,7 +952,13 @@ export default {
         })
       }
     },
-    handleAction(action) {
+    onSwishMemberSelect(event) {
+      const phone = event.target.value
+      if (phone) {
+        this.swishPayment.phone = phone
+      }
+    },
+    async handleAction(action) {
       console.log('Action:', action)
       if (action === 'upload-receipt') {
         this.showUploadModal = true
@@ -933,6 +969,17 @@ export default {
       } else if (action === 'record-expense') {
         this.showExpenseModal = true
       } else if (action === 'swish-payment') {
+        // Load members if not already loaded, so we can pick from the list
+        if (this.clubMembers.length === 0) {
+          try {
+            const response = await getOrganizationMembers(this.organizationId)
+            this.teamMembers = response.teamMembers
+            this.clubMembers = response.clubMembers
+          } catch (error) {
+            console.error('Failed to load members for swish:', error)
+            // Don't block opening the modal if fetching fails
+          }
+        }
         this.showSwishModal = true
       } else {
         alert(`Funktionen "${action}" kommer snart!`)
@@ -985,6 +1032,87 @@ export default {
     },
     closeMembersModal() {
       this.showMembersModal = false
+    },
+    async requestAllUnpaid() {
+      const unpaidMembers = this.clubMembers.filter(m => !m.paid && m.phone)
+      
+      if (unpaidMembers.length === 0) {
+        alert('Inga obetalda medlemmar med telefonnummer hittades.')
+        return
+      }
+
+      const totalAmount = unpaidMembers.reduce((sum, m) => sum + m.fee, 0)
+      
+      if (!confirm(`Vill du skicka ${unpaidMembers.length} Swish-förfrågningar för totalt ${totalAmount} kr?\n\nDetta kommer att skicka en begäran till varje obetald medlem med registrerat telefonnummer.`)) {
+        return
+      }
+
+      this.loading = true
+      let successCount = 0
+      let failCount = 0
+      const errors = []
+
+      // Prepare request options
+      const defaultAccountId = this.accounts.length > 0 ? this.accounts[0].id : null
+
+      for (const member of unpaidMembers) {
+        try {
+          const response = await fetch('/api/swish-requests', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-org-id': String(this.organizationId)
+            },
+            body: JSON.stringify({
+              payerPhone: member.phone,
+              amount: String(member.fee), // Ensure string
+              message: 'Medlemsavgift',
+              bookAccountId: defaultAccountId
+            })
+          })
+
+          if (response.ok) {
+            successCount++
+          } else {
+            const errorText = await response.text()
+            console.error(`Failed to request from ${member.name}:`, errorText)
+            errors.push(`${member.name}: ${errorText}`)
+            failCount++
+          }
+        } catch (error) {
+          console.error(`Error requesting from ${member.name}:`, error)
+          errors.push(`${member.name}: ${error.message}`)
+          failCount++
+        }
+      }
+
+      this.loading = false
+      
+      let message = `Klar! Skickade ${successCount} förfrågningar.`
+      if (failCount > 0) {
+        message += `\n\nMisslyckades med ${failCount} förfrågningar. Se konsolen för detaljer.`
+      }
+      
+      alert(message)
+      this.closeMembersModal()
+    },
+    requestPaymentForMember(member) {
+      if (!member.phone) {
+        alert('Denna medlem har inget telefonnummer registrerat.');
+        return;
+      }
+      
+      this.closeMembersModal();
+      
+      // Pre-fill Swish modal data
+      this.swishPayment = {
+        phone: member.phone,
+        amount: member.fee, // Use member's annual fee as default amount
+        description: 'Medlemsavgift',
+        bookAccountId: this.accounts.length > 0 ? this.accounts[0].id : null
+      };
+      
+      this.showSwishModal = true;
     },
     async promoteMember(member) {
       // Toggle between MEMBER, VIEWER, and ADMIN roles
