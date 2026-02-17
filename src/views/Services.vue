@@ -61,7 +61,7 @@
                 </button>
                 <button class="quick-action-card" @click="handleAction('download-accounting')" :disabled="downloadingSie">
                   <img src="../assets/images/arrow-icon.png" alt="Download" class="action-icon-img" />
-                  <span class="action-text">{{ downloadingSie ? 'Laddar ner...' : 'Ladda ner SIE-fil' }}</span>
+                  <span class="action-text">{{ downloadingSie ? 'Laddar ner...' : 'Ladda ner SIE4-fil' }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('swish-payment')">
                   <span class="action-icon">$</span>
