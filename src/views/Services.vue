@@ -220,7 +220,7 @@
         </div>
         <div class="modal-footer centered">
           <button v-if="customAlertType === 'show-settings-link'" class="btn btn-primary btn-lg" @click="$router.push('/settings')">Gå till Inställningar</button>
-          <button :class="['btn', 'btn-lg', customAlertType === 'show-settings-link' ? 'btn-secondary' : 'btn-primary']" @click="showCustomAlert = false">
+          <button :class="['btn', 'btn-lg', customAlertType === 'show-settings-link' ? 'btn-primary' : 'btn-primary']" @click="showCustomAlert = false">
             {{ customAlertType === 'show-settings-link' ? 'Avbryt' : 'OK' }}
           </button>
         </div>

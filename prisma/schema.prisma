@@ -36,6 +36,7 @@ model Organization {
   swishPassIv         Bytes?
   swishPassTag        Bytes?
   createdAt           DateTime @default(now())
+  deletedAt           DateTime?
 
   memberships   OrganizationMembership[]
   accounts      Account[]
@@ -50,6 +51,7 @@ model OrganizationMembership {
   organizationId Int
   role           OrgRole  @default(MEMBER)
   createdAt      DateTime @default(now())
+  deletedAt      DateTime?
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -116,6 +118,7 @@ model Member {
   paid           Boolean  @default(false)
   organizationId Int
   createdAt      DateTime @default(now())
+  deletedAt      DateTime?
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   swishPaymentRequests SwishPaymentRequest[]

@@ -10,7 +10,14 @@ export async function requireOrgMember(
     const membership = await prisma.organizationMembership.findFirst({
         where: {
             userId: userId,
-            organizationId: organizationId
+            organizationId: organizationId,
+            deletedAt: null,
+            organization: {
+                deletedAt: null
+            }
+        },
+        include: {
+            organization: true
         }
     })
 
@@ -31,7 +38,14 @@ export async function requireOrgAdmin(
     const membership = await prisma.organizationMembership.findFirst({
         where: {
             userId: userId,
-            organizationId: organizationId
+            organizationId: organizationId,
+            deletedAt: null,
+            organization: {
+                deletedAt: null
+            }
+        },
+        include: {
+            organization: true
         }
     })
 

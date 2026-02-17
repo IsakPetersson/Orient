@@ -49,7 +49,13 @@ async function handleGetMyOrgs(userId: number, req: VercelRequest, res: VercelRe
     }
 
     const memberships = await prisma.organizationMembership.findMany({
-        where: { userId },
+        where: {
+            userId,
+            deletedAt: null,
+            organization: {
+                deletedAt: null
+            }
+        },
         include: {
             organization: true
         },
@@ -127,11 +133,16 @@ async function handleJoin(userId: number, req: VercelRequest, res: VercelRespons
 
     const result = await prisma.$transaction(async (tx) => {
         const invite = await tx.organizationInvite.findUnique({
-            where: { code: inviteCode }
+            where: { code: inviteCode },
+            include: { organization: true }
         })
 
         if (!invite) {
             return { ok: false as const, reason: 'Invalid invite code' }
+        }
+
+        if (invite.organization.deletedAt) {
+            return { ok: false as const, reason: 'Organization no longer exists' }
         }
 
         if (invite.usedAt) {
@@ -243,18 +254,9 @@ async function handleDelete(userId: number, req: VercelRequest, res: VercelRespo
         return res.status(403).json({ error: 'Only organization owners can delete organizations' })
     }
 
-    await prisma.$transaction(async (tx) => {
-        await tx.organizationInvite.deleteMany({
-            where: { organizationId: Number(organizationId) }
-        })
-
-        await tx.organizationMembership.deleteMany({
-            where: { organizationId: Number(organizationId) }
-        })
-
-        await tx.organization.delete({
-            where: { id: Number(organizationId) }
-        })
+    await prisma.organization.update({
+        where: { id: Number(organizationId) },
+        data: { deletedAt: new Date() }
     })
 
     return res.status(200).json({
@@ -393,9 +395,11 @@ async function handleRemoveMember(userId: number, req: VercelRequest, res: Verce
     }
 
     // Remove the membership
-    await prisma.organizationMembership.delete({
-        where: { id: Number(membershipId) }
+    await prisma.organizationMembership.update({
+        where: { id: Number(membershipId) },
+        data: { deletedAt: new Date() }
     })
+
 
     return res.status(200).json({
         success: true,
@@ -417,9 +421,12 @@ async function handleGetDetails(userId: number, req: VercelRequest, res: VercelR
     const membership = await prisma.organizationMembership.findFirst({
         where: {
             userId,
-            organizationId: Number(organizationId)
+            organizationId: Number(organizationId),
+            deletedAt: null,
+            organization: { deletedAt: null }
         }
     })
+
 
     if (!membership) {
         return res.status(403).json({ error: 'Not a member of this organization' })
@@ -459,11 +466,14 @@ async function handleUpdateSettings(userId: number, req: VercelRequest, res: Ver
         where: {
             userId,
             organizationId,
+            deletedAt: null,
+            organization: { deletedAt: null },
             role: {
                 in: ['OWNER', 'ADMIN']
             }
         }
     })
+
 
     if (!membership) {
         return res.status(403).json({ error: 'Only organization owners and admins can update settings' })

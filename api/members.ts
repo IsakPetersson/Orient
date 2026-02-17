@@ -20,7 +20,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (req.method === 'GET') {
             // Get organization team members
             const teamMembers = await prisma.organizationMembership.findMany({
-                where: { organizationId },
+                where: {
+                    organizationId,
+                    deletedAt: null
+                },
                 include: {
                     user: {
                         select: {
@@ -36,7 +39,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             // Get club members
             const clubMembers = await prisma.member.findMany({
-                where: { organizationId },
+                where: {
+                    organizationId,
+                    deletedAt: null
+                },
                 orderBy: { createdAt: 'desc' }
             })
 
@@ -152,9 +158,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return res.status(404).json({ error: 'Member not found' })
             }
 
-            // Delete the member
-            await prisma.member.delete({
-                where: { id: memberId }
+            // Soft delete the member
+            await prisma.member.update({
+                where: { id: memberId },
+                data: { deletedAt: new Date() }
             })
 
             return res.status(200).json({

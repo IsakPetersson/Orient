@@ -92,7 +92,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // Validate memberId if provided
             if (memberId) {
                 const member = await prisma.member.findFirst({
-                    where: { id: memberId, organizationId }
+                    where: {
+                        id: memberId,
+                        organizationId,
+                        deletedAt: null
+                    }
                 });
                 if (!member) {
                     return res.status(400).json({ error: 'Invalid memberId or member not in organization' });

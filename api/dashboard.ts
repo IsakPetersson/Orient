@@ -51,7 +51,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Get club members count and payment status
         const allMembers = await prisma.member.findMany({
-            where: { organizationId },
+            where: {
+                organizationId,
+                deletedAt: null
+            },
             select: { paid: true }
         })
 
