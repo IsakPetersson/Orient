@@ -102,6 +102,20 @@
             </div>
           </div>
 
+          <!-- Accounting Export Section -->
+          <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-light); border-radius: 8px; border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-dark);">Bokföring & Export</h3>
+            </div>
+            <p class="setting-hint" style="margin-bottom: 1rem;">Här kan du exportera all bokföringsdata till en SIE4-fil som kan importeras i andra bokföringsprogram (t.ex. Fortnox, Visma).</p>
+            <div class="setting-item" style="margin-bottom: 0;">
+              <button class="btn btn-secondary btn-block" @click="downloadSieFile" :disabled="downloadingSie" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                <span v-if="downloadingSie">Laddar ner...</span>
+                <span v-else>⬇ Ladda ner SIE-fil (Bokföring)</span>
+              </button>
+            </div>
+          </div>
+
           <div class="setting-item">
             <div class="label-row">
               <label for="swishMerchantNumber">Swish-nummer (Handelsnummer)</label>
@@ -324,6 +338,7 @@ export default {
       swishMerchantNumber: '',
       swishMode: 'TEST',
       swishPassphrase: '',
+      downloadingSie: false,
       certificateFile: null,
       swishConfig: null,
       swishConfigLoaded: false,
@@ -383,8 +398,8 @@ export default {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-org-id': String(this.organizationId)
           },
-          credentials: 'include',
           body: JSON.stringify({ organizationId: this.organizationId })
         })
         
@@ -393,20 +408,69 @@ export default {
           this.organizationName = data.organization.name
           this.swishMerchantNumber = data.organization.swishMerchantNumber || ''
         }
-        
+
         // Get invite code
-        const inviteData = await getOrganizationInvite(this.organizationId)
-        this.inviteCode = inviteData.code
-        
+        try {
+          const inviteData = await getOrganizationInvite(this.organizationId)
+          this.inviteCode = inviteData.code
+        } catch (e) {
+          console.error('Failed to get invite code:', e)
+        }
+
         // Load Swish configuration status
         await this.loadSwishConfig()
         
         this.loading = false
       } catch (error) {
         console.error('Failed to load settings:', error)
-        this.loading = false
         alert('Kunde inte ladda inställningar')
+        this.loading = false
       }
+    },
+    async downloadSieFile() {
+      try {
+        this.downloadingSie = true
+        
+        const response = await fetch(`/api/accounting?action=export-sie`, {
+          method: 'GET',
+          headers: {
+            'x-org-id': String(this.organizationId)
+          }
+        })
+        
+        if (!response.ok) {
+          throw new Error('Failed to download SIE file')
+        }
+        
+        // Handle file download
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        
+        // Extract filename from header
+        const contentDisposition = response.headers.get('Content-Disposition')
+        let filename = 'export.se'
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename="?([^"]+)"?/)
+          if (match && match[1]) {
+            filename = match[1]
+          }
+        }
+        
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
+        
+      } catch (error) {
+        console.error('SIE export failed:', error)
+        alert('Kunde inte ladda ner SIE-filen. Försök igen later.')
+      } finally {
+        this.downloadingSie = false
+      }
+
     },
     async loadSwishConfig() {
       try {
