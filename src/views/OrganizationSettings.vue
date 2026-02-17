@@ -103,7 +103,10 @@
           </div>
 
           <div class="setting-item">
-            <label for="swishMerchantNumber">Swish-nummer (Handelsnummer)</label>
+            <div class="label-row">
+              <label for="swishMerchantNumber">Swish-nummer (Handelsnummer)</label>
+              <button class="help-link" @click="showMerchantGuide = true">Så gör ni</button>
+            </div>
             <input 
               type="text" 
               id="swishMerchantNumber" 
@@ -134,7 +137,10 @@
           </div>
 
           <div class="setting-item">
-            <label for="swishCertificate">Swish .p12 Certifikat</label>
+            <div class="label-row">
+              <label for="swishCertificate">Swish .p12 Certifikat</label>
+              <button class="help-link" @click="showCertificateGuide = true">Detta gör ni bara en gång</button>
+            </div>
             <input 
               type="file" 
               id="swishCertificate" 
@@ -216,6 +222,65 @@
         </div>
       </div>
     </section>
+    <!-- Merchant Number Guide Modal -->
+    <div v-if="showMerchantGuide" class="modal-overlay help-modal-overlay" @click.self="showMerchantGuide = false">
+      <div class="modal-content help-modal-content">
+        <div class="help-modal-header">
+          <h2>Så gör ni</h2>
+          <button class="close-btn" @click="showMerchantGuide = false">×</button>
+        </div>
+        <div class="help-modal-body">
+          <p>För att kunna ta betalt med Swish i systemet behöver er förening/organisation ett eget Swish-nummer för handel.</p>
+          
+          <h3>1. Kontakta er bank</h3>
+          <p>Hör av er till er bank och be att få teckna avtal för <strong>Swish Handel</strong> (ibland kallat Swish Företag eller Swish Commerce). Det är viktigt att det är just "Handel/Commerce" för att API:et ska fungera.</p>
+          
+          <h3>2. Få ert nummer</h3>
+          <p>När avtalet är klart får ni ett Swish-nummer som oftast börjar på <strong>123...</strong>.</p>
+          
+          <h3>3. Fyll i inställningarna</h3>
+          <p>Ange detta nummer i fältet "Swish-nummer" här på sidan. Se också till att ni har fått tillgång till certifikats-hanteraren (Swish Certificate Management) via banken.</p>
+        </div>
+        <div class="help-modal-footer">
+          <button class="btn btn-primary" @click="showMerchantGuide = false">Jag förstår</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Certificate Guide Modal -->
+    <div v-if="showCertificateGuide" class="modal-overlay help-modal-overlay" @click.self="showCertificateGuide = false">
+      <div class="modal-content help-modal-content">
+        <div class="help-modal-header">
+          <h2>Detta gör ni bara en gång</h2>
+          <button class="close-btn" @click="showCertificateGuide = false">×</button>
+        </div>
+        <div class="help-modal-body">
+          <p>För att systemet ska kunna prata säkert med Swish krävs ett digitalt certifikat. Detta behöver genereras och laddas upp en gång (giltighetstid oftast 2 år).</p>
+          
+          <h3>1. Skapa en CSR-fil</h3>
+          <p>Använd OpenSSL (i terminalen) för att skapa en privat nyckel och en förfrågan (CSR):</p>
+          <code style="display:block; background:#f5f5f5; padding:10px; border-radius:4px; font-family:monospace; margin-bottom:1rem; word-break:break-all;">
+            openssl req -new -newkey rsa:2048 -nodes -keyout swish.key -out swish.csr
+          </code>
+          
+          <h3>2. Signera hos Swish</h3>
+          <p>Logga in på <strong>Swish Certificate Management</strong> (banken ger länk). Ladda upp din <code>swish.csr</code>-fil. När den är godkänd, ladda ner certifikatet (t.ex. <code>swish_signed.pem</code>).</p>
+          
+          <h3>3. Skapa .p12-filen</h3>
+          <p>Nu ska du paketera nyckeln och det signerade certifikatet till en enda fil:</p>
+          <code style="display:block; background:#f5f5f5; padding:10px; border-radius:4px; font-family:monospace; margin-bottom:1rem; word-break:break-all;">
+            openssl pkcs12 -export -out swish_certificate.p12 -inkey swish.key -in swish_signed.pem
+          </code>
+          <p>Du kommer bli ombedd att välja ett export-lösenord. <strong>Notera detta lösenord!</strong></p>
+          
+          <h3>4. Ladda upp</h3>
+          <p>Ladda upp <code>swish_certificate.p12</code> här i formuläret och ange lösenordet du valde i steget ovan.</p>
+        </div>
+        <div class="help-modal-footer">
+          <button class="btn btn-primary" @click="showCertificateGuide = false">Jag förstår</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -229,6 +294,8 @@ export default {
     return {
       showAuthModal: false,
       showNoOrgModal: false,
+      showMerchantGuide: false,
+      showCertificateGuide: false,
       loading: true,
       saving: false,
       savingSwish: false,
@@ -894,6 +961,104 @@ export default {
 .file-input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  width: 100%;
+}
+
+.label-row label {
+  margin-bottom: 0;
+}
+
+.help-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.help-link:hover {
+  color: var(--primary-dark);
+}
+
+.help-modal-overlay {
+  z-index: 2000;
+}
+
+.help-modal-content {
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 0;
+  border-radius: 12px;
+}
+
+.help-modal-header {
+  padding: 1.5rem 2rem 1rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.help-modal-header h2 {
+  margin: 0;
+  color: var(--primary-dark);
+  font-size: 1.5rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+}
+
+.help-modal-body {
+  padding: 2rem;
+  text-align: left;
+}
+
+.help-modal-body h3 {
+  font-size: 1.1rem;
+  margin: 1.5rem 0 0.5rem;
+  color: #333;
+}
+
+.help-modal-body p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  color: #444;
+}
+
+.help-modal-body ul, .help-modal-body ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.help-modal-body li {
+  margin-bottom: 0.5rem;
+  color: #444;
+}
+
+.help-modal-footer {
+  padding: 1rem 2rem;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .file-selected {
