@@ -315,13 +315,15 @@ function generateSIE4(org: any, transactions: any[]): string {
     const quote = (str: string) => `"${(str || '').replace(/"/g, '')}"`
 
     sie += `#FLAGGA 0\r\n`
-    sie += `#PROGRAM "TechshipProto" 1.0\r\n`
+    sie += `#PROGRAM "Orient" 1.0\r\n`
     sie += `#FORMAT PC8\r\n`
-    sie += `#GEN ${dateStr} "${quote(org.name)}"\r\n`
-    sie += `#FNAM ${quote(org.name)}\r\n`
+    sie += `#GEN ${dateStr} "Orient"\r\n`
+    sie += `#SIETYP 4\r\n`
+    sie += `#FNAMN "${org.name}"\r\n`
 
     const currentYear = now.getFullYear()
     sie += `#RAR 0 ${currentYear}0101 ${currentYear}1231\r\n`
+    sie += `\r\n`
 
     const usedAccounts = new Set<number>()
     usedAccounts.add(bankAccount)
@@ -336,9 +338,11 @@ function generateSIE4(org: any, transactions: any[]): string {
         usedAccounts.add(contraAccount)
     })
 
-    usedAccounts.forEach(acc => {
+    const accountsArray = Array.from(usedAccounts).sort((a, b) => a - b)
+
+    accountsArray.forEach(acc => {
         const name = acc === 1930 ? 'Bank' : 'Konto ' + acc
-        sie += `#KONTO ${acc} ${quote(name)}\r\n`
+        sie += `#KONTO ${acc} "${name}"\r\n`
     })
 
     sie += `\r\n`
@@ -347,7 +351,8 @@ function generateSIE4(org: any, transactions: any[]): string {
         const tDate = new Date(t.createdAt).toISOString().split('T')[0].replace(/-/g, '')
         const safeDesc = quote(t.description || 'Transaktion')
 
-        sie += `#VER ${quote(t.voucherSeries)} ${t.voucherNumber} ${tDate} ${safeDesc} ${tDate}\r\n`
+        sie += `#VER ${quote(t.voucherSeries || 'A')} ${t.voucherNumber || 1} ${tDate} ${safeDesc} ${tDate}\r\n`
+        sie += `{\r\n`
 
         const amount = t.amount.toFixed(2)
         sie += `#TRANS ${bankAccount} {} ${amount}\r\n`
