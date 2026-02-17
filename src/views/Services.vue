@@ -59,9 +59,9 @@
                   <span class="action-icon">▶</span>
                   <span class="action-text">Starta Bokföring</span>
                 </button>
-                <button class="quick-action-card" @click="handleAction('download-accounting')">
+                <button class="quick-action-card" @click="handleAction('download-accounting')" :disabled="downloadingSie">
                   <img src="../assets/images/arrow-icon.png" alt="Download" class="action-icon-img" />
-                  <span class="action-text">Ladda ner Bokföring</span>
+                  <span class="action-text">{{ downloadingSie ? 'Laddar ner...' : 'Ladda ner SIE-fil' }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('swish-payment')">
                   <span class="action-icon">$</span>
@@ -909,6 +909,7 @@ export default {
         memberId: null
       },
       recentTransactions: [],
+      downloadingSie: false,
       alerts: [],
       incomeBreakdown: [],
       expenseBreakdown: [],
@@ -1017,6 +1018,50 @@ export default {
         this.swishPayment.memberId = null
       }
     },
+    async downloadSieFile() {
+      try {
+        this.downloadingSie = true
+        
+        const response = await fetch(`/api/finance?action=sie`, {
+          method: 'GET',
+          headers: {
+            'x-org-id': String(this.organizationId)
+          }
+        })
+        
+        if (!response.ok) {
+          throw new Error('Failed to download SIE file')
+        }
+        
+        // Handle file download
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        
+        // Extract filename from header
+        const contentDisposition = response.headers.get('Content-Disposition')
+        let filename = 'export.se'
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename="?([^"]+)"?/)
+          if (match && match[1]) {
+            filename = match[1]
+          }
+        }
+        
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
+        
+      } catch (error) {
+        console.error('SIE export failed:', error)
+        alert('Kunde inte ladda ner SIE-filen. Försök igen senare.')
+      } finally {
+        this.downloadingSie = false
+      }
+    },
     async handleAction(action) {
       console.log('Action:', action)
       if (action === 'upload-receipt') {
@@ -1027,6 +1072,8 @@ export default {
         this.showIncomeModal = true
       } else if (action === 'record-expense') {
         this.showExpenseModal = true
+      } else if (action === 'download-accounting') {
+        await this.downloadSieFile()
       } else if (action === 'swish-payment') {
         // Load members if not already loaded, so we can pick from the list
         if (this.clubMembers.length === 0) {

@@ -102,20 +102,6 @@
             </div>
           </div>
 
-          <!-- Accounting Export Section -->
-          <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-light); border-radius: 8px; border: 1px solid var(--border-color);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-dark);">Bokföring & Export</h3>
-            </div>
-            <p class="setting-hint" style="margin-bottom: 1rem;">Här kan du exportera all bokföringsdata till en SIE4-fil som kan importeras i andra bokföringsprogram (t.ex. Fortnox, Visma).</p>
-            <div class="setting-item" style="margin-bottom: 0;">
-              <button class="btn btn-secondary btn-block" @click="downloadSieFile" :disabled="downloadingSie" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
-                <span v-if="downloadingSie">Laddar ner...</span>
-                <span v-else>⬇ Ladda ner SIE-fil (Bokföring)</span>
-              </button>
-            </div>
-          </div>
-
           <div class="setting-item">
             <div class="label-row">
               <label for="swishMerchantNumber">Swish-nummer (Handelsnummer)</label>
@@ -208,6 +194,23 @@
           >
             {{ savingSwish ? 'Sparar...' : 'Spara Swish-konfiguration' }}
           </button>
+        </div>
+
+        <!-- Accounting Export Section -->
+        <div class="settings-section">
+          <h2>Bokföring & Export</h2>
+          <div style="padding: 1.5rem; background: var(--bg-light); border-radius: 8px; border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-dark);">Export av data</h3>
+            </div>
+            <p class="setting-hint" style="margin-bottom: 1rem;">Här kan du exportera all bokföringsdata till en SIE4-fil som kan importeras i andra bokföringsprogram (t.ex. Fortnox, Visma).</p>
+            <div class="setting-item" style="margin-bottom: 0;">
+              <button class="btn btn-primary btn-block" @click="downloadSieFile" :disabled="downloadingSie" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                <span v-if="downloadingSie">Laddar ner...</span>
+                <span v-else>⬇ Ladda ner SIE-fil (Bokföring)</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Invite Section -->
