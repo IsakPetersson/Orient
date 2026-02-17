@@ -30,6 +30,8 @@ export type DashboardData = {
         date: string
         category: string | null
         accountName: string
+        voucherSeries?: string
+        voucherNumber?: number
     }>
     incomeBreakdown: Array<{
         category: string

@@ -90,16 +90,19 @@ model Account {
 }
 
 model Transaction {
-  id          Int      @id @default(autoincrement())
-  amount      Float
-  description String?
-  category    String?
-  accountId   Int
-  createdAt   DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  amount        Float
+  description   String?
+  category      String?
+  accountId     Int
+  voucherSeries String   @default("A")
+  voucherNumber Int
+  createdAt     DateTime @default(now())
 
   account             Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
   swishPaymentRequest SwishPaymentRequest?
 
+  @@unique([accountId, voucherSeries, voucherNumber]) // Ensure uniqueness per account (simplification, ideally per org)
   @@index([accountId])
 }
 

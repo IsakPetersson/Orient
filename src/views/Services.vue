@@ -187,7 +187,10 @@
               <div class="activity-compact">
                 <div v-for="transaction in recentTransactions.slice(0, 5)" :key="transaction.id" class="activity-row">
                   <div class="activity-info">
-                    <span class="activity-name">{{ transaction.description }}</span>
+                    <span class="activity-name">
+                      <span v-if="transaction.voucherSeries" class="voucher-id">{{ transaction.voucherSeries }}{{ transaction.voucherNumber }}</span>
+                      {{ transaction.description }}
+                    </span>
                     <span class="activity-date">{{ transaction.date }}</span>
                   </div>
                   <div class="activity-amount" :class="transaction.type">
@@ -3315,6 +3318,19 @@ export default {
 .btn-lg {
   padding: 0.75rem 2rem;
   font-size: 1.1rem;
+}
+
+.voucher-id {
+  display: inline-block;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right: 8px;
+  vertical-align: middle;
+  border: 1px solid #e5e7eb;
 }
 </style>
 

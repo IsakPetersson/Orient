@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { prisma } from "../lib/prisma.js";
+import { createTransaction } from "../lib/accounting.js";
 import { requireAuth } from "../lib/session.js";
 import { getOrgIdFromHeader, requireOrgMember } from "../lib/org.js";
 
@@ -46,23 +47,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return res.status(400).json({ error: "Amount and accountId are required" });
             }
 
-            // Prevent cross-org writes: verify account belongs to org
-            const account = await prisma.account.findFirst({
-                where: { id: accountIdNumber, organizationId },
-                select: { id: true },
-            });
-
-            if (!account) {
-                return res.status(404).json({ error: "Account not found in organization" });
-            }
-
-            const transaction = await prisma.transaction.create({
-                data: {
-                    amount: amountNumber,
-                    description: typeof description === "string" ? description : null,
-                    category: typeof category === "string" ? category : null,
-                    accountId: accountIdNumber,
-                },
+            // Perform transaction creation with voucher number via helper
+            const transaction = await createTransaction({
+                organizationId,
+                accountId: accountIdNumber,
+                amount: amountNumber,
+                description: typeof description === "string" ? description : null,
+                category: typeof category === "string" ? category : null,
             });
 
             return res.status(201).json(transaction);

@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { prisma } from '../lib/prisma.js';
+import { createTransaction } from '../lib/accounting.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Only accept POST requests
@@ -61,13 +62,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // If payment is PAID and bookAccountId is set, create transaction
         if (status === 'PAID') {
             if (paymentRequest.bookAccountId && !paymentRequest.transactionId) {
-                const transaction = await prisma.transaction.create({
-                    data: {
-                        accountId: paymentRequest.bookAccountId,
-                        amount: parseFloat(paymentRequest.amount),
-                        description: paymentRequest.message || `Swish payment from ${paymentRequest.payerAlias}`,
-                        category: 'Swish Payment',
-                    },
+                const transaction = await createTransaction({
+                    organizationId: paymentRequest.organizationId,
+                    accountId: paymentRequest.bookAccountId,
+                    amount: parseFloat(paymentRequest.amount),
+                    description: paymentRequest.message || `Swish payment from ${paymentRequest.payerAlias}`,
+                    category: 'Swish Payment',
+                    voucherSeries: 'B' // Use 'B' for automatic Swish payments
                 });
 
                 updateData.transactionId = transaction.id;

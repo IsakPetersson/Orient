@@ -120,7 +120,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             amount: Math.abs(t.amount),
             date: t.createdAt.toISOString().split('T')[0],
             category: t.category,
-            accountName: t.account.name
+            accountName: t.account.name,
+            voucherSeries: t.voucherSeries,
+            voucherNumber: t.voucherNumber
         }))
 
         return res.status(200).json({
