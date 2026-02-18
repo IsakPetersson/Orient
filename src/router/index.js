@@ -5,12 +5,18 @@ import Services from '../views/Services.vue'
 import Contact from '../views/Contact.vue'
 import Login from '../views/login.vue'
 import OrganizationSettings from '../views/OrganizationSettings.vue'
+import Legal from '../views/Legal.vue'
 
 const routes = [
     {
         path: '/',
         name: 'Home',
         component: Home
+    },
+    {
+        path: '/legal',
+        name: 'Legal',
+        component: Legal
     },
     {
         path: '/about',

@@ -32,6 +32,12 @@
               <span class="nav-text">Kontakt</span>
             </router-link>
           </li>
+          <li>
+            <router-link to="/legal" active-class="active">
+              <span class="nav-icon">§</span>
+              <span class="nav-text">Juridik</span>
+            </router-link>
+          </li>
           <li v-if="!user">
             <router-link to="/login" active-class="active">
               <span class="nav-icon">▶</span>
