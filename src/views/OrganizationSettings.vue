@@ -86,6 +86,24 @@
             />
             <p class="setting-hint">Kontakta support för att ändra organisationsnamnet</p>
           </div>
+          
+          <div class="setting-item">
+            <label for="orgNumber">Organisationsnummer (Valfritt)</label>
+            <div style="display: flex; gap: 1rem;">
+              <input 
+                type="text" 
+                id="orgNumber" 
+                v-model="orgNumber" 
+                class="setting-input"
+                placeholder="XXXXXX-XXXX"
+                :disabled="savingOrg"
+              />
+              <button class="btn btn-primary" @click="saveOrgDetails" :disabled="savingOrg || !orgNumChanged">
+                {{ savingOrg ? 'Sparar...' : 'Spara' }}
+              </button>
+            </div>
+            <p class="setting-hint">Används vid SIE4-export.</p>
+          </div>
         </div>
 
         <!-- Swish Settings -->
@@ -340,6 +358,9 @@ export default {
       organizationName: '',
       swishMerchantNumber: '',
       swishMode: 'TEST',
+      orgNumber: '',
+      originalOrgNumber: '',
+      savingOrg: false,
       swishPassphrase: '',
       downloadingSie: false,
       certificateFile: null,
@@ -360,6 +381,9 @@ export default {
              this.swishMode && 
              this.certificateFile && 
              this.swishPassphrase.trim()
+    },
+    orgNumChanged() {
+      return this.orgNumber !== this.originalOrgNumber
     }
   },
   async mounted() {
@@ -410,6 +434,8 @@ export default {
           const data = await response.json()
           this.organizationName = data.organization.name
           this.swishMerchantNumber = data.organization.swishMerchantNumber || ''
+          this.orgNumber = data.organization.orgNumber || ''
+          this.originalOrgNumber = data.organization.orgNumber || ''
         }
 
         // Get invite code
@@ -474,6 +500,35 @@ export default {
         this.downloadingSie = false
       }
 
+    },
+    async saveOrgDetails() {
+      try {
+        this.savingOrg = true
+        
+        const response = await fetch('/api/orgs?action=update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-org-id': String(this.organizationId)
+          },
+          body: JSON.stringify({
+            orgNumber: this.orgNumber
+          })
+        })
+        
+        if (!response.ok) {
+          throw new Error('Failed to update organization')
+        }
+        
+        this.originalOrgNumber = this.orgNumber
+        alert('Organisationsnummer sparat!')
+        
+      } catch (error) {
+        console.error('Failed to save org details:', error)
+        alert('Kunde inte spara organisationsnummer')
+      } finally {
+        this.savingOrg = false
+      }
     },
     async loadSwishConfig() {
       try {

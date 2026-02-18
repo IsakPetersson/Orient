@@ -32,6 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return await handleRemoveMember(userId, req, res)
             case 'getDetails':
                 return await handleGetDetails(userId, req, res)
+            case 'update':
             case 'updateSettings':
                 return await handleUpdateSettings(userId, req, res)
             default:
@@ -450,7 +451,7 @@ async function handleGetDetails(userId: number, req: VercelRequest, res: VercelR
 }
 
 async function handleUpdateSettings(userId: number, req: VercelRequest, res: VercelResponse) {
-    if (req.method !== 'PATCH') {
+    if (req.method !== 'PATCH' && req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' })
     }
 
@@ -479,18 +480,27 @@ async function handleUpdateSettings(userId: number, req: VercelRequest, res: Ver
         return res.status(403).json({ error: 'Only organization owners and admins can update settings' })
     }
 
-    const { swishMerchantNumber } = req.body ?? {}
+    const { swishMerchantNumber, orgNumber } = req.body ?? {}
+
+    const dataToUpdate: any = {}
+
+    if (swishMerchantNumber !== undefined) {
+        dataToUpdate.swishMerchantNumber = swishMerchantNumber || null
+    }
+
+    if (orgNumber !== undefined) {
+        dataToUpdate.orgNumber = orgNumber || null
+    }
 
     // Update the organization
     const updated = await prisma.organization.update({
         where: { id: organizationId },
-        data: {
-            swishMerchantNumber: swishMerchantNumber || null
-        },
+        data: dataToUpdate,
         select: {
             id: true,
             name: true,
             swishMerchantNumber: true,
+            orgNumber: true,
             createdAt: true
         }
     })

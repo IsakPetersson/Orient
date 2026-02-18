@@ -288,13 +288,33 @@ async function handleSieExport(req: VercelRequest, res: VercelResponse, organiza
 
     const filename = `sie_export_${org.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.se`
 
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    // Set content type to binary to preserve CP437 bytes
+    res.setHeader('Content-Type', 'application/octet-stream')
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-    res.status(200).send(sieContent)
+
+    // Convert string to buffer using "latin1" (closest single-byte) but we need manual mapping for CP437
+    // Since we can't easily do full CP437, we will construct a buffer manually from the string
+    const buffer = Buffer.from(sieContent, 'binary')
+    res.status(200).send(buffer)
+}
+
+function toCP437(str: string): string {
+    return str.split('').map(c => {
+        switch (c) {
+            case 'Å': return '\x8F';
+            case 'Ä': return '\x8E';
+            case 'Ö': return '\x99';
+            case 'å': return '\x86';
+            case 'ä': return '\x84';
+            case 'ö': return '\x94';
+            default: return c;
+        }
+    }).join('');
 }
 
 function generateSIE4(org: any, transactions: any[]): string {
     const now = new Date()
+    const currentYear = now.getFullYear()
     const dateStr = now.toISOString().split('T')[0].replace(/-/g, '') // YYYYMMDD
 
     const accountMapping: Record<string, number> = {
@@ -312,50 +332,89 @@ function generateSIE4(org: any, transactions: any[]): string {
     const bankAccount = 1930
 
     let sie = ''
-    const quote = (str: string) => `"${(str || '').replace(/"/g, '')}"`
+    // Helper to quote string and convert to CP437 if needed
+    const quote = (str: string) => `"${toCP437((str || '').replace(/"/g, ''))}"`
 
-    sie += `#FLAGGA 0\r\n`
-    sie += `#PROGRAM "Orient" 1.0\r\n`
-    sie += `#FORMAT PC8\r\n`
-    sie += `#GEN ${dateStr} "Orient"\r\n`
-    sie += `#SIETYP 4\r\n`
-    sie += `#FNAMN "${org.name}"\r\n`
+    sie += toCP437(`#FLAGGA 0\r\n`)
+    sie += toCP437(`#PROGRAM "Orient" 1.0\r\n`)
+    sie += toCP437(`#FORMAT PC8\r\n`)
+    sie += toCP437(`#GEN ${dateStr} "Orient"\r\n`)
+    sie += toCP437(`#SIETYP 4\r\n`)
 
-    const currentYear = now.getFullYear()
-    sie += `#RAR 0 ${currentYear}0101 ${currentYear}1231\r\n`
+    // Explicitly check for orgNumber as any to avoid TS error until types are refreshed
+    const orgNum = (org as any).orgNumber
+    if (orgNum) {
+        sie += toCP437(`#ORGNR ${orgNum}\r\n`)
+    }
+
+    sie += `#FNAMN ${quote(org.name)}\r\n`
+    sie += toCP437(`#RAR 0 ${currentYear}0101 ${currentYear}1231\r\n`)
     sie += `\r\n`
 
+    const accountBalances: Record<number, number> = {}
     const usedAccounts = new Set<number>()
     usedAccounts.add(bankAccount)
 
+    // First pass: Calculate balances and identify used accounts
     transactions.forEach(t => {
+        const amount = t.amount
+
         let contraAccount
         if (t.category && accountMapping[t.category]) {
             contraAccount = accountMapping[t.category]
         } else {
             contraAccount = t.amount >= 0 ? defaultIncomeAccount : defaultExpenseAccount
         }
+
         usedAccounts.add(contraAccount)
+
+        // Update balances (Bank)
+        accountBalances[bankAccount] = (accountBalances[bankAccount] || 0) + amount
+
+        // Update balances (Contra)
+        accountBalances[contraAccount] = (accountBalances[contraAccount] || 0) - amount
     })
 
     const accountsArray = Array.from(usedAccounts).sort((a, b) => a - b)
 
+    // Output #KONTO
     accountsArray.forEach(acc => {
         const name = acc === 1930 ? 'Bank' : 'Konto ' + acc
-        sie += `#KONTO ${acc} "${name}"\r\n`
+        sie += `#KONTO ${acc} ${quote(name)}\r\n`
+    })
+
+    // Output #IB, #UB, #RES
+    // Simple logic: Assuming all transactions are for the current year (RAR 0)
+    // IB is 0 for all accounts since we don't have previous year data logic implemented yet
+    // UB is the sum for Balance accounts (class 1, 2)
+    // RES is the sum for Result accounts (class 3-8)
+
+    accountsArray.forEach(acc => {
+        const balance = accountBalances[acc] || 0
+        const balanceFormatted = balance.toFixed(2)
+
+        if (acc < 3000) {
+            // Balance sheet account
+            sie += toCP437(`#IB 0 ${acc} 0.00\r\n`)
+            sie += toCP437(`#UB 0 ${acc} ${balanceFormatted}\r\n`)
+        } else {
+            // Result account
+            sie += toCP437(`#RES 0 ${acc} ${balanceFormatted}\r\n`)
+        }
     })
 
     sie += `\r\n`
 
+    // Output Transactions
     transactions.forEach(t => {
         const tDate = new Date(t.createdAt).toISOString().split('T')[0].replace(/-/g, '')
         const safeDesc = quote(t.description || 'Transaktion')
 
-        sie += `#VER ${quote(t.voucherSeries || 'A')} ${t.voucherNumber || 1} ${tDate} ${safeDesc} ${tDate}\r\n`
+        sie += toCP437(`#VER ${quote(t.voucherSeries || 'A')} ${t.voucherNumber || 1} ${tDate} ${safeDesc} ${tDate}\r\n`)
         sie += `{\r\n`
 
         const amount = t.amount.toFixed(2)
-        sie += `#TRANS ${bankAccount} {} ${amount}\r\n`
+        sie += toCP437(`#TRANS ${bankAccount} {} ${amount}\r\n`)
 
         let contraAccount
         if (t.category && accountMapping[t.category]) {
@@ -365,7 +424,7 @@ function generateSIE4(org: any, transactions: any[]): string {
         }
 
         const contraAmount = (-t.amount).toFixed(2)
-        sie += `#TRANS ${contraAccount} {} ${contraAmount}\r\n`
+        sie += toCP437(`#TRANS ${contraAccount} {} ${contraAmount}\r\n`)
 
         sie += `}\r\n`
     })
