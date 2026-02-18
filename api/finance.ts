@@ -349,6 +349,7 @@ function generateSIE4(org: any, transactions: any[]): string {
 
     sie += `#FNAMN ${quote(org.name)}\r\n`
     sie += toCP437(`#RAR 0 ${currentYear}0101 ${currentYear}1231\r\n`)
+    sie += toCP437(`#VALUTA SEK\r\n`)
     sie += `\r\n`
 
     const accountBalances: Record<number, number> = {}
