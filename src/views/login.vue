@@ -693,7 +693,8 @@ export default {
 }
 
 .checkbox-group {
-  display: flex;
+  display: flex !important;
+  flex-direction: row !important;
   align-items: flex-start;
   gap: 0.75rem;
   margin-top: 1rem;
@@ -702,6 +703,8 @@ export default {
 .checkbox-group input[type='checkbox'] {
   margin-top: 0.25rem;
   cursor: pointer;
+  width: auto;
+  margin-right: 0;
 }
 
 .checkbox-group label {
@@ -709,6 +712,8 @@ export default {
   line-height: 1.4;
   color: var(--text-dark);
   cursor: pointer;
+  margin-bottom: 0;
+  font-weight: normal;
 }
 </style>
 
