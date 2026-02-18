@@ -48,7 +48,7 @@ async function handleDashboard(req: VercelRequest, res: VercelResponse, organiza
     // Get organization info
     const organization = await prisma.organization.findUnique({
         where: { id: organizationId },
-        select: { id: true, name: true }
+        select: { id: true, name: true, logoUrl: true }
     })
 
     if (!organization) {

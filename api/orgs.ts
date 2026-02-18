@@ -480,7 +480,7 @@ async function handleUpdateSettings(userId: number, req: VercelRequest, res: Ver
         return res.status(403).json({ error: 'Only organization owners and admins can update settings' })
     }
 
-    const { swishMerchantNumber, orgNumber } = req.body ?? {}
+    const { swishMerchantNumber, orgNumber, logoUrl } = req.body ?? {}
 
     const dataToUpdate: any = {}
 
@@ -492,6 +492,10 @@ async function handleUpdateSettings(userId: number, req: VercelRequest, res: Ver
         dataToUpdate.orgNumber = orgNumber || null
     }
 
+    if (logoUrl !== undefined) {
+        dataToUpdate.logoUrl = logoUrl || null
+    }
+
     // Update the organization
     const updated = await prisma.organization.update({
         where: { id: organizationId },
@@ -501,6 +505,7 @@ async function handleUpdateSettings(userId: number, req: VercelRequest, res: Ver
             name: true,
             swishMerchantNumber: true,
             orgNumber: true,
+            logoUrl: true,
             createdAt: true
         }
     })

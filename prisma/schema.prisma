@@ -27,6 +27,7 @@ model User {
 model Organization {
   id                  Int       @id @default(autoincrement())
   name                String
+  logoUrl             String?
   orgNumber           String?
   swishMerchantNumber String?
   swishMode           String? // "TEST" | "PROD"

@@ -98,12 +98,28 @@
                 placeholder="XXXXXX-XXXX"
                 :disabled="savingOrg"
               />
-              <button class="btn btn-primary" @click="saveOrgDetails" :disabled="savingOrg || !orgNumChanged">
-                {{ savingOrg ? 'Sparar...' : 'Spara' }}
-              </button>
             </div>
             <p class="setting-hint">Används vid SIE4-export.</p>
           </div>
+
+          <div class="setting-item">
+            <label for="orgLogo">Logotyp (URL)</label>
+            <div style="display: flex; gap: 1rem;">
+              <input 
+                type="text" 
+                id="orgLogo" 
+                v-model="orgLogo" 
+                class="setting-input"
+                placeholder="https://example.com/logo.png"
+                :disabled="savingOrg"
+              />
+            </div>
+            <p class="setting-hint">Länk till bildfil för organisationens logotyp.</p>
+          </div>
+
+          <button class="btn btn-primary" @click="saveOrgDetails" :disabled="savingOrg || !orgDetailsChanged" style="margin-top: 1rem;">
+            {{ savingOrg ? 'Sparar...' : 'Spara Allmänt' }}
+          </button>
         </div>
 
         <!-- Swish Settings -->
@@ -360,6 +376,8 @@ export default {
       swishMode: 'TEST',
       orgNumber: '',
       originalOrgNumber: '',
+      orgLogo: '',
+      originalOrgLogo: '',
       savingOrg: false,
       swishPassphrase: '',
       downloadingSie: false,
@@ -382,8 +400,8 @@ export default {
              this.certificateFile && 
              this.swishPassphrase.trim()
     },
-    orgNumChanged() {
-      return this.orgNumber !== this.originalOrgNumber
+    orgDetailsChanged() {
+      return this.orgNumber !== this.originalOrgNumber || this.orgLogo !== this.originalOrgLogo
     }
   },
   async mounted() {
@@ -436,6 +454,8 @@ export default {
           this.swishMerchantNumber = data.organization.swishMerchantNumber || ''
           this.orgNumber = data.organization.orgNumber || ''
           this.originalOrgNumber = data.organization.orgNumber || ''
+          this.orgLogo = data.organization.logoUrl || ''
+          this.originalOrgLogo = data.organization.logoUrl || ''
         }
 
         // Get invite code
@@ -512,7 +532,8 @@ export default {
             'x-org-id': String(this.organizationId)
           },
           body: JSON.stringify({
-            orgNumber: this.orgNumber
+            orgNumber: this.orgNumber,
+            logoUrl: this.orgLogo
           })
         })
         
@@ -521,11 +542,12 @@ export default {
         }
         
         this.originalOrgNumber = this.orgNumber
-        alert('Organisationsnummer sparat!')
+        this.originalOrgLogo = this.orgLogo
+        alert('Inställningar sparade!')
         
       } catch (error) {
         console.error('Failed to save org details:', error)
-        alert('Kunde inte spara organisationsnummer')
+        alert('Kunde inte spara inställningar')
       } finally {
         this.savingOrg = false
       }

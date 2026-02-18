@@ -12,19 +12,15 @@
         <div class="header-bar">
           <div class="welcome-text">
             <h1>Dashboard</h1>
-            <select 
-              v-if="userOrganizations.length > 1" 
-              v-model="organizationId" 
-              @change="onOrganizationChange"
-              class="org-selector"
-            >
-              <option v-for="org in userOrganizations" :key="org.organization.id" :value="org.organization.id">
-                {{ org.organization.name }}
-              </option>
-            </select>
           </div>
-          <div class="org-name" v-if="userOrganizations.length <= 1">
-            <p>{{ organizationName }}</p>
+          <div class="org-name-container">
+              <img v-if="organizationLogo" :src="organizationLogo" alt="Logo" class="org-logo"/>
+              <select v-if="userOrganizations.length > 1" v-model="organizationId" @change="onOrganizationChange" class="org-selector">
+                <option v-for="org in userOrganizations" :key="org.organization.id" :value="org.organization.id">
+                  {{ org.organization.name }}
+                </option>
+              </select>
+              <h2 v-else class="org-title">{{ organizationName }}</h2>
           </div>
           <div class="header-actions">
             <button class="quick-action-card header-btn" @click="handleViewSwishStatus">
@@ -850,6 +846,7 @@ export default {
       loading: true,
       organizationId: null,
       organizationName: '',
+      organizationLogo: null,
       userOrganizations: [],
       currentUserRole: '',
       showMembersModal: false,
@@ -985,6 +982,7 @@ export default {
     updateDashboardState(data) {
       // Update state with real data
       this.organizationName = data.organization.name
+      this.organizationLogo = data.organization.logoUrl // Populate logoUrl
       this.cashAndBank = data.financialSummary.totalBalance
       this.monthlyIncome = data.financialSummary.monthlyIncome
       this.monthlyExpenses = data.financialSummary.monthlyExpenses
@@ -1863,6 +1861,28 @@ export default {
   color: var(--primary-dark);
   margin: 0;
   line-height: 1.2;
+}
+
+.org-name-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: 2rem;
+  margin-right: auto; /* Push header actions to right */
+}
+
+.org-logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.org-title {
+  font-size: 1.25rem;
+  color: var(--primary-dark);
+  font-weight: 600;
+  margin: 0;
 }
 
 .org-name {

@@ -2,6 +2,7 @@ export type DashboardData = {
     organization: {
         id: number
         name: string
+        logoUrl: string | null
     }
     financialSummary: {
         totalBalance: number
