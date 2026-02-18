@@ -115,6 +115,13 @@
             />
           </div>
 
+          <div class="form-group checkbox-group">
+            <input type="checkbox" id="terms" v-model="termsAccepted">
+            <label for="terms">
+              Jag godkänner <router-link to="/legal?tab=terms" target="_blank">användarvillkoren</router-link> och <router-link to="/legal?tab=privacy" target="_blank">integritetspolicyn</router-link>
+            </label>
+          </div>
+
           <p v-if="registerError" class="error-message">{{ registerError }}</p>
 
           <button type="submit" class="btn btn-primary btn-full" :disabled="registerLoading">
@@ -251,6 +258,7 @@ export default {
       registerEmail: '',
       registerPassword: '',
       registerConfirmPassword: '',
+      termsAccepted: false,
       registerLoading: false,
       registerError: null,
       showOrgSetupModal: false,
@@ -295,11 +303,17 @@ export default {
       this.registerEmail = ''
       this.registerPassword = ''
       this.registerConfirmPassword = ''
+      this.termsAccepted = false
       this.registerError = null
     },
 
     async handleRegisterSubmit() {
       this.registerError = null
+
+      if (!this.termsAccepted) {
+        this.registerError = 'Du måste godkänna användarvillkoren och integritetspolicyn'
+        return
+      }
 
       // Validate passwords match
       if (this.registerPassword !== this.registerConfirmPassword) {
@@ -677,4 +691,24 @@ export default {
     font-size: 1.5rem;
   }
 }
+
+.checkbox-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.checkbox-group input[type='checkbox'] {
+  margin-top: 0.25rem;
+  cursor: pointer;
+}
+
+.checkbox-group label {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--text-dark);
+  cursor: pointer;
+}
 </style>
+
