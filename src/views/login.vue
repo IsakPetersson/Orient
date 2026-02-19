@@ -4,34 +4,34 @@
       <!-- Login Hero -->
       <section class="hero login-hero">
         <div class="hero-content">
-          <h1>Välkommen Tillbaka</h1>
-          <p class="hero-subtitle">Logga in på ditt Orient-konto</p>
+          <h1>{{ $t('auth.welcomeBack') }}</h1>
+          <p class="hero-subtitle">{{ $t('auth.loginSubtitle') }}</p>
         </div>
       </section>
 
       <!-- Login Form Section -->
       <section class="login-section">
         <div class="login-form-wrapper">
-        <h2 class="login-title">Logga In</h2>
+        <h2 class="login-title">{{ $t('auth.loginTitle') }}</h2>
           <form @submit.prevent="handleLogin" class="login-form">
             <div class="form-group">
-              <label for="email">E-post</label>
+              <label for="email">{{ $t('auth.email') }}</label>
               <input
                 type="email"
                 id="email"
                 v-model="email"
-                placeholder="din@email.se"
+                :placeholder="$t('auth.emailPlaceholder')"
                 required
               />
             </div>
 
             <div class="form-group">
-              <label for="password">Lösenord</label>
+              <label for="password">{{ $t('auth.password') }}</label>
               <input
                 type="password"
                 id="password"
                 v-model="password"
-                placeholder="Ange ditt lösenord"
+                :placeholder="$t('auth.passwordPlaceholder')"
                 required
               />
             </div>
@@ -39,24 +39,24 @@
             <div class="form-options">
               <label class="remember-me">
                 <input type="checkbox" v-model="rememberMe" />
-                <span>Kom ihåg mig</span>
+                <span>{{ $t('auth.rememberMe') }}</span>
               </label>
-              <a href="#" class="forgot-password">Glömt lösenord?</a>
+              <a href="#" class="forgot-password">{{ $t('auth.forgotPassword') }}</a>
             </div>
 
             <button type="submit" class="btn btn-primary btn-full" :disabled="loading">
-                {{ loading ? 'Loggar in…' : 'Logga In' }}
+                {{ loading ? $t('auth.loggingIn') : $t('auth.login') }}
             </button>
 
             <p v-if="error" style="color: red; margin: 0;">{{ error }}</p>
 
 
             <div class="login-divider">
-              <span>eller</span>
+              <span>{{ $t('auth.or') }}</span>
             </div>
 
             <button type="button" class="btn btn-primary btn-full" @click="handleRegister">
-              Skapa Nytt Konto
+              {{ $t('auth.createNewAccount') }}
             </button>
           </form>
         </div>
@@ -67,50 +67,50 @@
     <div v-if="showRegisterModal" class="modal-overlay" @click.self="closeRegisterModal">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Skapa Nytt Konto</h2>
+          <h2>{{ $t('auth.createNewAccount') }}</h2>
           <button class="close-btn" @click="closeRegisterModal">&times;</button>
         </div>
         <form @submit.prevent="handleRegisterSubmit" class="register-form">
           <div class="form-group">
-            <label for="register-name">Namn</label>
+            <label for="register-name">{{ $t('auth.name') }}</label>
             <input
               type="text"
               id="register-name"
               v-model="registerName"
-              placeholder="Ditt fullständiga namn"
+              :placeholder="$t('auth.namePlaceholder')"
               required
             />
           </div>
 
           <div class="form-group">
-            <label for="register-email">E-post</label>
+            <label for="register-email">{{ $t('auth.email') }}</label>
             <input
               type="email"
               id="register-email"
               v-model="registerEmail"
-              placeholder="din@email.se"
+              :placeholder="$t('auth.emailPlaceholder')"
               required
             />
           </div>
 
           <div class="form-group">
-            <label for="register-password">Lösenord</label>
+            <label for="register-password">{{ $t('auth.password') }}</label>
             <input
               type="password"
               id="register-password"
               v-model="registerPassword"
-              placeholder="Välj ett starkt lösenord"
+              :placeholder="$t('auth.passwordStrongPlaceholder')"
               required
             />
           </div>
 
           <div class="form-group">
-            <label for="register-confirm-password">Bekräfta Lösenord</label>
+            <label for="register-confirm-password">{{ $t('auth.confirmPassword') }}</label>
             <input
               type="password"
               id="register-confirm-password"
               v-model="registerConfirmPassword"
-              placeholder="Ange lösenordet igen"
+              :placeholder="$t('auth.confirmPasswordPlaceholder')"
               required
             />
           </div>
@@ -118,14 +118,14 @@
           <div class="form-group checkbox-group">
             <input type="checkbox" id="terms" v-model="termsAccepted">
             <label for="terms">
-              Jag godkänner <router-link to="/legal?tab=terms" target="_blank">användarvillkoren</router-link> och <router-link to="/legal?tab=privacy" target="_blank">integritetspolicyn</router-link>
+              {{ $t('auth.agreeTo') }} <router-link to="/legal?tab=terms" target="_blank">{{ $t('auth.terms') }}</router-link> {{ $t('auth.and') }} <router-link to="/legal?tab=privacy" target="_blank">{{ $t('auth.privacy') }}</router-link>
             </label>
           </div>
 
           <p v-if="registerError" class="error-message">{{ registerError }}</p>
 
           <button type="submit" class="btn btn-primary btn-full" :disabled="registerLoading">
-            {{ registerLoading ? 'Skapar konto…' : 'Skapa Konto' }}
+            {{ registerLoading ? $t('auth.creatingAccount') : $t('auth.createAccount') }}
           </button>
         </form>
       </div>
@@ -135,20 +135,20 @@
     <div v-if="showOrgSetupModal" class="modal-overlay" @click.self="skipOrgSetup">
       <div class="modal-content org-setup-modal">
         <div class="modal-header">
-          <h2>Välkommen!</h2>
+          <h2>{{ $t('auth.welcomeExclamation') }}</h2>
           <button class="close-btn" @click="skipOrgSetup">&times;</button>
         </div>
         <div class="modal-body">
-          <p class="welcome-message">Ditt konto har skapats! Vill du gå med i en organisation eller skapa en ny?</p>
+          <p class="welcome-message">{{ $t('auth.accountCreatedMessage') }}</p>
           <div class="org-setup-actions">
             <button class="btn btn-primary btn-full" @click="openJoinOrgFromSetup">
-              Gå med i Organisation
+              {{ $t('auth.joinOrg') }}
             </button>
             <button class="btn btn-primary btn-full" @click="openCreateOrgFromSetup">
-              Skapa Organisation
+              {{ $t('auth.createOrg') }}
             </button>
             <button class="btn-link" @click="skipOrgSetup">
-              Hoppa över
+              {{ $t('auth.skip') }}
             </button>
           </div>
         </div>
@@ -159,25 +159,25 @@
     <div v-if="showCreateOrgModal" class="modal-overlay" @click.self="closeCreateOrgModal">
       <div class="modal-content create-org-modal">
         <div class="modal-header">
-          <h2>Skapa Organisation</h2>
+          <h2>{{ $t('auth.createOrg') }}</h2>
           <button class="close-btn" @click="closeCreateOrgModal">&times;</button>
         </div>
         <form @submit.prevent="submitCreateOrganization" class="modal-body-form">
           <div class="form-group">
-            <label for="org-name">Organisationens namn</label>
+            <label for="org-name">{{ $t('auth.orgName') }}</label>
             <input
               type="text"
               id="org-name"
               v-model="newOrgName"
-              placeholder="T.ex. Fotbollsklubben AIK"
+              :placeholder="$t('auth.orgNamePlaceholder')"
               required
             />
           </div>
           <p v-if="createError" class="error-message">{{ createError }}</p>
           <div class="modal-actions">
-            <button type="button" class="btn btn-primary" @click="closeCreateOrgModal">Avbryt</button>
+            <button type="button" class="btn btn-primary" @click="closeCreateOrgModal">{{ $t('buttons.cancel') }}</button>
             <button type="submit" class="btn btn-primary" :disabled="createLoading">
-              {{ createLoading ? 'Skapar...' : 'Skapa' }}
+              {{ createLoading ? $t('auth.creating') : $t('buttons.create') }}
             </button>
           </div>
         </form>
@@ -188,25 +188,25 @@
     <div v-if="showJoinOrgModal" class="modal-overlay" @click.self="closeJoinOrgModal">
       <div class="modal-content join-org-modal">
         <div class="modal-header">
-          <h2>Gå med i Organisation</h2>
+          <h2>{{ $t('auth.joinOrg') }}</h2>
           <button class="close-btn" @click="closeJoinOrgModal">&times;</button>
         </div>
         <form @submit.prevent="submitJoinOrganization" class="modal-body-form">
           <div class="form-group">
-            <label for="invite-code">Inbjödningskod</label>
+            <label for="invite-code">{{ $t('auth.inviteCode') }}</label>
             <input
               type="text"
               id="invite-code"
               v-model="inviteCode"
-              placeholder="Ange inbjödningskod"
+              :placeholder="$t('auth.inviteCodePlaceholder')"
               required
             />
           </div>
           <p v-if="joinError" class="error-message">{{ joinError }}</p>
           <div class="modal-actions">
-            <button type="button" class="btn btn-primary" @click="closeJoinOrgModal">Avbryt</button>
+            <button type="button" class="btn btn-primary" @click="closeJoinOrgModal">{{ $t('buttons.cancel') }}</button>
             <button type="submit" class="btn btn-primary" :disabled="joinLoading">
-              {{ joinLoading ? 'Går med...' : 'Gå med' }}
+              {{ joinLoading ? $t('auth.joining') : $t('auth.join') }}
             </button>
           </div>
         </form>
@@ -217,22 +217,22 @@
     <div v-if="showSuccessModal" class="modal-overlay" @click.self="closeSuccessModal">
       <div class="modal-content success-modal">
         <div class="modal-header">
-          <h2>Organisation Skapad!</h2>
+          <h2>{{ $t('auth.orgCreated') }}</h2>
           <button class="close-btn" @click="closeSuccessModal">&times;</button>
         </div>
         <div class="modal-body">
-          <p class="success-message">Organisation "{{ createdOrgName }}" har skapats!</p>
+          <p class="success-message">{{ $t('auth.orgCreatedMessage', { orgName: createdOrgName }) }}</p>
           <div class="invite-code-section">
-            <label>Inbjödningskod: </label>
+            <label>{{ $t('auth.inviteCodeLabel') }} </label>
             <code>{{ inviteCodeToShare }}</code>
             <div class="invite-code-display">
-              <button type="button" class="btn btn-primary btn-sm btn-kopiera" @click="copyInviteCode">Kopiera</button>
+              <button type="button" class="btn btn-primary btn-sm btn-kopiera" @click="copyInviteCode">{{ $t('auth.copy') }}</button>
             </div>
-            <p v-if="codeCopied" class="copy-success-message">✓ Kopierad!</p>
-            <p class="invite-code-hint">Dela denna kod med andra för att bjuda in dem till organisationen.</p>
+            <p v-if="codeCopied" class="copy-success-message">{{ $t('auth.copied') }}</p>
+            <p class="invite-code-hint">{{ $t('auth.shareInviteHint') }}</p>
           </div>
           <div class="modal-actions">
-            <button class="btn btn-primary" @click="closeSuccessModal">Fortsätt</button>
+            <button class="btn btn-primary" @click="closeSuccessModal">{{ $t('auth.continue') }}</button>
           </div>
         </div>
       </div>
@@ -287,7 +287,7 @@ export default {
         // Om du har /dashboard, byt till det.
         this.$router.push('/')
       } catch (e) {
-        this.error = e?.message || 'Inloggningen misslyckades'
+        this.error = e?.message || this.$t('auth.loginFailed')
       } finally {
         this.loading = false
       }
@@ -311,13 +311,13 @@ export default {
       this.registerError = null
 
       if (!this.termsAccepted) {
-        this.registerError = 'Du måste godkänna användarvillkoren och integritetspolicyn'
+        this.registerError = this.$t('auth.termsRequired')
         return
       }
 
       // Validate passwords match
       if (this.registerPassword !== this.registerConfirmPassword) {
-        this.registerError = 'Lösenorden matchar inte'
+        this.registerError = this.$t('auth.passwordsNoMatch')
         return
       }
 
@@ -329,7 +329,7 @@ export default {
         this.closeRegisterModal()
         this.showOrgSetupModal = true
       } catch (e) {
-        this.registerError = e?.message || 'Registreringen misslyckades'
+        this.registerError = e?.message || this.$t('auth.registrationFailed')
       } finally {
         this.registerLoading = false
       }
@@ -385,7 +385,7 @@ export default {
         this.closeCreateOrgModal()
         this.showSuccessModal = true
       } catch (error) {
-        this.createError = error.message || 'Kunde inte skapa organisationen'
+        this.createError = error.message || this.$t('auth.createOrgFailed')
       } finally {
         this.createLoading = false
       }
@@ -400,7 +400,7 @@ export default {
         this.closeJoinOrgModal()
         this.$router.push('/')
       } catch (error) {
-        this.joinError = error.message || 'Kunde inte gå med i organisationen'
+        this.joinError = error.message || this.$t('auth.joinOrgFailed')
       } finally {
         this.joinLoading = false
       }

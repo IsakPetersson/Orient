@@ -3,7 +3,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p>Laddar dashboard...</p>
+      <p>{{ $t('dashboard.loading') }}</p>
     </div>
     
     <section v-else-if="!showNoOrgModal && !showAuthModal" class="dashboard-compact">
@@ -11,7 +11,7 @@
         <!-- Header -->
         <div class="header-bar">
           <div class="welcome-text">
-            <h1>Dashboard</h1>
+            <h1>{{ $t('dashboard.title') }}</h1>
           </div>
           <div class="org-name-container">
               <img v-if="organizationLogo" :src="organizationLogo" alt="Logo" class="org-logo"/>
@@ -25,15 +25,15 @@
           <div class="header-actions">
             <button class="quick-action-card header-btn" @click="handleViewSwishStatus">
               <span class="action-icon">⇄</span>
-              <span class="action-text">Swish Status</span>
+              <span class="action-text">{{ $t('dashboard.swishStatus') }}</span>
             </button>
             <button class="quick-action-card header-btn" @click="handleViewMembers">
               <img src="../assets/images/members-icon.png" alt="Members" class="action-icon-img" />
-              <span class="action-text">Medlemmar</span>
+              <span class="action-text">{{ $t('dashboard.membersBtn') }}</span>
             </button>
             <button class="quick-action-card header-btn" @click="handleViewSettings" v-if="currentUserRole === 'OWNER' || currentUserRole === 'ADMIN'">
               <span class="action-icon">⚙</span>
-              <span class="action-text">Inställningar</span>
+              <span class="action-text">{{ $t('dashboard.settingsBtn') }}</span>
             </button>
           </div>
         </div>
@@ -44,40 +44,40 @@
           <div class="left-column">
             <div class="panel">
               <div class="panel-header">
-                <h3>Snabbknappar</h3>
+                <h3>{{ $t('dashboard.quickActions') }}</h3>
               </div>
               <div class="quick-actions-grid" style="padding-top: 10px;">
                 <button class="quick-action-card" @click="handleAction('upload-receipt')">
                   <img src="../assets/images/arrow-icon.png" alt="Upload" class="action-icon-img arrow-up" />
-                  <span class="action-text">Ladda upp Kvitto</span>
+                  <span class="action-text">{{ $t('dashboard.uploadReceipt') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('start-accounting')">
                   <span class="action-icon">▶</span>
-                  <span class="action-text">Starta Bokföring</span>
+                  <span class="action-text">{{ $t('dashboard.startAccounting') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('download-accounting')" :disabled="downloadingSie">
                   <img src="../assets/images/arrow-icon.png" alt="Download" class="action-icon-img" />
-                  <span class="action-text">{{ downloadingSie ? 'Laddar ner...' : 'Ladda ner SIE4-fil' }}</span>
+                  <span class="action-text">{{ downloadingSie ? $t('dashboard.downloadingSie') : $t('dashboard.downloadSie') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('swish-payment')">
                   <span class="action-icon">$</span>
-                  <span class="action-text">Swish Betalning</span>
+                  <span class="action-text">{{ $t('dashboard.swishPay') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('create-invoice')">
                   <span class="action-icon"><div class="thick-square"></div></span>
-                  <span class="action-text">Skapa Faktura</span>
+                  <span class="action-text">{{ $t('dashboard.createInvoice') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('add-member')">
                   <span class="action-icon">+</span>
-                  <span class="action-text">Lägg till Medlem</span>
+                  <span class="action-text">{{ $t('dashboard.addMember') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('record-expense')">
                   <span class="action-icon">−</span>
-                  <span class="action-text">Registrera Utgift</span>
+                  <span class="action-text">{{ $t('dashboard.recordExpense') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('record-income')">
                   <span class="action-icon">+</span>
-                  <span class="action-text">Registrera Intäkt</span>
+                  <span class="action-text">{{ $t('dashboard.recordIncome') }}</span>
                 </button>
               </div>
             </div>
@@ -86,21 +86,21 @@
           <!-- Top Center - Financial Overview (spans 2 columns) -->
           <div class="center-column">
             <div class="stats-compact">
-              <h3 class="section-title">Ekonomisk Översikt</h3>
+              <h3 class="section-title">{{ $t('dashboard.overview') }}</h3>
               <div class="stat-card-compact">
-                <div class="stat-label">Kassa & Bank</div>
+                <div class="stat-label">{{ $t('dashboard.cashBank') }}</div>
                 <div class="stat-amount">{{ cashAndBank.toLocaleString() }} kr</div>
               </div>
               <div class="stat-card-compact income">
-                <div class="stat-label">Månadens Intäkter</div>
+                <div class="stat-label">{{ $t('dashboard.monthlyIncome') }}</div>
                 <div class="stat-amount">+{{ monthlyIncome.toLocaleString() }} kr</div>
               </div>
               <div class="stat-card-compact expense">
-                <div class="stat-label">Månadens Utgifter</div>
+                <div class="stat-label">{{ $t('dashboard.monthlyExpenses') }}</div>
                 <div class="stat-amount">-{{ monthlyExpenses.toLocaleString() }} kr</div>
               </div>
               <div class="stat-card-compact" :class="monthlyResult >= 0 ? 'income' : 'expense'">
-                <div class="stat-label">Resultat</div>
+                <div class="stat-label">{{ $t('dashboard.result') }}</div>
                 <div class="stat-amount">{{ monthlyResult >= 0 ? '+' : '' }}{{ monthlyResult.toLocaleString() }} kr</div>
               </div>
             </div>
@@ -110,7 +110,7 @@
           <div class="right-column">
             <div class="panel">
               <div class="panel-header">
-                <h3>Att Göra</h3>
+                <h3>{{ $t('dashboard.todo') }}</h3>
               </div>
               <div class="alerts-compact">
                 <div v-for="alert in alerts" :key="alert.id" class="alert-row" :class="alert.type">
@@ -118,25 +118,25 @@
                   <span class="alert-text">{{ alert.message }}</span>
                 </div>
               </div>
-              <button class="alerts-action-btn" @click="handleViewAllAlerts">Åtgärda Alla</button>
+              <button class="alerts-action-btn" @click="handleViewAllAlerts">{{ $t('dashboard.fixAll') }}</button>
             </div>
           </div>
 
           <!-- Bottom Left - Member Status -->
           <div class="bottom-left">
             <div class="panel">
-              <h3 class="panel-header-title">Medlemsstatus</h3>
+              <h3 class="panel-header-title">{{ $t('dashboard.memberStatus') }}</h3>
               <div class="member-stats-compact">
                 <div class="member-stat-row">
-                  <span class="member-label">Totalt Medlemmar</span>
+                  <span class="member-label">{{ $t('dashboard.totalMembers') }}</span>
                   <span class="member-value">{{ totalMembers }}</span>
                 </div>
                 <div class="member-stat-row">
-                  <span class="member-label">Betalat</span>
+                  <span class="member-label">{{ $t('dashboard.paid') }}</span>
                   <span class="member-value paid">{{ paidMembers }}</span>
                 </div>
                 <div class="member-stat-row">
-                  <span class="member-label">Obetalt</span>
+                  <span class="member-label">{{ $t('dashboard.unpaid') }}</span>
                   <span class="member-value unpaid">{{ unpaidMembers }}</span>
                 </div>
               </div>
@@ -148,7 +148,7 @@
             <div class="center-split">
               <!-- Income Breakdown -->
               <div class="breakdown-panel">
-                <h3>Intäkter (Uppdelning)</h3>
+                <h3>{{ $t('dashboard.income') }} {{ $t('dashboard.breakdown') }}</h3>
                 <div class="breakdown-list">
                   <div v-for="item in incomeBreakdown" :key="item.id" class="breakdown-row">
                     <span class="breakdown-label">{{ item.category }}</span>
@@ -159,7 +159,7 @@
 
               <!-- Expense Breakdown -->
               <div class="breakdown-panel">
-                <h3>Utgifter (Uppdelning)</h3>
+                <h3>{{ $t('dashboard.expenses') }} {{ $t('dashboard.breakdown') }}</h3>
                 <div class="breakdown-list">
                   <div v-for="item in expenseBreakdown" :key="item.id" class="breakdown-row">
                     <span class="breakdown-label">{{ item.category }}</span>
@@ -178,7 +178,7 @@
           <div class="bottom-right-2">
             <div class="panel">
               <div class="panel-header">
-                <h3>Senaste Aktivitet</h3>
+                <h3>{{ $t('dashboard.recentActivity') }}</h3>
               </div>
               <div class="activity-compact">
                 <div v-for="transaction in recentTransactions.slice(0, 5)" :key="transaction.id" class="activity-row">
@@ -215,9 +215,9 @@
           <p style="white-space: pre-line;">{{ customAlertMessage }}</p>
         </div>
         <div class="modal-footer centered">
-          <button v-if="customAlertType === 'show-settings-link'" class="btn btn-primary btn-lg" @click="$router.push('/settings')">Gå till Inställningar</button>
+          <button v-if="customAlertType === 'show-settings-link'" class="btn btn-primary btn-lg" @click="$router.push('/settings')">{{ $t('dashboard.gotoSettings') }}</button>
           <button :class="['btn', 'btn-lg', customAlertType === 'show-settings-link' ? 'btn-primary' : 'btn-primary']" @click="showCustomAlert = false">
-            {{ customAlertType === 'show-settings-link' ? 'Avbryt' : 'OK' }}
+            {{ customAlertType === 'show-settings-link' ? $t('dashboard.cancel') : $t('dashboard.ok') }}
           </button>
         </div>
       </div>
@@ -236,8 +236,8 @@
           <p style="white-space: pre-line;">{{ customAlertMessage }}</p>
         </div>
         <div class="modal-footer centered" style="gap: 1rem;">
-          <button class="btn cancel-btn" @click="showConfirmModal = false">Avbryt</button>
-          <button class="btn btn-primary" @click="handleConfirm">Bekräfta</button>
+          <button class="btn cancel-btn" @click="showConfirmModal = false">{{ $t('dashboard.cancel') }}</button>
+          <button class="btn btn-primary" @click="handleConfirm">{{ $t('dashboard.confirm') }}</button>
         </div>
       </div>
     </div>
@@ -246,15 +246,15 @@
     <div v-if="showMembersModal" class="modal-overlay" @click="closeMembersModal">
       <div class="modal-content members-modal" @click.stop>
         <div class="modal-header">
-          <h2>Medlemmar i {{ organizationName }}</h2>
+          <h2>{{ $t('dashboard.membersTitle', { orgName: organizationName }) }}</h2>
           <button class="close-btn" @click="closeMembersModal">×</button>
         </div>
         <div class="modal-body">
           <!-- Team Members Section -->
           <div class="members-section">
-            <h3 class="section-title">Teammedlemmar ({{ teamMembers.length }})</h3>
+            <h3 class="section-title">{{ $t('dashboard.teamMembers', { count: teamMembers.length }) }}</h3>
             <div v-if="teamMembers.length === 0" class="no-members">
-              <p>Inga teammedlemmar hittades.</p>
+              <p>{{ $t('dashboard.noTeamMembers') }}</p>
             </div>
             <div v-else class="members-list">
               <div v-for="member in teamMembers" :key="'team-' + member.id" class="member-item">
@@ -269,7 +269,7 @@
                   {{ translateRole(member.role) }}
                 </div>
                 <div class="member-joined">
-                  Gick med {{ formatDate(member.joinedAt) }}
+                  {{ $t('dashboard.joined', { date: formatDate(member.joinedAt) }) }}
                 </div>
                 <div v-if="currentUserRole === 'OWNER' && member.role !== 'OWNER'" class="member-actions">
                   <button class="action-btn promote-btn" @click="promoteMember(member)" :title="member.role === 'ADMIN' ? 'Degradera' : 'Befördra'">
@@ -286,18 +286,18 @@
           <!-- Club Members Section -->
           <div class="members-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <h3 class="section-title" style="margin-bottom: 0;">Klubbmedlemmar ({{ clubMembers.length }})</h3>
+              <h3 class="section-title" style="margin-bottom: 0;">{{ $t('dashboard.clubMembers', { count: clubMembers.length }) }}</h3>
               <button 
                 v-if="currentUserRole === 'OWNER' && clubMembers.some(m => !m.paid && m.phone)" 
                 class="btn btn-sm btn-primary" 
                 @click="requestAllUnpaid"
                 style="font-size: 0.8rem; padding: 4px 8px;"
               >
-                Begär från alla obetalda
+                {{ $t('dashboard.requestUnpaid') }}
               </button>
             </div>
             <div v-if="clubMembers.length === 0" class="no-members">
-              <p>Inga klubbmedlemmar hittades.</p>
+              <p>{{ $t('dashboard.noClubMembers') }}</p>
             </div>
             <div v-else class="members-list">
               <div v-for="member in clubMembers" :key="'club-' + member.id" class="member-item" @click="viewClubMemberDetails(member)" style="cursor: pointer;">
@@ -307,25 +307,25 @@
                 <div class="member-info">
                   <div class="member-name">{{ member.name }}</div>
                   <div class="member-email">{{ member.email }}</div>
-                  <div class="member-meta">{{ translateMemberType(member.type) }} • {{ member.fee }} kr/år</div>
+                  <div class="member-meta">{{ translateMemberType(member.type) }} • {{ member.fee }} kr/{{ $t('common.year') }}</div>
                 </div>
                 <div class="member-status-badge" :class="{ 'paid': member.paid, 'unpaid': !member.paid }">
-                  {{ member.paid ? 'Betald' : 'Obetald' }}
+                  {{ member.paid ? $t('dashboard.member.paid') : $t('dashboard.member.unpaid') }}
                 </div>
                 <div class="member-joined">
-                  Medlem sedan {{ formatDate(member.createdAt) }}
+                  {{ $t('dashboard.member.since', { date: formatDate(member.createdAt) }) }}
                 </div>
                 <div class="header-actions" v-if="currentUserRole === 'OWNER'" @click.stop>
                    <button 
                      v-if="!member.paid && member.phone" 
                      class="action-btn" 
                      @click="requestPaymentForMember(member)" 
-                     title="Begär Swish-betalning"
+                     :title="$t('dashboard.member.requestSwish')"
                      style="margin-right: 5px; background: none; border: none; font-size: 1.2rem; cursor: pointer;"
                    >
                      $
                    </button>
-                  <button class="action-btn remove-btn" @click="removeClubMember(member)" title="Ta bort">
+                  <button class="action-btn remove-btn" @click="removeClubMember(member)" :title="$t('dashboard.member.remove')">
                     ×
                   </button>
                 </div>
@@ -334,7 +334,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary" @click="closeMembersModal">Stäng</button>
+          <button class="btn btn-primary" @click="closeMembersModal">{{ $t('dashboard.member.close') }}</button>
         </div>
       </div>
     </div>
@@ -343,7 +343,7 @@
     <div v-if="showUploadModal" class="modal-overlay" @click="closeUploadModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>Ladda upp Kvitto</h2>
+          <h2>{{ $t('dashboard.uploadModal.title') }}</h2>
           <button class="close-btn" @click="closeUploadModal">×</button>
         </div>
         <div 
@@ -357,8 +357,8 @@
           <div class="upload-icon">
             <img src="../assets/images/arrow-icon.png" alt="Upload" class="action-icon-img arrow-up large-icon" />
           </div>
-          <p class="upload-text">Dra och släpp filer här</p>
-          <p class="upload-subtext">eller</p>
+          <p class="upload-text">{{ $t('dashboard.uploadModal.dropText') }}</p>
+          <p class="upload-subtext">{{ $t('dashboard.uploadModal.or') }}</p>
           <input 
             type="file" 
             ref="fileInput" 
@@ -367,11 +367,11 @@
             accept="image/*,.pdf"
             style="display: none;"
           />
-          <button class="browse-btn" @click="$refs.fileInput.click()">Bläddra efter filer</button>
-          <p class="upload-hint">Stödda format: Bilder (JPG, PNG) och PDF</p>
+          <button class="browse-btn" @click="$refs.fileInput.click()">{{ $t('dashboard.uploadModal.browse') }}</button>
+          <p class="upload-hint">{{ $t('dashboard.uploadModal.hint') }}</p>
         </div>
         <div v-if="selectedFiles.length > 0" class="file-list">
-          <h3>Valda filer ({{ selectedFiles.length }})</h3>
+          <h3>{{ $t('dashboard.uploadModal.selectedFiles', { count: selectedFiles.length }) }}</h3>
           <div v-for="(file, index) in selectedFiles" :key="index" class="file-item">
             <span class="file-icon"><div class="thick-square small"></div></span>
             <span class="file-name">{{ file.name }}</span>
@@ -380,13 +380,13 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="cancel-btn" @click="closeUploadModal">Avbryt</button>
+          <button class="cancel-btn" @click="closeUploadModal">{{ $t('dashboard.uploadModal.cancel') }}</button>
           <button 
             class="upload-btn" 
             @click="uploadFiles" 
             :disabled="selectedFiles.length === 0"
           >
-            Ladda upp ({{ selectedFiles.length }})
+            {{ $t('dashboard.uploadModal.upload', { count: selectedFiles.length }) }}
           </button>
         </div>
       </div>
@@ -396,52 +396,52 @@
     <div v-if="showAddMemberModal" class="modal-overlay" @click="closeAddMemberModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>Lägg till Medlem</h2>
+          <h2>{{ $t('dashboard.addMemberModal.title') }}</h2>
           <button class="close-btn" @click="closeAddMemberModal">×</button>
         </div>
         <div class="modal-body">
           <form @submit.prevent="addMember">
             <div class="form-group">
-              <label for="memberName">Namn *</label>
+              <label for="memberName">{{ $t('dashboard.addMemberModal.name') }}</label>
               <input 
                 type="text" 
                 id="memberName" 
                 v-model="newMember.name" 
                 required
-                placeholder="För- och efternamn"
+                :placeholder="$t('dashboard.addMemberModal.name')"
               />
             </div>
             <div class="form-group">
-              <label for="memberEmail">E-post *</label>
+              <label for="memberEmail">{{ $t('dashboard.addMemberModal.email') }}</label>
               <input 
                 type="email" 
                 id="memberEmail" 
                 v-model="newMember.email" 
                 required
-                placeholder="exempel@email.com"
+                :placeholder="$t('dashboard.addMemberModal.email')"
               />
             </div>
             <div class="form-group">
-              <label for="memberPhone">Telefon</label>
+              <label for="memberPhone">{{ $t('dashboard.addMemberModal.phone') }}</label>
               <input 
                 type="tel" 
                 id="memberPhone" 
                 v-model="newMember.phone"
-                placeholder="070-123 45 67"
+                :placeholder="$t('dashboard.addMemberModal.phone')"
               />
             </div>
             <div class="form-group">
-              <label for="memberType">Medlemstyp *</label>
+              <label for="memberType">{{ $t('dashboard.addMemberModal.type') }}</label>
               <select id="memberType" v-model="newMember.type" required>
-                <option value="">Välj medlemstyp</option>
-                <option value="regular">Ordinarie</option>
-                <option value="youth">Ungdom</option>
-                <option value="senior">Senior</option>
-                <option value="family">Familj</option>
+                <option value="">{{ $t('dashboard.addMemberModal.selectType') }}</option>
+                <option value="regular">{{ $t('dashboard.addMemberModal.types.regular') }}</option>
+                <option value="youth">{{ $t('dashboard.addMemberModal.types.youth') }}</option>
+                <option value="senior">{{ $t('dashboard.addMemberModal.types.senior') }}</option>
+                <option value="family">{{ $t('dashboard.addMemberModal.types.family') }}</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="memberFee">Årsavgift (kr) *</label>
+              <label for="memberFee">{{ $t('dashboard.addMemberModal.fee') }}</label>
               <input 
                 type="number" 
                 id="memberFee" 
@@ -457,14 +457,14 @@
                   type="checkbox" 
                   v-model="newMember.paid"
                 />
-                <span>Har betalat årsavgift</span>
+                <span>{{ $t('dashboard.addMemberModal.paidCheck') }}</span>
               </label>
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button class="cancel-btn" @click="closeAddMemberModal">Avbryt</button>
-          <button class="upload-btn" @click="addMember">Lägg till Medlem</button>
+          <button class="cancel-btn" @click="closeAddMemberModal">{{ $t('dashboard.addMemberModal.cancel') }}</button>
+          <button class="upload-btn" @click="addMember">{{ $t('dashboard.addMemberModal.add') }}</button>
         </div>
       </div>
     </div>
@@ -473,23 +473,23 @@
     <div v-if="showIncomeModal" class="modal-overlay" @click="closeIncomeModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>Registrera Intäkt</h2>
+          <h2>{{ $t('dashboard.incomeModal.title') }}</h2>
           <button class="close-btn" @click="closeIncomeModal">×</button>
         </div>
         <div class="modal-body">
           <form @submit.prevent="registerIncome">
             <div class="form-group">
-              <label for="incomeDescription">Beskrivning *</label>
+              <label for="incomeDescription">{{ $t('dashboard.incomeModal.description') }}</label>
               <input 
                 type="text" 
                 id="incomeDescription" 
                 v-model="newIncome.description" 
                 required
-                placeholder="T.ex. Medlemsavgifter, Sponsring"
+                :placeholder="$t('dashboard.incomeModal.placeholderDesc')"
               />
             </div>
             <div class="form-group">
-              <label for="incomeAmount">Belopp (kr) *</label>
+              <label for="incomeAmount">{{ $t('dashboard.incomeModal.amount') }}</label>
               <input 
                 type="number" 
                 id="incomeAmount" 
@@ -501,18 +501,18 @@
               />
             </div>
             <div class="form-group">
-              <label for="incomeCategory">Kategori *</label>
+              <label for="incomeCategory">{{ $t('dashboard.incomeModal.category') }}</label>
               <select id="incomeCategory" v-model="newIncome.category" required>
-                <option value="">Välj kategori</option>
-                <option value="Medlemsavgifter">Medlemsavgifter</option>
-                <option value="Sponsring">Sponsring</option>
-                <option value="Tävlingsavgifter">Tävlingsavgifter</option>
-                <option value="Bidrag">Bidrag</option>
-                <option value="Övrigt">Övrigt</option>
+                <option value="">{{ $t('dashboard.incomeModal.selectCategory') }}</option>
+                <option value="Medlemsavgifter">{{ $t('dashboard.incomeModal.categories.fees') }}</option>
+                <option value="Sponsring">{{ $t('dashboard.incomeModal.categories.sponsorship') }}</option>
+                <option value="Tävlingsavgifter">{{ $t('dashboard.incomeModal.categories.competition') }}</option>
+                <option value="Bidrag">{{ $t('dashboard.incomeModal.categories.grants') }}</option>
+                <option value="Övrigt">{{ $t('dashboard.incomeModal.categories.other') }}</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="incomeDate">Datum *</label>
+              <label for="incomeDate">{{ $t('dashboard.incomeModal.date') }}</label>
               <input 
                 type="date" 
                 id="incomeDate" 
@@ -521,19 +521,19 @@
               />
             </div>
             <div class="form-group">
-              <label for="incomeNotes">Anteckningar</label>
+              <label for="incomeNotes">{{ $t('dashboard.incomeModal.notes') }}</label>
               <textarea 
                 id="incomeNotes" 
                 v-model="newIncome.notes"
                 rows="3"
-                placeholder="Valfri information..."
+                :placeholder="$t('dashboard.incomeModal.placeholderNotes')"
               ></textarea>
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button class="cancel-btn" @click="closeIncomeModal">Avbryt</button>
-          <button class="upload-btn" @click="registerIncome">Registrera Intäkt</button>
+          <button class="cancel-btn" @click="closeIncomeModal">{{ $t('dashboard.incomeModal.cancel') }}</button>
+          <button class="upload-btn" @click="registerIncome">{{ $t('dashboard.incomeModal.register') }}</button>
         </div>
       </div>
     </div>
@@ -542,23 +542,23 @@
     <div v-if="showExpenseModal" class="modal-overlay" @click="closeExpenseModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>Registrera Utgift</h2>
+          <h2>{{ $t('dashboard.expenseModal.title') }}</h2>
           <button class="close-btn" @click="closeExpenseModal">×</button>
         </div>
         <div class="modal-body">
           <form @submit.prevent="registerExpense">
             <div class="form-group">
-              <label for="expenseDescription">Beskrivning *</label>
+              <label for="expenseDescription">{{ $t('dashboard.expenseModal.description') }}</label>
               <input 
                 type="text" 
                 id="expenseDescription" 
                 v-model="newExpense.description" 
                 required
-                placeholder="T.ex. Lokalhyra, Utrustning"
+                :placeholder="$t('dashboard.expenseModal.placeholderDesc')"
               />
             </div>
             <div class="form-group">
-              <label for="expenseAmount">Belopp (kr) *</label>
+              <label for="expenseAmount">{{ $t('dashboard.expenseModal.amount') }}</label>
               <input 
                 type="number" 
                 id="expenseAmount" 
@@ -570,20 +570,20 @@
               />
             </div>
             <div class="form-group">
-              <label for="expenseCategory">Kategori *</label>
+              <label for="expenseCategory">{{ $t('dashboard.expenseModal.category') }}</label>
               <select id="expenseCategory" v-model="newExpense.category" required>
-                <option value="">Välj kategori</option>
-                <option value="Lokalhyra">Lokalhyra</option>
-                <option value="Utrustning">Utrustning</option>
-                <option value="Tränare">Tränare</option>
-                <option value="Resor">Resor</option>
-                <option value="Marknadsföring">Marknadsföring</option>
-                <option value="Administration">Administration</option>
-                <option value="Övrigt">Övrigt</option>
+                <option value="">{{ $t('dashboard.expenseModal.selectCategory') }}</option>
+                <option value="Lokalhyra">{{ $t('dashboard.expenseModal.categories.rent') }}</option>
+                <option value="Utrustning">{{ $t('dashboard.expenseModal.categories.equipment') }}</option>
+                <option value="Tränare">{{ $t('dashboard.expenseModal.categories.coach') }}</option>
+                <option value="Resor">{{ $t('dashboard.expenseModal.categories.travel') }}</option>
+                <option value="Marknadsföring">{{ $t('dashboard.expenseModal.categories.marketing') }}</option>
+                <option value="Administration">{{ $t('dashboard.expenseModal.categories.admin') }}</option>
+                <option value="Övrigt">{{ $t('dashboard.expenseModal.categories.other') }}</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="expenseDate">Datum *</label>
+              <label for="expenseDate">{{ $t('dashboard.expenseModal.date') }}</label>
               <input 
                 type="date" 
                 id="expenseDate" 
@@ -592,19 +592,19 @@
               />
             </div>
             <div class="form-group">
-              <label for="expenseNotes">Anteckningar</label>
+              <label for="expenseNotes">{{ $t('dashboard.expenseModal.notes') }}</label>
               <textarea 
                 id="expenseNotes" 
                 v-model="newExpense.notes"
                 rows="3"
-                placeholder="Valfri information..."
+                :placeholder="$t('dashboard.expenseModal.placeholderNotes')"
               ></textarea>
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button class="cancel-btn" @click="closeExpenseModal">Avbryt</button>
-          <button class="upload-btn" @click="registerExpense">Registrera Utgift</button>
+          <button class="cancel-btn" @click="closeExpenseModal">{{ $t('dashboard.expenseModal.cancel') }}</button>
+          <button class="upload-btn" @click="registerExpense">{{ $t('dashboard.expenseModal.register') }}</button>
         </div>
       </div>
     </div>
@@ -613,25 +613,25 @@
     <div v-if="showSwishModal" class="modal-overlay" @click="closeSwishModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>Swish Betalning</h2>
+          <h2>{{ $t('dashboard.swishModal.title') }}</h2>
           <button class="close-btn" @click="closeSwishModal">×</button>
         </div>
         <div class="modal-body">
             <div class="form-group">
-              <label for="swishMember">Välj medlem (fyller i telefonnummer)</label>
+              <label for="swishMember">{{ $t('dashboard.swishModal.selectMember') }}</label>
               <select 
                 id="swishMember" 
                 @change="onSwishMemberSelect($event)"
                 class="form-select"
               >
-                <option value="">-- Välj medlem --</option>
+                <option value="">{{ $t('dashboard.swishModal.selectMemberPlaceholder') }}</option>
                 <option v-for="member in clubMembers" :key="member.id" :value="member.id">
-                  {{ member.name }} ({{ member.phone || 'Inget nummer' }})
+                  {{ member.name }} ({{ member.phone || $t('dashboard.swishModal.noPhone') }})
                 </option>
               </select>
             </div>
             <div class="form-group">
-              <label for="swishPhone">Telefonnummer *</label>
+              <label for="swishPhone">{{ $t('dashboard.swishModal.phone') }}</label>
               <input 
                 type="tel" 
                 id="swishPhone" 
@@ -642,7 +642,7 @@
               />
             </div>
             <div class="form-group">
-              <label for="swishAmount">Belopp (kr) *</label>
+              <label for="swishAmount">{{ $t('dashboard.swishModal.amount') }}</label>
               <input 
                 type="number" 
                 id="swishAmount" 
@@ -654,7 +654,7 @@
               />
             </div>
             <div class="form-group">
-              <label for="swishDescription">Beskrivning *</label>
+              <label for="swishDescription">{{ $t('dashboard.swishModal.description') }}</label>
               <div class="preset-buttons">
                 <button 
                   type="button"
@@ -672,29 +672,29 @@
                 v-model="swishPayment.description"
                 required
                 rows="3"
-                placeholder="Välj en förinställning eller skriv egen text"
+                :placeholder="$t('dashboard.swishModal.selectPreset')"
                 maxlength="50"
               ></textarea>
-              <small class="char-count">{{ swishPayment.description.length }}/50 tecken</small>
+              <small class="char-count">{{ $t('dashboard.swishModal.charCount', { current: swishPayment.description.length, max: 50 }) }}</small>
             </div>
             <div class="form-group">
-              <label for="swishAccount">Boka till konto (valfritt)</label>
+              <label for="swishAccount">{{ $t('dashboard.swishModal.bookAccount') }}</label>
               <select 
                 id="swishAccount" 
                 v-model="swishPayment.bookAccountId"
                 class="form-select"
               >
-                <option :value="null">-- Boka inte automatiskt --</option>
+                <option :value="null">{{ $t('dashboard.swishModal.noAutoBook') }}</option>
                 <option v-for="account in accounts" :key="account.id" :value="account.id">
                   {{ account.name }}
                 </option>
               </select>
-              <small class="setting-hint">Om vald kommer betalningen automatiskt bokas som en transaktion när den är genomförd.</small>
+              <small class="setting-hint">{{ $t('dashboard.swishModal.bookHint') }}</small>
             </div>
         </div>
         <div class="modal-footer">
-          <button class="cancel-btn" @click="closeSwishModal">Avbryt</button>
-          <button class="upload-btn" @click="requestSwishPayment">Begär Betalning</button>
+          <button class="cancel-btn" @click="closeSwishModal">{{ $t('dashboard.swishModal.cancel') }}</button>
+          <button class="upload-btn" @click="requestSwishPayment">{{ $t('dashboard.swishModal.request') }}</button>
         </div>
       </div>
     </div>
@@ -706,10 +706,10 @@
           <div class="auth-icon">
             <img src="../assets/images/lock.png" alt="Lock" class="auth-icon-img" />
           </div>
-          <h2>Inloggning Krävs</h2>
-          <p>Du måste vara inloggad för att komma åt Dashboard.</p>
+          <h2>{{ $t('dashboard.authModal.title') }}</h2>
+          <p>{{ $t('dashboard.authModal.message') }}</p>
           <button class="btn btn-primary btn-full" @click="goToLogin">
-            Gå till Inloggning
+            {{ $t('dashboard.authModal.login') }}
           </button>
         </div>
       </div>
@@ -722,10 +722,10 @@
           <div class="auth-icon">
             <img src="../assets/images/members-icon.png" alt="Organization" class="auth-icon-img" />
           </div>
-          <h2>Ingen Organisation</h2>
-          <p>Du är inte med i någon organisation. Gå till Organisationer för att gå med eller skapa en.</p>
+          <h2>{{ $t('dashboard.noOrgModal.title') }}</h2>
+          <p>{{ $t('dashboard.noOrgModal.message') }}</p>
           <button class="btn btn-primary btn-full" @click="$router.push('/')">
-            Gå till Startsidan
+            {{ $t('dashboard.noOrgModal.home') }}
           </button>
         </div>
       </div>
@@ -735,7 +735,7 @@
     <div v-if="showClubMemberDetailModal && selectedClubMember" class="modal-overlay" @click="closeClubMemberDetailModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>Medlemsdetaljer</h2>
+          <h2>{{ $t('dashboard.clubMemberDetailModal.title') }}</h2>
           <button class="close-btn" @click="closeClubMemberDetailModal">×</button>
         </div>
         <div class="modal-body">
@@ -748,29 +748,29 @@
 
           <div class="member-detail-info">
             <div class="detail-row">
-              <span class="detail-label">E-post:</span>
+              <span class="detail-label">{{ $t('dashboard.clubMemberDetailModal.email') }}:</span>
               <span class="detail-value">{{ selectedClubMember.email }}</span>
             </div>
             <div v-if="selectedClubMember.phone" class="detail-row">
-              <span class="detail-label">Telefon:</span>
+              <span class="detail-label">{{ $t('dashboard.clubMemberDetailModal.phone') }}:</span>
               <span class="detail-value">{{ selectedClubMember.phone }}</span>
             </div>
             <div class="detail-row">
-              <span class="detail-label">Medlemstyp:</span>
+              <span class="detail-label">{{ $t('dashboard.clubMemberDetailModal.type') }}:</span>
               <span class="detail-value">{{ translateMemberType(selectedClubMember.type) }}</span>
             </div>
             <div class="detail-row">
-              <span class="detail-label">Årsavgift:</span>
+              <span class="detail-label">{{ $t('dashboard.clubMemberDetailModal.fee') }}:</span>
               <span class="detail-value">{{ selectedClubMember.fee }} kr</span>
             </div>
             <div class="detail-row">
-              <span class="detail-label">Medlem sedan:</span>
+              <span class="detail-label">{{ $t('dashboard.clubMemberDetailModal.since') }}:</span>
               <span class="detail-value">{{ formatDate(selectedClubMember.createdAt) }}</span>
             </div>
           </div>
 
           <div class="payment-status-section">
-            <h4>Betalningsstatus</h4>
+            <h4>{{ $t('dashboard.clubMemberDetailModal.paymentStatus') }}</h4>
             <div class="payment-toggle">
               <label class="toggle-label">
                 <input 
@@ -781,17 +781,17 @@
                 />
                 <span class="toggle-slider"></span>
                 <span class="toggle-text">
-                  {{ selectedClubMember.paid ? 'Betald' : 'Obetald' }}
+                  {{ selectedClubMember.paid ? $t('dashboard.clubMemberDetailModal.paid') : $t('dashboard.clubMemberDetailModal.unpaid') }}
                 </span>
               </label>
             </div>
             <p class="payment-note" v-if="currentUserRole !== 'OWNER' && currentUserRole !== 'ADMIN'">
-              Endast ägare och administratörer kan ändra betalningsstatus.
+              {{ $t('dashboard.clubMemberDetailModal.adminNote') }}
             </p>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary" @click="closeClubMemberDetailModal">Stäng</button>
+          <button class="btn btn-primary" @click="closeClubMemberDetailModal">{{ $t('dashboard.clubMemberDetailModal.close') }}</button>
         </div>
       </div>
     </div>
@@ -800,12 +800,12 @@
     <div v-if="showSwishStatusModal" class="modal-overlay" @click="closeSwishStatusModal">
       <div class="modal-content modal-lg" @click.stop>
         <div class="modal-header">
-          <h2>Swish Betalningar</h2>
+          <h2>{{ $t('dashboard.swishStatusModal.title') }}</h2>
           <button class="close-btn" @click="closeSwishStatusModal">×</button>
         </div>
         <div class="modal-body">
           <div v-if="swishRequests.length === 0" class="no-members">
-            <p>Inga Swish-förfrågningar hittades.</p>
+            <p>{{ $t('dashboard.swishStatusModal.noRequests') }}</p>
           </div>
           <div v-else class="members-list">
             <div v-for="req in swishRequests" :key="req.id" class="member-item">
@@ -827,7 +827,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="cancel-btn" @click="closeSwishStatusModal">Stäng</button>
+          <button class="cancel-btn" @click="closeSwishStatusModal">{{ $t('dashboard.swishStatusModal.close') }}</button>
         </div>
       </div>
     </div>
@@ -910,15 +910,7 @@ export default {
       alerts: [],
       incomeBreakdown: [],
       expenseBreakdown: [],
-      accounts: [],
-      descriptionPresets: [
-        'Medlemsavgift',
-        'Tävlingsavgift',
-        'Träningsavgift',
-        'Lokalhyra',
-        'Utrustning',
-        'Sponsring'
-      ]
+      accounts: []
     }
   },
   async mounted() {
@@ -933,6 +925,16 @@ export default {
   computed: {
     monthlyResult() {
       return this.monthlyIncome - this.monthlyExpenses
+    },
+    descriptionPresets() {
+      return [
+        'Medlemsavgift',
+        'Tävlingsavgift',
+        'Träningsavgift',
+        'Lokalhyra',
+        'Utrustning',
+        'Sponsring'
+      ]
     }
   },
   methods: {
@@ -974,7 +976,7 @@ export default {
         }
       } catch (error) {
         console.error('Failed to load dashboard:', error)
-        alert('Kunde inte ladda dashboard-data')
+        alert(this.$t('dashboard.alerts.loadError')) // Use translation
       } finally {
         this.loading = false
       }
@@ -1000,7 +1002,7 @@ export default {
         this.alerts.push({
           id: 1,
           type: 'warning',
-          message: `${this.unpaidMembers} medlemmar har ej betalat avgift`
+          message: `${this.unpaidMembers} ${this.$t('dashboard.member.unpaid').toLowerCase()} ${this.$t('dashboard.membersBtn').toLowerCase()}` // Keep simple or improve alert translation later
         })
       }
     },
@@ -1055,7 +1057,7 @@ export default {
         
       } catch (error) {
         console.error('SIE export failed:', error)
-        alert('Kunde inte ladda ner SIE-filen. Försök igen senare.')
+        alert(this.$t('dashboard.alerts.sieError'))
       } finally {
         this.downloadingSie = false
       }
@@ -1090,12 +1092,12 @@ export default {
         }
         this.showSwishModal = true
       } else {
-        alert(`Funktionen "${action}" kommer snart!`)
+        alert(this.$t('dashboard.alerts.featureComing', { feature: action }))
       }
     },
     handleViewAllAlerts() {
       console.log('View all alerts')
-      alert('Öppnar åtgärdssida (kommer snart)...')
+      alert(this.$t('dashboard.alerts.actionPage'))
     },
     async handleViewSwishStatus() {
       this.showSwishStatusModal = true
@@ -1107,22 +1109,15 @@ export default {
         this.swishRequests = await response.json()
       } catch (error) {
         console.error('Error fetching Swish requests:', error)
-        alert('Kunde inte hämta Swish-förfrågningar')
+        alert(this.$t('dashboard.alerts.swishError'))
       }
     },
     closeSwishStatusModal() {
       this.showSwishStatusModal = false
     },
     translateSwishStatus(status) {
-      const map = {
-        'PAID': 'Betald',
-        'DECLINED': 'Nekad',
-        'ERROR': 'Fel',
-        'PENDING': 'Väntar',
-        'CREATED': 'Skapad',
-        'CANCELLED': 'Avbruten'
-      }
-      return map[status] || status
+      const key = `dashboard.swishStatus.${status}`
+      return this.$t(key) !== key ? this.$t(key) : status
     },
     async handleViewMembers() {      
       try {
@@ -1132,7 +1127,7 @@ export default {
         this.showMembersModal = true
       } catch (error) {
         console.error('Failed to load members:', error)
-        alert('Kunde inte ladda medlemmar')
+        alert(this.$t('dashboard.alerts.membersError'))
       }
     },
     handleViewSettings() {
@@ -1163,15 +1158,15 @@ export default {
       const unpaidMembers = this.clubMembers.filter(m => !m.paid && m.phone)
       
       if (unpaidMembers.length === 0) {
-        this.showAlert('Inga mottagare', 'Inga obetalda medlemmar med telefonnummer hittades.', 'warning')
+        this.showAlert(this.$t('dashboard.alerts.noRecipients'), this.$t('dashboard.alerts.noUnpaidPhones'), 'warning')
         return
       }
 
       const totalAmount = unpaidMembers.reduce((sum, m) => sum + m.fee, 0)
       
       this.showConfirm(
-        'Skicka betalningsförfrågningar?',
-        `Detta skickar ${unpaidMembers.length} Swish-förfrågningar för totalt ${totalAmount} kr.\n\nEn begäran skickas till varje obetald medlem med registrerat telefonnummer.`,
+        this.$t('dashboard.alerts.sendRequests'),
+        this.$t('dashboard.alerts.confirmSend', { count: unpaidMembers.length, amount: totalAmount }),
         async () => {
           const defaultAccountId = this.accounts.length > 0 ? this.accounts[0].id : null
           await this.processUnpaidRequests(unpaidMembers, defaultAccountId)
@@ -1180,7 +1175,7 @@ export default {
     },
     async processUnpaidRequests(unpaidMembers, defaultAccountId) {
       if (this.unpaidMembers === 0) {
-        this.showAlert('Inga obetalda', 'Det finns inga obetalda medlemmar att skicka till.', 'info');
+        this.showAlert(this.$t('dashboard.alerts.noUnpaid'), this.$t('dashboard.alerts.noUnpaidToSend'), 'info');
         return;
       }
       
@@ -1254,27 +1249,28 @@ export default {
         return
       }
       
-      let message = `Klar! Skickade ${successCount} förfrågningar.`
+      let message = this.$t('dashboard.alerts.bulkRequestSuccess', { successCount })
       if (failCount > 0) {
-        message += `\n\nMisslyckades med ${failCount} förfrågningar.`
+        message += `\n\n${this.$t('dashboard.alerts.bulkRequestFail', { failCount })}`
         
         // Add sample errors to message
         if (errors.length > 0) {
           const sampleErrors = errors.slice(0, 3).join('\n');
-          message += `\n\nExempel på fel:\n${sampleErrors}`;
+          message += `\n\n${this.$t('dashboard.alerts.bulkRequestError')}\n${sampleErrors}`;
           
           if (errors.length > 3) {
-            message += `\n...och ${errors.length - 3} till.`;
+            message += `\n${this.$t('dashboard.alerts.bulkRequestMore', { count: errors.length - 3 })}`;
           }
         }
       }
       
-      this.showAlert(failCount > 0 ? 'Slutfört med fel' : 'Klart!', message, failCount > 0 ? 'warning' : 'success')
+      const title = failCount > 0 ? this.$t('dashboard.alerts.doneWithErrors') : this.$t('dashboard.alerts.done');
+      this.showAlert(title, message, failCount > 0 ? 'warning' : 'success')
       this.loadDashboard() // Refresh data
     },
     requestPaymentForMember(member) {
       if (!member.phone) {
-        this.showAlert('Saknar uppgifter', 'Denna medlem har inget telefonnummer registrerat.', 'warning');
+        this.showAlert(this.$t('dashboard.alerts.missingInfo'), this.$t('dashboard.alerts.noPhone'), 'warning');
         return;
       }
       
@@ -1303,8 +1299,12 @@ export default {
       }
 
       this.showConfirm(
-        'Ändra roll?',
-        `Är du säker på att du vill ändra rollen för ${member.user.name} från ${this.translateRole(member.role)} till ${this.translateRole(newRole)}?`,
+        this.$t('dashboard.alerts.changeRoleTitle'),
+        this.$t('dashboard.alerts.changeRoleConfirm', {
+          name: member.user.name,
+          oldRole: this.translateRole(member.role),
+          newRole: this.translateRole(newRole)
+        }),
         async () => {
           try {
             const response = await fetch(`/api/orgs?action=updateRole`, {
@@ -1516,22 +1516,11 @@ export default {
       })
     },
     translateRole(role) {
-      const translations = {
-        'OWNER': 'Ägare',
-        'ADMIN': 'Administratör',
-        'MEMBER': 'Medlem',
-        'VIEWER': 'Granskare'
-      }
-      return translations[role] || role
+      return this.$t(`roles.${role}`)
     },
     translateMemberType(type) {
-      const translations = {
-        'regular': 'Ordinarie',
-        'youth': 'Ungdom',
-        'senior': 'Senior',
-        'family': 'Familj'
-      }
-      return translations[type] || type
+      if (!type) return ''
+      return this.$t(`memberTypes.${type}`)
     },
     uploadFiles() {
       console.log('Uploading files:', this.selectedFiles)
@@ -1613,14 +1602,14 @@ export default {
     async registerIncome() {
       try {
         if (!this.organizationId) {
-          alert('Ingen organisation vald')
+          alert(this.$t('dashboard.alerts.noOrgSelected'))
           return
         }
         
         // Get or create a default account
         let accountId = this.accounts[0]?.id
         if (!accountId) {
-          alert('Inget konto hittat. Skapa ett konto först.')
+          alert(this.$t('dashboard.alerts.noAccount'))
           return
         }
         
@@ -1639,7 +1628,7 @@ export default {
         await this.loadDashboard()
       } catch (error) {
         console.error('Failed to register income:', error)
-        alert('Kunde inte registrera intäkt')
+        alert(this.$t('dashboard.alerts.incomeError'))
       }
     },
     closeExpenseModal() {
@@ -1655,14 +1644,14 @@ export default {
     async registerExpense() {
       try {
         if (!this.organizationId) {
-          alert('Ingen organisation vald')
+          alert(this.$t('dashboard.alerts.noOrgSelected'))
           return
         }
         
         // Get or create a default account
         let accountId = this.accounts[0]?.id
         if (!accountId) {
-          alert('Inget konto hittat. Skapa ett konto först.')
+          alert(this.$t('dashboard.alerts.noAccount'))
           return
         }
         
@@ -1681,7 +1670,7 @@ export default {
         await this.loadDashboard()
       } catch (error) {
         console.error('Failed to register expense:', error)
-        alert('Kunde inte registrera utgift')
+        alert(this.$t('dashboard.alerts.expenseError'))
       }
     },
     setDescriptionPreset(preset) {
@@ -1699,13 +1688,13 @@ export default {
     async requestSwishPayment() {
       // Validate phone number
       if (!this.swishPayment.phone) {
-        this.showAlert('Saknar uppgifter', 'Vänligen ange ett telefonnummer.', 'warning');
+        this.showAlert(this.$t('dashboard.alerts.missingInfo'), this.$t('dashboard.alerts.enterPhone'), 'warning');
         return;
       }
 
       this.showConfirm(
-        'Skicka betalningsförfrågan?',
-        `Är du säker på att du vill skicka en Swish-förfrågan till ${this.swishPayment.phone} på ${this.swishPayment.amount} kr?`,
+        this.$t('dashboard.alerts.sendRequest'),
+        this.$t('dashboard.alerts.confirmSendRequest', { phone: this.swishPayment.phone, amount: this.swishPayment.amount }),
         async () => {
           await this.processSwishPayment();
         }
@@ -1732,14 +1721,14 @@ export default {
         if (!response.ok) {
           const error = await response.json()
           // Show detailed error message if available
-          const errorMsg = error.message || error.error || 'Kunde inte skapa betalningsbegäran'
+          const errorMsg = error.message || error.error || this.$t('dashboard.alerts.createRequestError')
           console.error('Swish API error details:', error)
           throw new Error(errorMsg)
         }
 
         const paymentRequest = await response.json()
         
-        this.showAlert('Betalning skickad!', `Swish-betalning begärd från ${this.swishPayment.phone} för ${this.swishPayment.amount} kr`, 'success')
+        this.showAlert(this.$t('dashboard.alerts.paymentSent'), this.$t('dashboard.alerts.paymentRequested', { phone: this.swishPayment.phone, amount: this.swishPayment.amount }), 'success')
         
         this.closeSwishModal()
         
@@ -1747,7 +1736,7 @@ export default {
         await this.loadDashboard()
       } catch (error) {
         console.error('Failed to request Swish payment:', error)
-        this.showAlert('Fel vid betalning', `Fel vid betalningsbegäran: ${error.message}`, 'error')
+        this.showAlert(this.$t('dashboard.alerts.paymentError'), this.$t('dashboard.alerts.requestErrorPrefix') + error.message, 'error')
       }
     },
     goToLogin() {

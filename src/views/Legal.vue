@@ -18,24 +18,24 @@
         </ul>
         <div class="lang-switch">
           <button 
-            :class="{ active: currentLang === 'sv' }" 
-            @click="currentLang = 'sv'"
+            :class="{ active: $i18n.locale === 'sv' }" 
+            @click="$i18n.locale = 'sv'"
           >🇸🇪 Svenska</button>
           <button 
-            :class="{ active: currentLang === 'en' }" 
-            @click="currentLang = 'en'"
+            :class="{ active: $i18n.locale === 'en' }" 
+            @click="$i18n.locale = 'en'"
           >🇬🇧 English</button>
         </div>
-        <button class="back-btn" @click="$router.push('/')">← {{ currentLang === 'sv' ? 'Tillbaka till Hem' : 'Back to Home' }}</button>
+        <button class="back-btn" @click="$router.push('/')">← {{ $i18n.locale === 'sv' ? 'Tillbaka till Hem' : 'Back to Home' }}</button>
       </div>
 
       <div class="legal-content">
         <!-- Terms of Service -->
         <div v-if="currentTab === 'terms'" class="legal-section">
-          <h1>{{ currentLang === 'sv' ? 'Allmänna Villkor' : 'Terms of Service' }}</h1>
-          <p class="last-updated">{{ currentLang === 'sv' ? 'Gäller från' : 'Effective from' }}: 2026-02-18 | Version: 1.0</p>
+          <h1>{{ $i18n.locale === 'sv' ? 'Allmänna Villkor' : 'Terms of Service' }}</h1>
+          <p class="last-updated">{{ $i18n.locale === 'sv' ? 'Gäller från' : 'Effective from' }}: 2026-02-18 | Version: 1.0</p>
           
-          <div v-if="currentLang === 'sv'" class="legal-text">
+          <div v-if="$i18n.locale === 'sv'" class="legal-text">
             <h2>1. Om Orient</h2>
             <p>Orient är ett molnbaserat bokföringssystem utvecklat för ideella föreningar och mindre organisationer i Sverige.</p>
             <p>Tjänsten möjliggör bland annat:</p>
@@ -182,10 +182,10 @@
 
         <!-- Privacy Policy -->
         <div v-if="currentTab === 'privacy'" class="legal-section">
-          <h1>{{ currentLang === 'sv' ? 'Integritetspolicy' : 'Privacy Policy' }}</h1> 
-          <p class="last-updated">{{ currentLang === 'sv' ? 'Senast uppdaterad' : 'Last updated' }}: 2026-02-18</p>
+          <h1>{{ $i18n.locale === 'sv' ? 'Integritetspolicy' : 'Privacy Policy' }}</h1> 
+          <p class="last-updated">{{ $i18n.locale === 'sv' ? 'Senast uppdaterad' : 'Last updated' }}: 2026-02-18</p>
 
-          <div v-if="currentLang === 'sv'" class="legal-text">
+          <div v-if="$i18n.locale === 'sv'" class="legal-text">
             <h2>1. Roller</h2>
             <p>Föreningen är personuppgiftsansvarig.<br>
             Orient är personuppgiftsbiträde.</p>
@@ -266,10 +266,10 @@
 
         <!-- DPA -->
         <div v-if="currentTab === 'dpa'" class="legal-section">
-           <h1>{{ currentLang === 'sv' ? 'Personuppgiftsbiträdesavtal (PUB)' : 'Data Processing Agreement (DPA)' }}</h1>
-           <p class="last-updated">{{ currentLang === 'sv' ? 'Senast uppdaterad' : 'Last updated' }}: 2026-02-18</p>
+           <h1>{{ $i18n.locale === 'sv' ? 'Personuppgiftsbiträdesavtal (PUB)' : 'Data Processing Agreement (DPA)' }}</h1>
+           <p class="last-updated">{{ $i18n.locale === 'sv' ? 'Senast uppdaterad' : 'Last updated' }}: 2026-02-18</p>
            
-           <div v-if="currentLang === 'sv'" class="legal-text">
+           <div v-if="$i18n.locale === 'sv'" class="legal-text">
              <p>Orient behandlar personuppgifter enligt instruktion från Föreningen.</p>
              
              <h2>Säkerhetsåtgärder</h2>
@@ -314,7 +314,7 @@
         <div v-if="currentTab === 'cookies'" class="legal-section">
             <h1>Cookiepolicy</h1>
             
-            <div v-if="currentLang === 'sv'" class="legal-text">
+            <div v-if="$i18n.locale === 'sv'" class="legal-text">
                 <p>Orient använder endast nödvändiga cookies för:</p>
                 <ul>
                     <li>Autentisering (session cookie)</li>
@@ -342,8 +342,7 @@ export default {
   name: 'Legal',
   data() {
     return {
-      currentTab: 'terms',
-      currentLang: 'sv'
+      currentTab: 'terms'
     }
   },
   mounted() {
@@ -354,7 +353,7 @@ export default {
   },
   methods: {
     getNavLabel(tab) {
-      if (this.currentLang === 'sv') {
+      if (this.$i18n.locale === 'sv') {
         const labels = {
           terms: 'Användarvillkor',
           privacy: 'Integritetspolicy',

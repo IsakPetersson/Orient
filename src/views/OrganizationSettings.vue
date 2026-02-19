@@ -3,7 +3,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
-      <p>Laddar inställningar...</p>
+      <p>{{ $t('settings.loading') }}</p>
     </div>
 
     <!-- Auth Required -->
@@ -13,10 +13,10 @@
           <div class="auth-icon">
             <img src="../assets/images/lock.png" alt="Lock" class="auth-icon-img" />
           </div>
-          <h2>Inloggning Krävs</h2>
-          <p>Du måste vara inloggad för att komma åt Organisationsinställningar.</p>
+          <h2>{{ $t('settings.authRequiredTitle') }}</h2>
+          <p>{{ $t('settings.authRequiredText') }}</p>
           <button class="btn btn-primary btn-full" @click="goToLogin">
-            Gå till Inloggning
+            {{ $t('settings.goToLogin') }}
           </button>
         </div>
       </div>
@@ -29,10 +29,10 @@
           <div class="auth-icon">
             <img src="../assets/images/members-icon.png" alt="Organization" class="auth-icon-img" />
           </div>
-          <h2>Ingen Organisation</h2>
-          <p>Du är inte med i någon organisation.</p>
+          <h2>{{ $t('settings.noOrgTitle') }}</h2>
+          <p>{{ $t('settings.noOrgText') }}</p>
           <button class="btn btn-primary btn-full" @click="$router.push('/')">
-            Gå till Startsidan
+            {{ $t('settings.goToHome') }}
           </button>
         </div>
       </div>
@@ -42,10 +42,10 @@
     <div v-else-if="!hasPermission" class="modal-overlay auth-modal-overlay">
       <div class="modal-content auth-modal-content">
         <div class="auth-modal-body">
-          <h2>Ingen Behörighet</h2>
-          <p>Endast ägare och administratörer kan ändra organisationsinställningar.</p>
+          <h2>{{ $t('settings.noPermissionTitle') }}</h2>
+          <p>{{ $t('settings.noPermissionText') }}</p>
           <button class="btn btn-primary btn-full" @click="$router.push('/dashboard')">
-            Tillbaka till Dashboard
+            {{ $t('settings.backToDashboard') }}
           </button>
         </div>
       </div>
@@ -55,9 +55,9 @@
     <section v-else class="settings-container">
       <div class="settings-header">
         <button class="back-btn" @click="$router.push('/dashboard')">
-          ← Tillbaka till Dashboard
+          ← {{ $t('settings.backToDashboard') }}
         </button>
-        <h1>Organisationsinställningar</h1>
+        <h1>{{ $t('settings.pageTitle') }}</h1>
         <select 
           v-if="userOrganizations.length > 1" 
           v-model="organizationId" 
@@ -74,9 +74,9 @@
       <div class="settings-content">
         <!-- General Settings -->
         <div class="settings-section">
-          <h2>Allmänt</h2>
+          <h2>{{ $t('settings.generalTitle') }}</h2>
           <div class="setting-item">
-            <label for="orgName">Organisationsnamn</label>
+            <label for="orgName">{{ $t('settings.orgNameLabel') }}</label>
             <input 
               type="text" 
               id="orgName" 
@@ -84,96 +84,96 @@
               class="setting-input"
               disabled
             />
-            <p class="setting-hint">Kontakta support för att ändra organisationsnamnet</p>
+            <p class="setting-hint">{{ $t('settings.orgNameHint') }}</p>
           </div>
           
           <div class="setting-item">
-            <label for="orgNumber">Organisationsnummer (Valfritt)</label>
+            <label for="orgNumber">{{ $t('settings.orgNumberLabel') }}</label>
             <div style="display: flex; gap: 1rem;">
               <input 
                 type="text" 
                 id="orgNumber" 
                 v-model="orgNumber" 
                 class="setting-input"
-                placeholder="XXXXXX-XXXX"
+                :placeholder="$t('settings.orgNumberPlaceholder')"
                 :disabled="savingOrg"
               />
             </div>
-            <p class="setting-hint">Används vid SIE4-export.</p>
+            <p class="setting-hint">{{ $t('settings.orgNumberHint') }}</p>
           </div>
 
           <div class="setting-item">
-            <label for="orgLogo">Logotyp (URL)</label>
+            <label for="orgLogo">{{ $t('settings.logoLabel') }}</label>
             <div style="display: flex; gap: 1rem;">
               <input 
                 type="text" 
                 id="orgLogo" 
                 v-model="orgLogo" 
                 class="setting-input"
-                placeholder="https://example.com/logo.png"
+                :placeholder="$t('settings.logoPlaceholder')"
                 :disabled="savingOrg"
               />
             </div>
-            <p class="setting-hint">Länk till bildfil för organisationens logotyp.</p>
+            <p class="setting-hint">{{ $t('settings.logoHint') }}</p>
           </div>
 
           <button class="btn btn-primary" @click="saveOrgDetails" :disabled="savingOrg || !orgDetailsChanged" style="margin-top: 1rem;">
-            {{ savingOrg ? 'Sparar...' : 'Spara Allmänt' }}
+            {{ savingOrg ? $t('settings.savingGeneral') : $t('settings.saveGeneral') }}
           </button>
         </div>
 
         <!-- Swish Settings -->
         <div class="settings-section">
-          <h2>Swish Inställningar</h2>
+          <h2>{{ $t('settings.swishTitle') }}</h2>
           
           <!-- Configuration Status -->
           <div v-if="swishConfigLoaded" class="config-status">
             <div v-if="swishConfig.certificateConfigured" class="status-badge success">
-              ✓ Swish konfigurerat ({{ swishConfig.mode }})
+              {{ $t('settings.swishConfigured', { mode: swishConfig.mode }) }}
             </div>
             <div v-else class="status-badge warning">
-              ⚠ Swish ej konfigurerat
+              {{ $t('settings.swishNotConfigured') }}
             </div>
           </div>
 
           <div class="setting-item">
             <div class="label-row">
-              <label for="swishMerchantNumber">Swish-nummer (Handelsnummer)</label>
-              <button class="help-link" @click="showMerchantGuide = true">Guide</button>
+              <label for="swishMerchantNumber">{{ $t('settings.merchantNumberLabel') }}</label>
+              <button class="help-link" @click="showMerchantGuide = true">{{ $t('settings.guideButton') }}</button>
             </div>
             <input 
               type="text" 
               id="swishMerchantNumber" 
               v-model="swishMerchantNumber" 
               class="setting-input"
-              placeholder="123 456 7890"
+              :placeholder="$t('settings.merchantNumberPlaceholder')"
               :disabled="savingSwish"
             />
             <p class="setting-hint">
-              Ditt företags Swish-nummer för Swish Handel.
+              {{ $t('settings.merchantNumberHint') }}
             </p>
           </div>
 
           <div class="setting-item">
-            <label for="swishMode">Miljö</label>
+            <label for="swishMode">{{ $t('settings.environmentLabel') }}</label>
             <select 
               id="swishMode" 
               v-model="swishMode" 
               class="setting-input"
               :disabled="savingSwish"
             >
-              <option value="TEST">Test (MSS)</option>
-              <option value="PROD">Produktion</option>
+              <option value="TEST">{{ $t('settings.envTest') }}</option>
+              <option value="PROD">{{ $t('settings.envProd') }}</option>
             </select>
             <p class="setting-hint">
-              Välj TEST för att använda Swish testmiljö (MSS), eller PROD för riktiga betalningar.
+              {{ $t('settings.environmentHint') }}
             </p>
           </div>
 
           <div class="setting-item">
             <div class="label-row">
-              <label for="swishCertificate">Swish .p12 Certifikat</label>
-              <button class="help-link" @click="showCertificateGuide = true">Guide</button>
+              <label for="swishCertificate">{{ $t('settings.certificateLabel') }}</label>
+              <button class="help-link" @click="showCertificateGuide = true">{{ $t('settings.guideButton') }}</button>
             </div>
             <input 
               type="file" 
@@ -185,39 +185,39 @@
               :disabled="savingSwish"
             />
             <p class="setting-hint">
-              Ladda upp det .p12-certifikat du har fått från din bank för Swish Commerce.
+              {{ $t('settings.certificateHint') }}
             </p>
             <p v-if="certificateFile" class="file-selected">
-              Vald fil: {{ certificateFile.name }}
+              {{ $t('settings.fileSelected', { fileName: certificateFile.name }) }}
             </p>
           </div>
 
           <div class="setting-item">
-            <label for="swishPassphrase">Certifikatslösenord</label>
+            <label for="swishPassphrase">{{ $t('settings.passphraseLabel') }}</label>
             <input 
               type="password" 
               id="swishPassphrase" 
               v-model="swishPassphrase" 
               class="setting-input"
-              placeholder="Lösenord för .p12-certifikatet"
+              :placeholder="$t('settings.passphrasePlaceholder')"
               :disabled="savingSwish"
               autocomplete="new-password"
             />
             <p class="setting-hint">
-              Lösenordet som skyddar ditt .p12-certifikat.
+              {{ $t('settings.passphraseHint') }}
             </p>
           </div>
           
           <div class="info-box">
-            <h3>Så här aktiverar du Swish-betalningar:</h3>
+            <h3>{{ $t('settings.activationStepsTitle') }}</h3>
             <ol>
-              <li>Se till att din organisation har ett <strong>Swish Commerce</strong>-avtal med din bank</li>
-              <li>Hämta ditt <strong>Swish-nummer</strong> (handelsnummer) från din bank</li>
-              <li>Hämta ditt <strong>.p12-certifikat och lösenord</strong> från din bank</li>
-              <li>Fyll i informationen ovan och klicka på "Spara Swish-konfiguration"</li>
+              <li v-html="$t('settings.step1')"></li>
+              <li v-html="$t('settings.step2')"></li>
+              <li v-html="$t('settings.step3')"></li>
+              <li>{{ $t('settings.step4') }}</li>
             </ol>
             <p class="note">
-              <strong>Obs:</strong> Certifikatet och lösenordet lagras krypterat i databasen.
+              {{ $t('settings.noteEncrypted') }}
             </p>
           </div>
 
@@ -226,22 +226,22 @@
             @click="saveSwishConfig"
             :disabled="savingSwish || !canSaveSwishConfig"
           >
-            {{ savingSwish ? 'Sparar...' : 'Spara Swish-konfiguration' }}
+            {{ savingSwish ? $t('settings.savingSwish') : $t('settings.saveSwish') }}
           </button>
         </div>
 
         <!-- Accounting Export Section -->
         <div class="settings-section">
-          <h2>Bokföring & Export</h2>
+          <h2>{{ $t('settings.accountingTitle') }}</h2>
           <div style="padding: 1.5rem; background: var(--bg-light); border-radius: 8px; border: 1px solid var(--border-color);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-dark);">Export av data</h3>
+              <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-dark);">{{ $t('settings.exportTitle') }}</h3>
             </div>
-            <p class="setting-hint" style="margin-bottom: 1rem;">Här kan du exportera all bokföringsdata till en SIE4-fil som kan importeras i andra bokföringsprogram (t.ex. Fortnox, Visma).</p>
+            <p class="setting-hint" style="margin-bottom: 1rem;">{{ $t('settings.exportDesc') }}</p>
             <div class="setting-item" style="margin-bottom: 0;">
               <button class="btn btn-primary btn-block" @click="downloadSieFile" :disabled="downloadingSie" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
-                <span v-if="downloadingSie">Laddar ner...</span>
-                <span v-else>⬇ Ladda ner SIE-fil (Bokföring)</span>
+                <span v-if="downloadingSie">{{ $t('settings.downloadingSie') }}</span>
+                <span v-else>{{ $t('settings.downloadSie') }}</span>
               </button>
             </div>
           </div>
@@ -249,13 +249,13 @@
 
         <!-- Invite Section -->
         <div class="settings-section">
-          <h2>Bjud in Medlemmar</h2>
+          <h2>{{ $t('settings.inviteTitle') }}</h2>
           <div class="invite-container">
-            <p>Dela denna inbjudningskod med nya teammedlemmar:</p>
+            <p>{{ $t('settings.inviteText') }}</p>
             <div class="invite-code-display">
-              <code class="invite-code">{{ inviteCode || 'Laddar...' }}</code>
+              <code class="invite-code">{{ inviteCode || $t('settings.loadingCode') }}</code>
               <button class="copy-btn" @click="copyInviteCode" :disabled="!inviteCode">
-                {{ copied ? '✓ Kopierad' : 'Kopiera' }}
+                {{ copied ? $t('settings.copied') : $t('settings.copy') }}
               </button>
             </div>
           </div>
@@ -263,11 +263,11 @@
 
         <!-- Danger Zone -->
         <div class="settings-section danger-zone" v-if="currentUserRole === 'OWNER'">
-          <h2>Farlig Zon</h2>
+          <h2>{{ $t('settings.dangerZoneTitle') }}</h2>
           <div class="setting-item">
-            <p>Ta bort denna organisation permanent. Detta kan inte ångras.</p>
+            <p>{{ $t('settings.deleteOrgText') }}</p>
             <button class="btn btn-danger" @click="confirmDeleteOrganization">
-              Ta bort Organisation
+              {{ $t('settings.deleteOrgButton') }}
             </button>
           </div>
         </div>
@@ -277,23 +277,23 @@
     <div v-if="showMerchantGuide" class="modal-overlay help-modal-overlay" @click.self="showMerchantGuide = false">
       <div class="modal-content help-modal-content">
         <div class="help-modal-header">
-          <h2>Så gör ni</h2>
+          <h2>{{ $t('settings.merchantGuideTitle') }}</h2>
           <button class="close-btn" @click="showMerchantGuide = false">×</button>
         </div>
         <div class="help-modal-body">
-          <p>För att kunna ta betalt med Swish i systemet behöver er förening/organisation ett eget Swish-nummer för handel.</p>
+          <p>{{ $t('settings.merchantGuideText1') }}</p>
           
-          <h3>1. Kontakta er bank</h3>
-          <p>Hör av er till er bank och be att få teckna avtal för <strong>Swish Handel</strong> (ibland kallat Swish Företag eller Swish Commerce). Det är viktigt att det är just "Handel/Commerce" för att API:et ska fungera.</p>
+          <h3 v-html="$t('settings.step1Title')"></h3>
+          <p v-html="$t('settings.step1Text')"></p>
           
-          <h3>2. Få ert nummer</h3>
-          <p>När avtalet är klart får ni ett Swish-nummer som oftast börjar på <strong>123...</strong>.</p>
+          <h3 v-html="$t('settings.step2Title')"></h3>
+          <p v-html="$t('settings.step2Text')"></p>
           
-          <h3>3. Fyll i inställningarna</h3>
-          <p>Ange detta nummer i fältet "Swish-nummer" här på sidan. Se också till att ni har fått tillgång till certifikats-hanteraren (Swish Certificate Management) via banken.</p>
+          <h3 v-html="$t('settings.step3Title')"></h3>
+          <p>{{ $t('settings.step3Text') }}</p>
         </div>
         <div class="help-modal-footer">
-          <button class="btn btn-primary" @click="showMerchantGuide = false">Jag förstår</button>
+          <button class="btn btn-primary" @click="showMerchantGuide = false">{{ $t('settings.understand') }}</button>
         </div>
       </div>
     </div>
@@ -302,34 +302,26 @@
     <div v-if="showCertificateGuide" class="modal-overlay help-modal-overlay" @click.self="showCertificateGuide = false">
       <div class="modal-content help-modal-content">
         <div class="help-modal-header">
-          <h2>Hjälp med Certifikat</h2>
+          <h2>{{ $t('settings.certGuideTitle') }}</h2>
           <button class="close-btn" @click="showCertificateGuide = false">×</button>
         </div>
         <div class="help-modal-body">
-          <p>För att systemet ska kunna prata säkert med Swish krävs ett digitalt certifikat (en säkerhetsfil). Detta behöver bara göras en gång, men kan upplevas krångligt om man inte är van vid datorer.</p>
+          <p>{{ $t('settings.certGuideIntro') }}</p>
           
           <div style="background-color: #f0f9ff; border-left: 4px solid #0284c7; padding: 1rem; margin-bottom: 2rem;">
-            <h3 style="margin-top: 0; color: #0284c7;">Alternativ 1: Ta hjälp (Rekommenderas)</h3>
-            <p>Har ni någon tekniskt kunnig i föreningen? Be denne hjälpa er. Kopiera texten nedan och skicka till den personen:</p>
-            <textarea readonly style="width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: none; font-size: 0.9em;">Hej! Vi behöver hjälp att ta fram ett TLS-certifikat för Swish Handel till föreningen. Vi behöver generera en CSR, signera den hos Swish (via banken), och sedan paketera ihop nyckeln och certifikatet till en .p12-fil (PKCS#12) och lösenordsskydda den. Kan du hjälpa oss med det?</textarea>
+            <h3 style="margin-top: 0; color: #0284c7;">{{ $t('settings.option1Title') }}</h3>
+            <p>{{ $t('settings.option1Text') }}</p>
+            <textarea readonly style="width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: none; font-size: 0.9em;">{{ $t('settings.helpRequestText') }}</textarea>
           </div>
 
-          <h3 style="color: #666;">Alternativ 2: Gör det själv</h3>
-          <p>Om du vill göra det själv behöver du använda din dator. Följ dessa steg noga:</p>
+          <h3 style="color: #666;">{{ $t('settings.option2Title') }}</h3>
+          <p>{{ $t('settings.option2Text') }}</p>
 
           <ol style="padding-left: 1.5rem;">
-            <li style="margin-bottom: 1rem;">
-              <strong>Logga in på banken:</strong> Gå till din internetbank företag och leta upp "Swish Handel" eller "Swish Företag". Där brukar det finnas en länk till "Certifikatshanterare" (Certificate Management).
-            </li>
-            <li style="margin-bottom: 1rem;">
-              <strong>Skapa filen:</strong> Ofta har banken en guide för hur man skapar certifikatet. De kan ibland hjälpa till via telefon. Målet är att du ska ha en fil på din dator som slutar på <strong>.p12</strong> eller <strong>.pfx</strong>.
-            </li>
-            <li style="margin-bottom: 1rem;">
-              <strong>Lösenord:</strong> När filen skapas får man välja ett lösenord. Det är mycket viktigt att du kommer ihåg detta!
-            </li>
-            <li>
-              <strong>Ladda upp:</strong> När du har filen på din dator, klicka på "Välj fil" här bakom och ladda upp den. Skriv sedan in lösenordet.
-            </li>
+            <li v-html="$t('settings.certStep1')"></li>
+            <li v-html="$t('settings.certStep2')"></li>
+            <li v-html="$t('settings.certStep3')"></li>
+            <li v-html="$t('settings.certStep4')"></li>
           </ol>
 
           <details style="margin-top: 2rem; cursor: pointer;">
@@ -472,7 +464,7 @@ export default {
         this.loading = false
       } catch (error) {
         console.error('Failed to load settings:', error)
-        alert('Kunde inte ladda inställningar')
+        alert(this.$t('settings.alerts.loadError'))
         this.loading = false
       }
     },
@@ -515,7 +507,7 @@ export default {
         
       } catch (error) {
         console.error('SIE export failed:', error)
-        alert('Kunde inte ladda ner SIE-filen. Försök igen later.')
+        alert(this.$t('settings.alerts.sieError'))
       } finally {
         this.downloadingSie = false
       }
@@ -543,11 +535,11 @@ export default {
         
         this.originalOrgNumber = this.orgNumber
         this.originalOrgLogo = this.orgLogo
-        alert('Inställningar sparade!')
+        alert(this.$t('settings.alerts.settingsSaved'))
         
       } catch (error) {
         console.error('Failed to save org details:', error)
-        alert('Kunde inte spara inställningar')
+        alert(this.$t('settings.alerts.saveError'))
       } finally {
         this.savingOrg = false
       }
@@ -583,14 +575,14 @@ export default {
       if (file) {
         // Validate file extension
         if (!file.name.endsWith('.p12') && !file.name.endsWith('.pfx')) {
-          alert('Vänligen välj en .p12 eller .pfx fil')
+          alert(this.$t('settings.alerts.fileType'))
           event.target.value = ''
           return
         }
         
         // Validate file size (max 50KB)
         if (file.size > 50 * 1024) {
-          alert('Certifikatfilen är för stor (max 50KB)')
+          alert(this.$t('settings.alerts.fileSize'))
           event.target.value = ''
           return
         }
@@ -600,12 +592,12 @@ export default {
     },
     async saveSwishConfig() {
       if (!this.hasPermission) {
-        alert('Du har inte behörighet att ändra inställningar')
+        alert(this.$t('settings.alerts.noPermission'))
         return
       }
 
       if (!this.canSaveSwishConfig) {
-        alert('Vänligen fyll i alla obligatoriska fält')
+        alert(this.$t('settings.alerts.fillFields'))
         return
       }
 
@@ -646,7 +638,7 @@ export default {
           throw new Error(errorMsg)
         }
         
-        alert('Swish-konfiguration sparad!')
+        alert(this.$t('settings.alerts.swishSaved'))
         
         // Clear sensitive fields
         this.swishPassphrase = ''
@@ -661,7 +653,7 @@ export default {
         this.savingSwish = false
       } catch (error) {
         console.error('Failed to save Swish config:', error)
-        alert(`Kunde inte spara Swish-konfiguration: ${error.message}`)
+        alert(this.$t('settings.alerts.swishSaveError', { error: error.message }))
         this.savingSwish = false
       }
     },
@@ -677,37 +669,28 @@ export default {
         }, 2000)
       } catch (error) {
         console.error('Failed to copy:', error)
-        alert('Kunde inte kopiera inbjudningskod')
+        alert(this.$t('settings.alerts.copyError'))
       }
     },
     async confirmDeleteOrganization() {
-      const confirmed = confirm(
-        `Är du säker på att du vill ta bort organisationen "${this.organizationName}"? ` +
-        `Detta kommer permanent radera alla data kopplade till organisationen, inklusive:\n\n` +
-        `• Alla konton och transaktioner\n` +
-        `• Alla medlemmar\n` +
-        `• Alla inbjudningar\n\n` +
-        `Denna åtgärd kan INTE ångras!`
-      )
+      const confirmed = confirm(this.$t('settings.alerts.deleteConfirm', { name: this.organizationName }))
       
       if (!confirmed) return
       
-      const doubleConfirm = prompt(
-        `Skriv organisationens namn "${this.organizationName}" för att bekräfta borttagning:`
-      )
+      const doubleConfirm = prompt(this.$t('settings.alerts.deleteDoubleConfirm', { name: this.organizationName }))
       
       if (doubleConfirm !== this.organizationName) {
-        alert('Organisationsnamnet matchar inte. Borttagning avbruten.')
+        alert(this.$t('settings.alerts.deleteMismatch'))
         return
       }
       
       try {
         await deleteOrganization(this.organizationId)
-        alert('Organisationen har tagits bort.')
+        alert(this.$t('settings.alerts.deleteSuccess'))
         this.$router.push('/login')
       } catch (error) {
         console.error('Failed to delete organization:', error)
-        alert('Kunde inte ta bort organisationen')
+        alert(this.$t('settings.alerts.deleteError'))
       }
     },
     goToLogin() {

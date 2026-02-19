@@ -10,53 +10,76 @@
         <ul class="nav-links">
           <li>
             <router-link to="/" exact-active-class="active">
-              <span class="nav-icon">○</span>
-              <span class="nav-text">Hem</span>
+              <span class="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              </span>
+              <span class="nav-text">{{ $t('nav.home') }}</span>
             </router-link>
           </li>
           <li>
             <router-link to="/dashboard" active-class="active">
-              <span class="nav-icon">■</span>
-              <span class="nav-text">Dashboard</span>
+              <span class="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              </span>
+              <span class="nav-text">{{ $t('nav.dashboard') }}</span>
             </router-link>
           </li>
           <li>
             <router-link to="/about" active-class="active">
-              <span class="nav-icon">?</span>
-              <span class="nav-text">Om Oss</span>
+              <span class="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              </span>
+              <span class="nav-text">{{ $t('nav.about') }}</span>
             </router-link>
           </li>
           <li>
             <router-link to="/contact" active-class="active">
-              <span class="nav-icon">@</span>
-              <span class="nav-text">Kontakt</span>
+              <span class="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              </span>
+              <span class="nav-text">{{ $t('nav.contact') }}</span>
             </router-link>
           </li>
           <li>
             <router-link to="/legal" active-class="active">
-              <span class="nav-icon">§</span>
-              <span class="nav-text">Juridik</span>
+              <span class="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              </span>
+              <span class="nav-text">{{ $t('nav.legal') }}</span>
             </router-link>
           </li>
           <li v-if="!user">
             <router-link to="/login" active-class="active">
-              <span class="nav-icon">▶</span>
-              <span class="nav-text">Logga In</span>
+              <span class="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+              </span>
+              <span class="nav-text">{{ $t('nav.login') }}</span>
             </router-link>
           </li>
           <li v-if="user">
             <a href="#" @click.prevent="handleLogout" class="nav-link">
-              <span class="nav-icon">◀</span>
-              <span class="nav-text">Logga Ut</span>
+              <span class="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              </span>
+              <span class="nav-text">{{ $t('nav.logout') }}</span>
             </a>
           </li>
         </ul>
       </nav>
+
+      <div class="language-switcher-sidebar">
+        <div class="lang-toggle">
+          <button @click="$i18n.locale = 'sv'" :class="{ active: $i18n.locale === 'sv' }">SV</button>
+          <button @click="$i18n.locale = 'en'" :class="{ active: $i18n.locale === 'en' }">EN</button>
+        </div>
+      </div>
       
       <div v-if="user" class="user-section">
         <a href="#" @click.prevent="openOrganizationsModal" class="organizations-link">
-          <span class="nav-icon">◆</span>
-          <span class="nav-text">Organisationer</span>
+          <span class="nav-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </span>
+          <span class="nav-text">{{ $t('nav.organizations') }}</span>
         </a>
         
         <div class="user-info">
@@ -79,15 +102,15 @@
     <div v-if="showOrganizationsModal" class="modal-overlay" @click.self="closeOrganizationsModal">
       <div class="modal-content organizations-modal">
         <div class="modal-header">
-          <h2>Organisationer</h2>
+          <h2>{{ $t('org.title') }}</h2>
           <button class="close-btn" @click="closeOrganizationsModal">&times;</button>
         </div>
         <div class="modal-body">
           <div class="organizations-section">
-            <h3>Nuvarande Organisationer</h3>
+            <h3>{{ $t('org.current') }}</h3>
             <div class="organizations-list">
               <div v-if="organizations.length === 0" class="no-organizations">
-                <p>Du är inte med i någon organisation ännu.</p>
+                <p>{{ $t('org.noOrgs') }}</p>
               </div>
               <div v-else>
                 <div 
@@ -103,13 +126,13 @@
                   </div>
                   <div v-if="selectedOrganization?.id === org.id && org.role === 'OWNER'" class="org-controls">
                     <button class="btn btn-sm btn-secondary" @click.stop="copyOrganizationInvite">
-                      Kopiera Inbjudan
+                      {{ $t('org.copyInvite') }}
                     </button>
                     <button class="btn btn-sm btn-danger" @click.stop="openDeleteModal">
-                      Radera
+                      {{ $t('org.delete') }}
                     </button>
                   </div>
-                  <p v-if="codeCopied && selectedOrganization?.id === org.id" class="copy-feedback">✓ Kopierad!</p>
+                  <p v-if="codeCopied && selectedOrganization?.id === org.id" class="copy-feedback">{{ $t('org.copied') }}</p>
                 </div>
               </div>
             </div>
@@ -117,10 +140,10 @@
 
           <div class="organizations-actions">
             <button class="btn btn-primary" @click="showJoinModal">
-              Gå med i Organisation
+              {{ $t('org.join') }}
             </button>
             <button class="btn btn-primary" @click="showCreateModal">
-              Skapa Organisation
+              {{ $t('org.create') }}
             </button>
           </div>
         </div>
@@ -131,25 +154,25 @@
     <div v-if="showCreateOrgModal" class="modal-overlay" @click.self="closeCreateOrgModal">
       <div class="modal-content create-org-modal">
         <div class="modal-header">
-          <h2>Skapa Organisation</h2>
+          <h2>{{ $t('org.createTitle') }}</h2>
           <button class="close-btn" @click="closeCreateOrgModal">&times;</button>
         </div>
         <form @submit.prevent="submitCreateOrganization" class="modal-body">
           <div class="form-group">
-            <label for="org-name">Organisationens namn</label>
+            <label for="org-name">{{ $t('org.nameLabel') }}</label>
             <input
               type="text"
               id="org-name"
               v-model="newOrgName"
-              placeholder="T.ex. Fotbollsklubben AIK"
+              :placeholder="$t('org.namePlaceholder')"
               required
             />
           </div>
           <p v-if="createError" class="error-message">{{ createError }}</p>
           <div class="modal-actions">
-            <button type="button" class="btn btn-primary" @click="closeCreateOrgModal">Avbryt</button>
+            <button type="button" class="btn btn-primary" @click="closeCreateOrgModal">{{ $t('org.cancel') }}</button>
             <button type="submit" class="btn btn-primary" :disabled="createLoading">
-              {{ createLoading ? 'Skapar...' : 'Skapa' }}
+              {{ createLoading ? $t('org.creating') : $t('org.createBtn') }}
             </button>
           </div>
         </form>
@@ -160,25 +183,25 @@
     <div v-if="showJoinOrgModal" class="modal-overlay" @click.self="closeJoinOrgModal">
       <div class="modal-content join-org-modal">
         <div class="modal-header">
-          <h2>Gå med i Organisation</h2>
+          <h2>{{ $t('org.joinTitle') }}</h2>
           <button class="close-btn" @click="closeJoinOrgModal">&times;</button>
         </div>
         <form @submit.prevent="submitJoinOrganization" class="modal-body">
           <div class="form-group">
-            <label for="invite-code">Inbjödningskod</label>
+            <label for="invite-code">{{ $t('org.inviteCode') }}</label>
             <input
               type="text"
               id="invite-code"
               v-model="inviteCode"
-              placeholder="Ange inbjödningskod"
+              :placeholder="$t('org.inviteCodePlaceholder')"
               required
             />
           </div>
           <p v-if="joinError" class="error-message">{{ joinError }}</p>
           <div class="modal-actions">
-            <button type="button" class="btn btn-primary" @click="closeJoinOrgModal">Avbryt</button>
+            <button type="button" class="btn btn-primary" @click="closeJoinOrgModal">{{ $t('org.cancel') }}</button>
             <button type="submit" class="btn btn-primary" :disabled="joinLoading">
-              {{ joinLoading ? 'Går med...' : 'Gå med' }}
+              {{ joinLoading ? $t('org.joining') : $t('org.joinBtn') }}
             </button>
           </div>
         </form>
@@ -189,22 +212,22 @@
     <div v-if="showSuccessModal" class="modal-overlay" @click.self="closeSuccessModal">
       <div class="modal-content success-modal">
         <div class="modal-header">
-          <h2>Organisation Skapad!</h2>
+          <h2>{{ $t('org.orgCreated') }}</h2>
           <button class="close-btn" @click="closeSuccessModal">&times;</button>
         </div>
         <div class="modal-body">
-          <p class="success-message">Organisation "{{ createdOrgName }}" har skapats!</p>
+          <p class="success-message">{{ $t('org.orgCreatedMessage', { orgName: createdOrgName }) }}</p>
           <div class="invite-code-section">
-            <label>Inbjödningskod:</label>
+            <label>{{ $t('org.inviteCodeLabel') }}</label>
             <div class="invite-code-display">
               <code>{{ inviteCodeToShare }}</code>
-              <button type="button" class="btn btn-primary btn-sm" @click="copyInviteCode">Kopiera</button>
+              <button type="button" class="btn btn-primary btn-sm" @click="copyInviteCode">{{ $t('org.copy') }}</button>
             </div>
-            <p v-if="codeCopied" class="copy-success-message">✓ Kopierad!</p>
-            <p class="invite-code-hint">Dela denna kod med andra för att bjuda in dem till organisationen.</p>
+            <p v-if="codeCopied" class="copy-success-message">{{ $t('org.copied') }}</p>
+            <p class="invite-code-hint">{{ $t('org.shareHint') }}</p>
           </div>
           <div class="modal-actions">
-            <button class="btn btn-primary" @click="closeSuccessModal">Stäng</button>
+            <button class="btn btn-primary" @click="closeSuccessModal">{{ $t('org.continue') }}</button>
           </div>
         </div>
       </div>
@@ -214,12 +237,12 @@
     <div v-if="showDeleteModal" class="modal-overlay" @click.self="closeDeleteModal">
       <div class="modal-content delete-modal">
         <div class="modal-header">
-          <h2>Radera Organisation</h2>
+          <h2>{{ $t('org.deleteTitle') }}</h2>
           <button class="close-btn" @click="closeDeleteModal">&times;</button>
         </div>
         <div class="modal-body">
-          <p class="warning-message">⚠️ Du är på väg att radera organisationen <strong>{{ selectedOrganization?.name }}</strong>.</p>
-          <p class="warning-text">Denna åtgärd kan inte ångras. All data kopplad till organisationen kommer att raderas permanent.</p>
+          <p class="warning-message">{{ $t('org.deleteWarning', { orgName: selectedOrganization?.name }) }}</p>
+          <p class="warning-text">{{ $t('org.deleteConfirm') }}</p>
           
           <div class="delete-confirmation">
             <label class="checkbox-label">
@@ -228,19 +251,19 @@
                 v-model="deleteConfirmChecked" 
                 @change="onDeleteCheckboxChange"
               />
-              <span>Jag förstår att denna åtgärd är permanent</span>
+              <span>{{ $t('org.deleteCheckbox') }}</span>
             </label>
           </div>
 
           <div class="modal-actions">
-            <button type="button" class="btn btn-primary" @click="closeDeleteModal">Avbryt</button>
+            <button type="button" class="btn btn-primary" @click="closeDeleteModal">{{ $t('org.cancel') }}</button>
             <button 
               type="button" 
               class="btn btn-danger" 
               @click="confirmDelete"
               :disabled="!deleteConfirmChecked || deleteCountdown > 0 || deleteLoading"
             >
-              {{ deleteLoading ? 'Raderar...' : deleteCountdown > 0 ? `Vänta (${deleteCountdown}s)` : 'Radera Organisation' }}
+              {{ deleteLoading ? $t('org.deleting') : deleteCountdown > 0 ? $t('org.wait', { seconds: deleteCountdown }) : $t('org.deleteBtn') }}
             </button>
           </div>
         </div>
@@ -298,13 +321,7 @@ export default {
   },
   methods: {
     translateRole(role) {
-      const translations = {
-        'OWNER': 'Ägare',
-        'ADMIN': 'Administratör',
-        'MEMBER': 'Medlem',
-        'VIEWER': 'Granskare'
-      }
-      return translations[role] || role
+      return this.$t(`roles.${role}`)
     },
     async checkAuth() {
       const user = await getCurrentUser()
@@ -1184,6 +1201,46 @@ export default {
     font-size: 1rem;
   }
 }
-</style>
+.language-switcher-sidebar {
+  padding: 1rem;
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: center;
+}
 
+.lang-toggle {
+  display: inline-flex;
+  background-color: rgba(0, 0, 0, 0.2);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lang-toggle button {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.lang-toggle button.active {
+  background-color: var(--primary-light);
+  color: #fff;
+  opacity: 1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.lang-toggle button:hover:not(.active) {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+</style>
 
