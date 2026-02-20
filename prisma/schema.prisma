@@ -158,3 +158,12 @@ model SwishPaymentRequest {
   @@index([organizationId, createdAt])
   @@index([payeePaymentReference])
 }
+
+model RegistrationCode {
+  id           Int       @id @default(autoincrement())
+  code         String    @unique
+  note         String?
+  usedAt       DateTime?
+  usedByEmail  String?
+  createdAt    DateTime  @default(now())
+}

@@ -115,6 +115,21 @@
             />
           </div>
 
+          <div class="form-group beta-code-group">
+            <label for="register-beta-code">{{ $t('auth.betaCodeLabel') }}</label>
+            <input
+              type="text"
+              id="register-beta-code"
+              v-model="registerBetaCode"
+              :placeholder="$t('auth.betaCodePlaceholder')"
+              autocomplete="off"
+              spellcheck="false"
+              required
+              style="text-transform: uppercase; letter-spacing: 0.08em;"
+            />
+            <p class="field-hint">{{ $t('auth.betaCodeHint') }}</p>
+          </div>
+
           <div class="form-group checkbox-group">
             <input type="checkbox" id="terms" v-model="termsAccepted">
             <label for="terms">
@@ -258,6 +273,7 @@ export default {
       registerEmail: '',
       registerPassword: '',
       registerConfirmPassword: '',
+      registerBetaCode: '',
       termsAccepted: false,
       registerLoading: false,
       registerError: null,
@@ -303,6 +319,7 @@ export default {
       this.registerEmail = ''
       this.registerPassword = ''
       this.registerConfirmPassword = ''
+      this.registerBetaCode = ''
       this.termsAccepted = false
       this.registerError = null
     },
@@ -321,9 +338,15 @@ export default {
         return
       }
 
+      // Validate beta code present
+      if (!this.registerBetaCode.trim()) {
+        this.registerError = this.$t('auth.betaCodeRequired')
+        return
+      }
+
       this.registerLoading = true
       try {
-        await register(this.registerEmail, this.registerName, this.registerPassword, false)
+        await register(this.registerEmail, this.registerName, this.registerPassword, false, this.registerBetaCode)
 
         // After register: show organization setup modal
         this.closeRegisterModal()
@@ -714,6 +737,25 @@ export default {
   cursor: pointer;
   margin-bottom: 0;
   font-weight: normal;
+}
+
+.beta-code-group {
+  background: #fefce8;
+  border: 1.5px solid #fde047;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+}
+
+.beta-code-group label {
+  font-weight: 700;
+  color: #854d0e;
+}
+
+.field-hint {
+  font-size: 0.78rem;
+  color: #92400e;
+  margin: 0.35rem 0 0;
+  line-height: 1.4;
 }
 </style>
 

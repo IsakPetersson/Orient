@@ -69,7 +69,12 @@
         "passwordsNoMatch": "Passwords do not match",
         "registrationFailed": "Registration failed",
         "createOrgFailed": "Could not create organization",
-        "joinOrgFailed": "Could not join organization"
+        "joinOrgFailed": "Could not join organization",
+        "betaCodeLabel": "Beta Access Code",
+        "betaCodePlaceholder": "XXXX-XXXX-XXXX",
+        "betaCodeHint": "A beta access code is required during the testing period. Contact the administrator to get one.",
+        "betaCodeRequired": "Please enter your beta access code",
+        "betaCodeInvalid": "Invalid or already used access code"
     },
     "home": {
         "heroTitle": "Financial Management for Associations",
@@ -267,6 +272,7 @@
         "startAccounting": "Start Accounting",
         "downloadSie": "Download SIE4 File",
         "downloadingSie": "Downloading...",
+        "comingSoon": "Coming soon",
         "swishPay": "Swish Payment",
         "createInvoice": "Create Invoice",
         "addMember": "Add Member",

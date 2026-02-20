@@ -72,10 +72,24 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method not allowed' })
     }
 
-    const { email, name, password, rememberMe } = req.body ?? {}
+    const { email, name, password, rememberMe, betaCode } = req.body ?? {}
 
     if (!email || !name || !password) {
         return res.status(400).json({ error: 'Missing required fields' })
+    }
+
+    // Validate beta access code
+    if (!betaCode) {
+        return res.status(403).json({ error: 'A beta access code is required to register' })
+    }
+
+    const normalizedCode = String(betaCode).trim().toUpperCase()
+    const codeRecord = await prisma.registrationCode.findUnique({
+        where: { code: normalizedCode }
+    })
+
+    if (!codeRecord || codeRecord.usedAt) {
+        return res.status(403).json({ error: 'Invalid or already used access code' })
     }
 
     const normalizedEmail = String(email).trim().toLowerCase()
@@ -86,6 +100,12 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
         const user = await prisma.user.create({
             data: { email: normalizedEmail, name: normalizedName, password: passwordHash },
             select: { id: true, email: true, name: true, createdAt: true }
+        })
+
+        // Mark code as used
+        await prisma.registrationCode.update({
+            where: { id: codeRecord.id },
+            data: { usedAt: new Date(), usedByEmail: normalizedEmail }
         })
 
         setSessionCookie(res, user.id, { rememberMe })

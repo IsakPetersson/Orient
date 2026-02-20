@@ -47,13 +47,15 @@
                 <h3>{{ $t('dashboard.quickActions') }}</h3>
               </div>
               <div class="quick-actions-grid" style="padding-top: 10px;">
-                <button class="quick-action-card" @click="handleAction('upload-receipt')">
+                <button class="quick-action-card coming-soon-card" @click="handleAction('upload-receipt')">
                   <img src="../assets/images/arrow-icon.png" alt="Upload" class="action-icon-img arrow-up" />
                   <span class="action-text">{{ $t('dashboard.uploadReceipt') }}</span>
+                  <span class="coming-soon-badge">{{ $t('dashboard.comingSoon') }}</span>
                 </button>
-                <button class="quick-action-card" @click="handleAction('start-accounting')">
+                <button class="quick-action-card coming-soon-card" @click="handleAction('start-accounting')">
                   <span class="action-icon">▶</span>
                   <span class="action-text">{{ $t('dashboard.startAccounting') }}</span>
+                  <span class="coming-soon-badge">{{ $t('dashboard.comingSoon') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('download-accounting')" :disabled="downloadingSie">
                   <img src="../assets/images/arrow-icon.png" alt="Download" class="action-icon-img" />
@@ -63,9 +65,10 @@
                   <span class="action-icon">$</span>
                   <span class="action-text">{{ $t('dashboard.swishPay') }}</span>
                 </button>
-                <button class="quick-action-card" @click="handleAction('create-invoice')">
+                <button class="quick-action-card coming-soon-card" @click="handleAction('create-invoice')">
                   <span class="action-icon"><div class="thick-square"></div></span>
                   <span class="action-text">{{ $t('dashboard.createInvoice') }}</span>
+                  <span class="coming-soon-badge">{{ $t('dashboard.comingSoon') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('add-member')">
                   <span class="action-icon">+</span>
@@ -118,7 +121,7 @@
                   <span class="alert-text">{{ alert.message }}</span>
                 </div>
               </div>
-              <button class="alerts-action-btn" @click="handleViewAllAlerts">{{ $t('dashboard.fixAll') }}</button>
+              <button class="alerts-action-btn" @click="handleViewAllAlerts" style="display: none;">{{ $t('dashboard.fixAll') }}</button>
             </div>
           </div>
 
@@ -2178,6 +2181,27 @@ export default {
 
 .quick-action-card:hover .action-icon,
 .quick-action-card:hover .action-text {
+  color: white;
+}
+
+.coming-soon-card {
+  opacity: 0.75;
+}
+
+.coming-soon-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 100px;
+  padding: 1px 7px;
+  pointer-events: none;
+}
+
+.quick-action-card:hover .coming-soon-badge {
+  background: rgba(255,255,255,0.25);
   color: white;
 }
 

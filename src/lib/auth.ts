@@ -21,12 +21,12 @@ export async function login(email: string, password: string, rememberMe: boolean
     return jsonOrThrow(res)
 }
 
-export async function register(email: string, name: string, password: string, rememberMe: boolean): Promise<SafeUser> {
+export async function register(email: string, name: string, password: string, rememberMe: boolean, betaCode: string): Promise<SafeUser> {
     const res = await fetch('/api/auth?action=register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, name, password, rememberMe })
+        body: JSON.stringify({ email, name, password, rememberMe, betaCode })
     })
     return jsonOrThrow(res)
 }

@@ -69,7 +69,12 @@
         "passwordsNoMatch": "Lösenorden matchar inte",
         "registrationFailed": "Registreringen misslyckades",
         "createOrgFailed": "Kunde inte skapa organisationen",
-        "joinOrgFailed": "Kunde inte gå med i organisationen"
+        "joinOrgFailed": "Kunde inte gå med i organisationen",
+        "betaCodeLabel": "Beta-åtkomstkod",
+        "betaCodePlaceholder": "XXXX-XXXX-XXXX",
+        "betaCodeHint": "En beta-åtkomstkod krävs under testperioden. Kontakta administratören för att få en.",
+        "betaCodeRequired": "Ange din beta-åtkomstkod",
+        "betaCodeInvalid": "Ogiltig eller redan använd åtkomstkod"
     },
     "home": {
         "heroTitle": "Ekonomisk Hantering för Föreningar",
@@ -267,6 +272,7 @@
         "startAccounting": "Starta Bokföring",
         "downloadSie": "Ladda ner SIE4-fil",
         "downloadingSie": "Laddar ner...",
+        "comingSoon": "Kommer snart",
         "swishPay": "Swish Betalning",
         "createInvoice": "Skapa Faktura",
         "addMember": "Lägg till Medlem",

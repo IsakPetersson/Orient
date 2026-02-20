@@ -6,6 +6,7 @@ import Contact from '../views/Contact.vue'
 import Login from '../views/login.vue'
 import OrganizationSettings from '../views/OrganizationSettings.vue'
 import Legal from '../views/Legal.vue'
+import Admin from '../views/Admin.vue'
 
 const routes = [
     {
@@ -42,6 +43,11 @@ const routes = [
         path: '/settings',
         name: 'OrganizationSettings',
         component: OrganizationSettings
+    },
+    {
+        path: '/admin',
+        name: 'Admin',
+        component: Admin
     }
 ]
 
