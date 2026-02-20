@@ -14,14 +14,17 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String
-  password  String
-  createdAt DateTime @default(now())
+  id                 Int      @id @default(autoincrement())
+  email              String   @unique
+  name               String
+  password           String
+  emailVerified      Boolean  @default(false)
+  emailVerifyToken   String?  @unique
+  createdAt          DateTime @default(now())
 
-  memberships   OrganizationMembership[]
-  swishRequests SwishPaymentRequest[]
+  memberships        OrganizationMembership[]
+  swishRequests      SwishPaymentRequest[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Organization {
@@ -166,4 +169,14 @@ model RegistrationCode {
   usedAt       DateTime?
   usedByEmail  String?
   createdAt    DateTime  @default(now())
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -95,6 +95,22 @@
     </aside>
 
     <div class="main-content">
+      <!-- Email verification banner -->
+      <div
+        v-if="user && !user.emailVerified && !verifyBannerDismissed"
+        class="verify-email-banner"
+      >
+        <span class="verify-banner-icon">⚠️</span>
+        <span class="verify-banner-text">{{ $t('auth.verifyEmailBanner') }}</span>
+        <button
+          class="verify-resend-btn"
+          :disabled="resendLoading || resendSent"
+          @click="resendVerificationEmail"
+        >
+          {{ resendSent ? $t('auth.verificationEmailSent') : (resendLoading ? $t('auth.sending') : $t('auth.resendVerification')) }}
+        </button>
+        <button class="verify-dismiss-btn" @click="verifyBannerDismissed = true">&times;</button>
+      </div>
       <router-view />
     </div>
 
@@ -300,7 +316,10 @@ export default {
       deleteConfirmChecked: false,
       deleteCountdown: 5,
       deleteCountdownInterval: null,
-      deleteLoading: false
+      deleteLoading: false,
+      verifyBannerDismissed: false,
+      resendLoading: false,
+      resendSent: false
     }
   },
   async mounted() {
@@ -322,6 +341,24 @@ export default {
   methods: {
     translateRole(role) {
       return this.$t(`dashboard.roles.${role}`)
+    },
+    async resendVerificationEmail() {
+      this.resendLoading = true
+      try {
+        // Re-trigger verification by calling register with existing user is not possible,
+        // so we use a dedicated resend endpoint
+        const res = await fetch('/api/auth?action=resend-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        })
+        if (res.ok) {
+          this.resendSent = true
+        }
+      } catch {
+        // silent fail
+      } finally {
+        this.resendLoading = false
+      }
     },
     async checkAuth() {
       const user = await getCurrentUser()
@@ -692,6 +729,49 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.verify-email-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fef3c7;
+  border-bottom: 2px solid #f59e0b;
+  padding: 10px 20px;
+  font-size: 13.5px;
+  color: #78350f;
+}
+.verify-banner-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.verify-banner-text {
+  flex: 1;
+}
+.verify-resend-btn {
+  background: #f59e0b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.verify-resend-btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+.verify-dismiss-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #92400e;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .main-content {

@@ -1,7 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import bcrypt from 'bcryptjs'
+import { randomBytes } from 'crypto'
 import { prisma } from '../lib/prisma.js'
 import { setSessionCookie, clearSessionCookie, requireAuth } from '../lib/session.js'
+import { sendVerificationEmail, sendPasswordResetEmail } from '../lib/email.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
@@ -17,6 +19,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return await handleRegister(req, res)
             case 'me':
                 return await handleMe(req, res)
+            case 'verify':
+                return await handleVerifyEmail(req, res)
+            case 'resend-verify':
+                return await handleResendVerify(req, res)
+            case 'forgot':
+                return await handleForgotPassword(req, res)
+            case 'reset':
+                return await handleResetPassword(req, res)
             default:
                 return res.status(404).json({ error: 'Not found' })
         }
@@ -54,6 +64,7 @@ async function handleLogin(req: VercelRequest, res: VercelResponse) {
         id: user.id,
         email: user.email,
         name: user.name,
+        emailVerified: user.emailVerified,
         createdAt: user.createdAt
     })
 }
@@ -97,9 +108,16 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
     const passwordHash = await bcrypt.hash(String(password), 12)
 
     try {
+        const emailVerifyToken = randomBytes(32).toString('hex')
+
         const user = await prisma.user.create({
-            data: { email: normalizedEmail, name: normalizedName, password: passwordHash },
-            select: { id: true, email: true, name: true, createdAt: true }
+            data: {
+                email: normalizedEmail,
+                name: normalizedName,
+                password: passwordHash,
+                emailVerifyToken
+            },
+            select: { id: true, email: true, name: true, createdAt: true, emailVerified: true }
         })
 
         // Mark code as used
@@ -107,6 +125,11 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
             where: { id: codeRecord.id },
             data: { usedAt: new Date(), usedByEmail: normalizedEmail }
         })
+
+        // Send verification email (non-blocking)
+        sendVerificationEmail(normalizedEmail, normalizedName, emailVerifyToken).catch(
+            err => console.error('Failed to send verification email:', err)
+        )
 
         setSessionCookie(res, user.id, { rememberMe })
 
@@ -129,8 +152,116 @@ async function handleMe(req: VercelRequest, res: VercelResponse) {
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true, email: true, name: true, createdAt: true }
+        select: { id: true, email: true, name: true, emailVerified: true, createdAt: true }
     })
 
     return res.status(200).json(user)
+}
+
+async function handleVerifyEmail(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const { token } = req.body ?? {}
+    if (!token) return res.status(400).json({ error: 'Missing token' })
+
+    const user = await prisma.user.findUnique({ where: { emailVerifyToken: String(token) } })
+    if (!user) return res.status(400).json({ error: 'Invalid or expired verification link' })
+    if (user.emailVerified) return res.status(200).json({ ok: true, alreadyVerified: true })
+
+    await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true, emailVerifyToken: null }
+    })
+
+    return res.status(200).json({ ok: true })
+}
+
+async function handleResendVerify(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const userId = requireAuth(req, res)
+    if (!userId) return
+
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) return res.status(404).json({ error: 'User not found' })
+    if (user.emailVerified) return res.status(200).json({ ok: true, alreadyVerified: true })
+
+    // Generate a fresh token (or reuse existing one)
+    const token = user.emailVerifyToken ?? randomBytes(32).toString('hex')
+    if (!user.emailVerifyToken) {
+        await prisma.user.update({ where: { id: userId }, data: { emailVerifyToken: token } })
+    }
+
+    sendVerificationEmail(user.email, user.name, token).catch(
+        err => console.error('Failed to resend verification email:', err)
+    )
+
+    return res.status(200).json({ ok: true })
+}
+
+async function handleForgotPassword(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const { email } = req.body ?? {}
+    if (!email) return res.status(400).json({ error: 'Missing email' })
+
+    const normalizedEmail = String(email).trim().toLowerCase()
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } })
+
+    // Always return success to avoid user enumeration
+    if (!user) return res.status(200).json({ ok: true })
+
+    // Delete any existing reset tokens for this user
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } })
+
+    const token = randomBytes(32).toString('hex')
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+
+    await prisma.passwordResetToken.create({
+        data: { userId: user.id, token, expiresAt }
+    })
+
+    sendPasswordResetEmail(normalizedEmail, user.name, token).catch(
+        err => console.error('Failed to send password reset email:', err)
+    )
+
+    return res.status(200).json({ ok: true })
+}
+
+async function handleResetPassword(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const { token, password } = req.body ?? {}
+    if (!token || !password) return res.status(400).json({ error: 'Missing required fields' })
+    if (String(password).length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' })
+
+    const resetRecord = await prisma.passwordResetToken.findUnique({
+        where: { token: String(token) },
+        include: { user: true }
+    })
+
+    if (!resetRecord) return res.status(400).json({ error: 'Invalid or expired reset link' })
+    if (resetRecord.expiresAt < new Date()) {
+        await prisma.passwordResetToken.delete({ where: { id: resetRecord.id } })
+        return res.status(400).json({ error: 'Reset link has expired. Please request a new one.' })
+    }
+
+    const passwordHash = await bcrypt.hash(String(password), 12)
+
+    await prisma.user.update({
+        where: { id: resetRecord.userId },
+        data: { password: passwordHash }
+    })
+
+    await prisma.passwordResetToken.delete({ where: { id: resetRecord.id } })
+
+    return res.status(200).json({ ok: true })
 }

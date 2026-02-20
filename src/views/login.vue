@@ -1,5 +1,10 @@
 <template>
   <div class="login-page">
+    <!-- Notification Banner -->
+    <div v-if="notificationMessage" :class="['notification-banner', 'notification-' + notificationType]">
+      <span>{{ notificationMessage }}</span>
+      <button class="notification-close" @click="notificationMessage = ''">&times;</button>
+    </div>
     <div class="login-container">
       <!-- Login Hero -->
       <section class="hero login-hero">
@@ -41,7 +46,7 @@
                 <input type="checkbox" v-model="rememberMe" />
                 <span>{{ $t('auth.rememberMe') }}</span>
               </label>
-              <a href="#" class="forgot-password">{{ $t('auth.forgotPassword') }}</a>
+              <a href="#" class="forgot-password" @click.prevent="openForgotModal">{{ $t('auth.forgotPassword') }}</a>
             </div>
 
             <button type="submit" class="btn btn-primary btn-full" :disabled="loading">
@@ -61,6 +66,84 @@
           </form>
         </div>
       </section>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div v-if="showForgotModal" class="modal-overlay" @click.self="closeForgotModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>{{ $t('auth.forgotPasswordTitle') }}</h2>
+          <button class="close-btn" @click="closeForgotModal">&times;</button>
+        </div>
+        <div v-if="!forgotSent">
+          <p class="modal-description">{{ $t('auth.forgotPasswordDesc') }}</p>
+          <form @submit.prevent="handleForgotSubmit" class="register-form">
+            <div class="form-group">
+              <label for="forgot-email">{{ $t('auth.email') }}</label>
+              <input
+                type="email"
+                id="forgot-email"
+                v-model="forgotEmail"
+                :placeholder="$t('auth.emailPlaceholder')"
+                required
+                autofocus
+              />
+            </div>
+            <p v-if="forgotError" class="error-message">{{ forgotError }}</p>
+            <button type="submit" class="btn btn-primary btn-full" :disabled="forgotLoading">
+              {{ forgotLoading ? $t('auth.sending') : $t('auth.sendResetLink') }}
+            </button>
+          </form>
+        </div>
+        <div v-else class="forgot-success">
+          <div class="success-icon">✓</div>
+          <p>{{ $t('auth.forgotPasswordSent') }}</p>
+          <button class="btn btn-primary btn-full" @click="closeForgotModal">{{ $t('auth.close') }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div v-if="showResetModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>{{ $t('auth.resetPasswordTitle') }}</h2>
+        </div>
+        <div v-if="!resetSuccess">
+          <form @submit.prevent="handleResetSubmit" class="register-form">
+            <div class="form-group">
+              <label for="reset-password">{{ $t('auth.newPassword') }}</label>
+              <input
+                type="password"
+                id="reset-password"
+                v-model="resetPassword"
+                :placeholder="$t('auth.passwordStrongPlaceholder')"
+                required
+                autofocus
+              />
+            </div>
+            <div class="form-group">
+              <label for="reset-confirm-password">{{ $t('auth.confirmPassword') }}</label>
+              <input
+                type="password"
+                id="reset-confirm-password"
+                v-model="resetConfirmPassword"
+                :placeholder="$t('auth.confirmPasswordPlaceholder')"
+                required
+              />
+            </div>
+            <p v-if="resetError" class="error-message">{{ resetError }}</p>
+            <button type="submit" class="btn btn-primary btn-full" :disabled="resetLoading">
+              {{ resetLoading ? $t('auth.saving') : $t('auth.setNewPassword') }}
+            </button>
+          </form>
+        </div>
+        <div v-else class="forgot-success">
+          <div class="success-icon">✓</div>
+          <p>{{ $t('auth.resetPasswordSuccess') }}</p>
+          <button class="btn btn-primary btn-full" @click="closeResetModal">{{ $t('auth.login') }}</button>
+        </div>
+      </div>
     </div>
 
     <!-- Registration Modal -->
@@ -261,6 +344,18 @@ import { createOrganization as createOrg, joinOrganization as joinOrg } from '..
 
 export default {
   name: 'LoginView',
+  mounted() {
+    const action = this.$route.query.action
+    const token = this.$route.query.token
+    if (action === 'verify' && token) {
+      this.handleVerifyEmail(String(token))
+    } else if (action === 'reset' && token) {
+      this.resetToken = String(token)
+      this.showResetModal = true
+      // Clean the URL without navigation
+      this.$router.replace('/login')
+    }
+  },
   data() {
     return {
       email: '',
@@ -268,6 +363,8 @@ export default {
       rememberMe: false,
       loading: false,
       error: null,
+      notificationMessage: '',
+      notificationType: 'success',
       showRegisterModal: false,
       registerName: '',
       registerEmail: '',
@@ -277,6 +374,18 @@ export default {
       termsAccepted: false,
       registerLoading: false,
       registerError: null,
+      showForgotModal: false,
+      forgotEmail: '',
+      forgotLoading: false,
+      forgotError: null,
+      forgotSent: false,
+      showResetModal: false,
+      resetToken: '',
+      resetPassword: '',
+      resetConfirmPassword: '',
+      resetLoading: false,
+      resetError: null,
+      resetSuccess: false,
       showOrgSetupModal: false,
       showCreateOrgModal: false,
       newOrgName: '',
@@ -440,6 +549,103 @@ export default {
         .catch(() => {
           this.codeCopied = false
         })
+    },
+
+    async handleVerifyEmail(token) {
+      try {
+        const res = await fetch('/api/auth?action=verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        })
+        const data = await res.json()
+        if (res.ok) {
+          this.notificationMessage = this.$t('auth.emailVerified')
+          this.notificationType = 'success'
+        } else {
+          this.notificationMessage = data.error || this.$t('auth.emailVerifyFailed')
+          this.notificationType = 'error'
+        }
+      } catch {
+        this.notificationMessage = this.$t('auth.emailVerifyFailed')
+        this.notificationType = 'error'
+      }
+      this.$router.replace('/login')
+    },
+
+    openForgotModal() {
+      this.forgotEmail = this.email
+      this.forgotError = null
+      this.forgotSent = false
+      this.showForgotModal = true
+    },
+
+    closeForgotModal() {
+      this.showForgotModal = false
+      this.forgotEmail = ''
+      this.forgotError = null
+      this.forgotSent = false
+    },
+
+    async handleForgotSubmit() {
+      this.forgotError = null
+      this.forgotLoading = true
+      try {
+        const res = await fetch('/api/auth?action=forgot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: this.forgotEmail })
+        })
+        if (res.ok) {
+          this.forgotSent = true
+        } else {
+          const data = await res.json()
+          this.forgotError = data.error || this.$t('auth.forgotFailed')
+        }
+      } catch {
+        this.forgotError = this.$t('auth.forgotFailed')
+      } finally {
+        this.forgotLoading = false
+      }
+    },
+
+    closeResetModal() {
+      this.showResetModal = false
+      this.resetToken = ''
+      this.resetPassword = ''
+      this.resetConfirmPassword = ''
+      this.resetError = null
+      this.resetSuccess = false
+    },
+
+    async handleResetSubmit() {
+      this.resetError = null
+      if (this.resetPassword !== this.resetConfirmPassword) {
+        this.resetError = this.$t('auth.passwordsNoMatch')
+        return
+      }
+      if (this.resetPassword.length < 8) {
+        this.resetError = this.$t('auth.passwordTooShort')
+        return
+      }
+      this.resetLoading = true
+      try {
+        const res = await fetch('/api/auth?action=reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: this.resetToken, password: this.resetPassword })
+        })
+        if (res.ok) {
+          this.resetSuccess = true
+        } else {
+          const data = await res.json()
+          this.resetError = data.error || this.$t('auth.resetFailed')
+        }
+      } catch {
+        this.resetError = this.$t('auth.resetFailed')
+      } finally {
+        this.resetLoading = false
+      }
     }
   }
 }
@@ -756,6 +962,61 @@ export default {
   color: #92400e;
   margin: 0.35rem 0 0;
   line-height: 1.4;
+}
+
+/* Notification banner */
+.notification-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 500;
+}
+.notification-success {
+  background: #16a34a;
+  color: #fff;
+}
+.notification-error {
+  background: #dc2626;
+  color: #fff;
+}
+.notification-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+/* Forgot success */
+.forgot-success {
+  text-align: center;
+  padding: 16px 0;
+}
+.success-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #16a34a;
+  color: #fff;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+.modal-description {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 20px;
 }
 </style>
 
