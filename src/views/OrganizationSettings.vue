@@ -325,13 +325,13 @@
           </ol>
 
           <details style="margin-top: 2rem; cursor: pointer;">
-            <summary style="color: #666; font-weight: 500;">Visa tekniska instruktioner (för experter)</summary>
+            <summary style="color: #666; font-weight: 500;">{{ $t('settings.technicalInstructions') }}</summary>
             <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
-              <p>Om du använder terminalen (OpenSSL):</p>
+              <p>{{ $t('settings.techStep1') }}</p>
               <code style="display:block; background:#f5f5f5; padding:10px; border-radius:4px; font-family:monospace; margin-bottom:1rem; word-break:break-all; font-size: 0.85em;">
                 openssl req -new -newkey rsa:2048 -nodes -keyout swish.key -out swish.csr
               </code>
-              <p>Ladda upp CSR hos Swish, hämta PEM-filen, och kör sedan:</p>
+              <p>{{ $t('settings.techStep2') }}</p>
               <code style="display:block; background:#f5f5f5; padding:10px; border-radius:4px; font-family:monospace; margin-bottom:1rem; word-break:break-all; font-size: 0.85em;">
                 openssl pkcs12 -export -out swish_certificate.p12 -inkey swish.key -in swish_signed.pem
               </code>
@@ -340,7 +340,7 @@
 
         </div>
         <div class="help-modal-footer">
-          <button class="btn btn-primary" @click="showCertificateGuide = false">Jag förstår</button>
+          <button class="btn btn-primary" @click="showCertificateGuide = false">{{ $t('settings.understand') }}</button>
         </div>
       </div>
     </div>
