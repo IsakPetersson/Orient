@@ -3,10 +3,10 @@ import sv from './locales/sv.json'
 import en from './locales/en.json'
 
 const i18n = createI18n({
-    legacy: false, // you must set `false`, to use Composition API
-    globalInjection: true, // Inject $t, $d, etc. globally
+    legacy: true, // Set to true for Options API support (this.$t)
     locale: 'sv', // set locale
     fallbackLocale: 'en', // set fallback locale
+    globalInjection: true,
     messages: {
         sv,
         en
