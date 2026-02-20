@@ -126,10 +126,12 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
             data: { usedAt: new Date(), usedByEmail: normalizedEmail }
         })
 
-        // Send verification email (non-blocking)
-        sendVerificationEmail(normalizedEmail, normalizedName, emailVerifyToken).catch(
-            err => console.error('Failed to send verification email:', err)
-        )
+        // Send verification email
+        try {
+            await sendVerificationEmail(normalizedEmail, normalizedName, emailVerifyToken)
+        } catch (err) {
+            console.error('Failed to send verification email:', err)
+        }
 
         setSessionCookie(res, user.id, { rememberMe })
 
@@ -196,9 +198,11 @@ async function handleResendVerify(req: VercelRequest, res: VercelResponse) {
         await prisma.user.update({ where: { id: userId }, data: { emailVerifyToken: token } })
     }
 
-    sendVerificationEmail(user.email, user.name, token).catch(
-        err => console.error('Failed to resend verification email:', err)
-    )
+    try {
+        await sendVerificationEmail(user.email, user.name, token)
+    } catch (err) {
+        console.error('Failed to resend verification email:', err)
+    }
 
     return res.status(200).json({ ok: true })
 }
@@ -227,9 +231,11 @@ async function handleForgotPassword(req: VercelRequest, res: VercelResponse) {
         data: { userId: user.id, token, expiresAt }
     })
 
-    sendPasswordResetEmail(normalizedEmail, user.name, token).catch(
-        err => console.error('Failed to send password reset email:', err)
-    )
+    try {
+        await sendPasswordResetEmail(normalizedEmail, user.name, token)
+    } catch (err) {
+        console.error('Failed to send password reset email:', err)
+    }
 
     return res.status(200).json({ ok: true })
 }

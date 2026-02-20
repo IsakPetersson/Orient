@@ -352,8 +352,7 @@ export default {
     } else if (action === 'reset' && token) {
       this.resetToken = String(token)
       this.showResetModal = true
-      // Clean the URL without navigation
-      this.$router.replace('/login')
+      // Don't clear URL here — wait until modal closes to avoid remount race
     }
   },
   data() {
@@ -616,6 +615,10 @@ export default {
       this.resetConfirmPassword = ''
       this.resetError = null
       this.resetSuccess = false
+      // Clean token from URL now that we're done
+      if (this.$route.query.token) {
+        this.$router.replace('/login')
+      }
     },
 
     async handleResetSubmit() {
