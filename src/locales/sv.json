@@ -462,7 +462,13 @@
             "bulkRequestError": "Exempel på fel:",
             "bulkRequestMore": "...och {count} till.",
             "done": "Klart!",
-            "doneWithErrors": "Slutfört med fel"
+            "doneWithErrors": "Slutförd med fel",
+            "errorTitle": "Fel",
+            "warningTitle": "Varning",
+            "infoTitle": "Info",
+            "successTitle": "Klart!",
+            "swishNotConfiguredTitle": "Swish ej konfigurerat",
+            "noPermissionTitle": "Ingen behörighet"
         },
         "roles": {
             "OWNER": "Ägare",

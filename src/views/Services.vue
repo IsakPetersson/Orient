@@ -976,7 +976,7 @@ export default {
         }
       } catch (error) {
         console.error('Failed to load dashboard:', error)
-        alert(this.$t('dashboard.alerts.loadError')) // Use translation
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.loadError'), 'error')
       } finally {
         this.loading = false
       }
@@ -1057,7 +1057,7 @@ export default {
         
       } catch (error) {
         console.error('SIE export failed:', error)
-        alert(this.$t('dashboard.alerts.sieError'))
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.sieError'), 'error')
       } finally {
         this.downloadingSie = false
       }
@@ -1092,12 +1092,12 @@ export default {
         }
         this.showSwishModal = true
       } else {
-        alert(this.$t('dashboard.alerts.featureComing', { feature: action }))
+        this.showAlert(this.$t('dashboard.alerts.infoTitle'), this.$t('dashboard.alerts.featureComing', { feature: action }), 'info')
       }
     },
     handleViewAllAlerts() {
       console.log('View all alerts')
-      alert(this.$t('dashboard.alerts.actionPage'))
+      this.showAlert(this.$t('dashboard.alerts.infoTitle'), this.$t('dashboard.alerts.actionPage'), 'info')
     },
     async handleViewSwishStatus() {
       this.showSwishStatusModal = true
@@ -1109,7 +1109,7 @@ export default {
         this.swishRequests = await response.json()
       } catch (error) {
         console.error('Error fetching Swish requests:', error)
-        alert(this.$t('dashboard.alerts.swishError'))
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.swishError'), 'error')
       }
     },
     closeSwishStatusModal() {
@@ -1127,7 +1127,7 @@ export default {
         this.showMembersModal = true
       } catch (error) {
         console.error('Failed to load members:', error)
-        alert(this.$t('dashboard.alerts.membersError'))
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.membersError'), 'error')
       }
     },
     handleViewSettings() {
@@ -1245,7 +1245,7 @@ export default {
         if (successCount > 0) {
           await this.loadDashboard()
         }
-        this.showAlert('Swish ej konfigurerat', configError, 'show-settings-link')
+        this.showAlert(this.$t('dashboard.alerts.swishNotConfiguredTitle'), configError, 'show-settings-link')
         return
       }
       
@@ -1299,9 +1299,9 @@ export default {
       }
 
       this.showConfirm(
-        this.$t('dashboard.alerts.changeRoleTitle'),
-        this.$t('dashboard.alerts.changeRoleConfirm', {
-          name: member.user.name,
+        this.$t('dashboard.alerts.changeRole'),
+        this.$t('dashboard.alerts.confirmChangeRole', {
+          user: member.user.name,
           oldRole: this.translateRole(member.role),
           newRole: this.translateRole(newRole)
         }),
@@ -1328,15 +1328,15 @@ export default {
             await this.handleViewMembers()
           } catch (error) {
             console.error('Failed to update role:', error)
-            this.showAlert('Fel', 'Kunde inte uppdatera rollen', 'error')
+            this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.updateRoleError'), 'error')
           }
         }
       )
     },
     async removeTeamMember(member) {
       this.showConfirm(
-        'Ta bort medlem?',
-        `Är du säker på att du vill ta bort ${member.user.name} från organisationen? Detta kan inte ångras.`,
+        this.$t('dashboard.alerts.removeMember'),
+        this.$t('dashboard.alerts.confirmRemoveTeamMember', { user: member.user.name }),
         async () => {
           try {
             const response = await fetch(`/api/orgs?action=removeMember`, {
@@ -1359,15 +1359,15 @@ export default {
             await this.handleViewMembers()
           } catch (error) {
             console.error('Failed to remove team member:', error)
-            this.showAlert('Fel', 'Kunde inte ta bort teammedlemmen', 'error')
+            this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.removeTeamMemberError'), 'error')
           }
         }
       )
     },
     async removeClubMember(member) {
       this.showConfirm(
-        'Ta bort medlem?',
-        `Är du säker på att du vill ta bort ${member.name} från medlemslistan? Detta kan inte ångras.`,
+        this.$t('dashboard.alerts.removeMember'),
+        this.$t('dashboard.alerts.confirmRemoveClubMember', { user: member.name }),
         async () => {
           try {
             const response = await fetch(`/api/members?id=${member.id}`, {
@@ -1386,7 +1386,7 @@ export default {
             await this.handleViewMembers()
           } catch (error) {
             console.error('Failed to remove club member:', error)
-            this.showAlert('Fel', 'Kunde inte ta bort klubbmedlemmen', 'error')
+            this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.removeClubMemberError'), 'error')
           }
         }
       )
@@ -1401,7 +1401,7 @@ export default {
     },
     async togglePaymentStatus() {
       if (this.currentUserRole !== 'OWNER' && this.currentUserRole !== 'ADMIN') {
-        this.showAlert('Ingen behörighet', 'Endast ägare och administratörer kan ändra betalningsstatus', 'error')
+        this.showAlert(this.$t('dashboard.alerts.noPermissionTitle'), this.$t('dashboard.clubMemberDetailModal.adminNote'), 'error')
         this.selectedClubMember.paid = !this.selectedClubMember.paid
         return
       }
@@ -1454,7 +1454,7 @@ export default {
         this.incomeBreakdown = data.incomeBreakdown
       } catch (error) {
         console.error('Failed to update payment status:', error)
-        this.showAlert('Fel', 'Kunde inte uppdatera betalningsstatus', 'error')
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.updatePaymentError'), 'error')
         // Revert the change
         this.selectedClubMember.paid = !this.selectedClubMember.paid
       }
@@ -1541,7 +1541,7 @@ export default {
     async addMember() {
       try {
         if (!this.organizationId) {
-          alert('Ingen organisation vald')
+          this.showAlert(this.$t('dashboard.alerts.warningTitle'), this.$t('dashboard.alerts.noOrgSelected'), 'warning')
           return
         }
 
@@ -1586,7 +1586,7 @@ export default {
         this.closeAddMemberModal()
       } catch (error) {
         console.error('Failed to add member:', error)
-        alert('Kunde inte lägga till medlem')
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.addMemberError'), 'error')
       }
     },
     closeIncomeModal() {
@@ -1602,14 +1602,14 @@ export default {
     async registerIncome() {
       try {
         if (!this.organizationId) {
-          alert(this.$t('dashboard.alerts.noOrgSelected'))
+          this.showAlert(this.$t('dashboard.alerts.warningTitle'), this.$t('dashboard.alerts.noOrgSelected'), 'warning')
           return
         }
         
         // Get or create a default account
         let accountId = this.accounts[0]?.id
         if (!accountId) {
-          alert(this.$t('dashboard.alerts.noAccount'))
+          this.showAlert(this.$t('dashboard.alerts.warningTitle'), this.$t('dashboard.alerts.noAccount'), 'warning')
           return
         }
         
@@ -1628,7 +1628,7 @@ export default {
         await this.loadDashboard()
       } catch (error) {
         console.error('Failed to register income:', error)
-        alert(this.$t('dashboard.alerts.incomeError'))
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.incomeError'), 'error')
       }
     },
     closeExpenseModal() {
@@ -1644,14 +1644,14 @@ export default {
     async registerExpense() {
       try {
         if (!this.organizationId) {
-          alert(this.$t('dashboard.alerts.noOrgSelected'))
+          this.showAlert(this.$t('dashboard.alerts.warningTitle'), this.$t('dashboard.alerts.noOrgSelected'), 'warning')
           return
         }
         
         // Get or create a default account
         let accountId = this.accounts[0]?.id
         if (!accountId) {
-          alert(this.$t('dashboard.alerts.noAccount'))
+          this.showAlert(this.$t('dashboard.alerts.warningTitle'), this.$t('dashboard.alerts.noAccount'), 'warning')
           return
         }
         
@@ -1670,7 +1670,7 @@ export default {
         await this.loadDashboard()
       } catch (error) {
         console.error('Failed to register expense:', error)
-        alert(this.$t('dashboard.alerts.expenseError'))
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.expenseError'), 'error')
       }
     },
     setDescriptionPreset(preset) {

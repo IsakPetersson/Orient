@@ -344,6 +344,86 @@
         </div>
       </div>
     </div>
+
+    <!-- Custom Alert Modal -->
+    <div v-if="showCustomAlert" class="modal-overlay alert-modal-overlay" @click.self="showCustomAlert = false">
+      <div class="modal-content alert-modal-content">
+        <div class="alert-header-centered">
+          <div class="alert-icon-circle" :class="customAlertType">
+            <span v-if="customAlertType === 'success'">✓</span>
+            <span v-else-if="customAlertType === 'error'">✕</span>
+            <span v-else>!</span>
+          </div>
+          <h2>{{ customAlertTitle }}</h2>
+        </div>
+        <div class="alert-body-centered" v-if="customAlertMessage">
+          <p style="white-space: pre-line;">{{ customAlertMessage }}</p>
+        </div>
+        <div class="modal-footer centered">
+          <button class="btn btn-primary btn-lg" @click="showCustomAlert = false">{{ $t('settings.understand') }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div v-if="showConfirmModal" class="modal-overlay alert-modal-overlay" @click.self="showConfirmModal = false">
+      <div class="modal-content alert-modal-content">
+        <div class="alert-header-centered">
+          <div class="alert-icon-circle warning">
+            <span>?</span>
+          </div>
+          <h2>{{ customAlertTitle }}</h2>
+        </div>
+        <div class="alert-body-centered">
+          <p style="white-space: pre-line;">{{ customAlertMessage }}</p>
+        </div>
+        <div class="modal-footer centered" style="gap: 1rem;">
+          <button class="btn cancel-btn" @click="showConfirmModal = false">{{ $t('buttons.cancel') }}</button>
+          <button class="btn btn-primary" @click="handleConfirm">{{ $t('dashboard.confirm') }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Organization Modal -->
+    <div v-if="showDeleteModal" class="modal-overlay alert-modal-overlay" @click.self="closeDeleteModal">
+      <div class="modal-content alert-modal-content delete-modal-content">
+        <div class="alert-header-centered">
+          <div class="alert-icon-circle error">
+            <span>✕</span>
+          </div>
+          <h2>{{ $t('settings.deleteTitle') }}</h2>
+        </div>
+        <div class="alert-body-centered">
+          <p><strong>{{ $t('settings.deleteWarning', { orgName: organizationName }) }}</strong></p>
+          <p style="color: #6b7280; font-size: 0.95rem;">{{ $t('settings.deleteConfirm') }}</p>
+          <div style="text-align: left; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 1rem; margin: 1rem 0;">
+            <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #991b1b; margin-bottom: 0.5rem;">
+              {{ $t('settings.alerts.deleteDoubleConfirm', { name: organizationName }) }}
+            </label>
+            <input
+              v-model="deleteConfirmName"
+              type="text"
+              class="setting-input"
+              :placeholder="organizationName"
+              style="border-color: #fca5a5;"
+              :disabled="deleting"
+            />
+          </div>
+        </div>
+        <div class="modal-footer centered" style="gap: 1rem;">
+          <button class="btn cancel-btn" @click="closeDeleteModal" :disabled="deleting">{{ $t('buttons.cancel') }}</button>
+          <button
+            class="btn btn-danger"
+            :disabled="!canConfirmDelete || deleting"
+            @click="executeDeleteOrganization"
+          >
+            <span v-if="deleting">{{ $t('settings.deleting') }}</span>
+            <span v-else-if="deleteCountdown > 0">{{ $t('settings.wait', { seconds: deleteCountdown }) }}</span>
+            <span v-else>{{ $t('settings.deleteBtn') }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -379,7 +459,20 @@ export default {
       userOrganizations: [],
       currentUserRole: '',
       inviteCode: '',
-      copied: false
+      copied: false,
+      // Alert/Confirm modal state
+      showCustomAlert: false,
+      showConfirmModal: false,
+      confirmCallback: null,
+      customAlertTitle: '',
+      customAlertMessage: '',
+      customAlertType: 'info',
+      // Delete modal state
+      showDeleteModal: false,
+      deleteConfirmName: '',
+      deleting: false,
+      deleteCountdown: 5,
+      deleteTimer: null
     }
   },
   computed: {
@@ -394,6 +487,9 @@ export default {
     },
     orgDetailsChanged() {
       return this.orgNumber !== this.originalOrgNumber || this.orgLogo !== this.originalOrgLogo
+    },
+    canConfirmDelete() {
+      return this.deleteConfirmName === this.organizationName && this.deleteCountdown === 0
     }
   },
   async mounted() {
@@ -464,7 +560,7 @@ export default {
         this.loading = false
       } catch (error) {
         console.error('Failed to load settings:', error)
-        alert(this.$t('settings.alerts.loadError'))
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('settings.alerts.loadError'), 'error')
         this.loading = false
       }
     },
@@ -507,7 +603,7 @@ export default {
         
       } catch (error) {
         console.error('SIE export failed:', error)
-        alert(this.$t('settings.alerts.sieError'))
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('settings.alerts.sieError'), 'error')
       } finally {
         this.downloadingSie = false
       }
@@ -535,11 +631,11 @@ export default {
         
         this.originalOrgNumber = this.orgNumber
         this.originalOrgLogo = this.orgLogo
-        alert(this.$t('settings.alerts.settingsSaved'))
+        this.showAlert(this.$t('settings.alerts.settingsSaved'), '', 'success')
         
       } catch (error) {
         console.error('Failed to save org details:', error)
-        alert(this.$t('settings.alerts.saveError'))
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('settings.alerts.saveError'), 'error')
       } finally {
         this.savingOrg = false
       }
@@ -575,14 +671,14 @@ export default {
       if (file) {
         // Validate file extension
         if (!file.name.endsWith('.p12') && !file.name.endsWith('.pfx')) {
-          alert(this.$t('settings.alerts.fileType'))
+          this.showAlert(this.$t('dashboard.alerts.warningTitle'), this.$t('settings.alerts.fileType'), 'warning')
           event.target.value = ''
           return
         }
         
         // Validate file size (max 50KB)
         if (file.size > 50 * 1024) {
-          alert(this.$t('settings.alerts.fileSize'))
+          this.showAlert(this.$t('dashboard.alerts.warningTitle'), this.$t('settings.alerts.fileSize'), 'warning')
           event.target.value = ''
           return
         }
@@ -592,12 +688,12 @@ export default {
     },
     async saveSwishConfig() {
       if (!this.hasPermission) {
-        alert(this.$t('settings.alerts.noPermission'))
+        this.showAlert(this.$t('dashboard.alerts.noPermissionTitle'), this.$t('settings.alerts.noPermission'), 'error')
         return
       }
 
       if (!this.canSaveSwishConfig) {
-        alert(this.$t('settings.alerts.fillFields'))
+        this.showAlert(this.$t('dashboard.alerts.warningTitle'), this.$t('settings.alerts.fillFields'), 'warning')
         return
       }
 
@@ -638,7 +734,7 @@ export default {
           throw new Error(errorMsg)
         }
         
-        alert(this.$t('settings.alerts.swishSaved'))
+        this.showAlert(this.$t('settings.alerts.swishSaved'), '', 'success')
         
         // Clear sensitive fields
         this.swishPassphrase = ''
@@ -653,12 +749,9 @@ export default {
         this.savingSwish = false
       } catch (error) {
         console.error('Failed to save Swish config:', error)
-        alert(this.$t('settings.alerts.swishSaveError', { error: error.message }))
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('settings.alerts.swishSaveError', { error: error.message }), 'error')
         this.savingSwish = false
       }
-    },
-    async onOrganizationChange() {
-      await this.loadSettings()
     },
     async copyInviteCode() {
       try {
@@ -669,34 +762,67 @@ export default {
         }, 2000)
       } catch (error) {
         console.error('Failed to copy:', error)
-        alert(this.$t('settings.alerts.copyError'))
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('settings.alerts.copyError'), 'error')
       }
     },
-    async confirmDeleteOrganization() {
-      const confirmed = confirm(this.$t('settings.alerts.deleteConfirm', { name: this.organizationName }))
-      
-      if (!confirmed) return
-      
-      const doubleConfirm = prompt(this.$t('settings.alerts.deleteDoubleConfirm', { name: this.organizationName }))
-      
-      if (doubleConfirm !== this.organizationName) {
-        alert(this.$t('settings.alerts.deleteMismatch'))
-        return
-      }
-      
-      try {
-        await deleteOrganization(this.organizationId)
-        alert(this.$t('settings.alerts.deleteSuccess'))
-        this.$router.push('/login')
-      } catch (error) {
-        console.error('Failed to delete organization:', error)
-        alert(this.$t('settings.alerts.deleteError'))
-      }
+    async onOrganizationChange() {
+      await this.loadSettings()
     },
     goToLogin() {
       this.$router.push('/login')
+    },
+    showAlert(title, message, type = 'info') {
+      this.customAlertTitle = title
+      this.customAlertMessage = message
+      this.customAlertType = type
+      this.showCustomAlert = true
+    },
+    showConfirm(title, message, callback) {
+      this.customAlertTitle = title
+      this.customAlertMessage = message
+      this.confirmCallback = callback
+      this.showConfirmModal = true
+    },
+    handleConfirm() {
+      this.showConfirmModal = false
+      if (this.confirmCallback) {
+        this.confirmCallback()
+      }
+    },
+    confirmDeleteOrganization() {
+      this.deleteConfirmName = ''
+      this.deleting = false
+      this.deleteCountdown = 5
+      this.showDeleteModal = true
+      if (this.deleteTimer) clearInterval(this.deleteTimer)
+      this.deleteTimer = setInterval(() => {
+        if (this.deleteCountdown > 0) {
+          this.deleteCountdown--
+        } else {
+          clearInterval(this.deleteTimer)
+        }
+      }, 1000)
+    },
+    closeDeleteModal() {
+      this.showDeleteModal = false
+      this.deleteConfirmName = ''
+      if (this.deleteTimer) clearInterval(this.deleteTimer)
+    },
+    async executeDeleteOrganization() {
+      if (!this.canConfirmDelete) return
+      try {
+        this.deleting = true
+        await deleteOrganization(this.organizationId)
+        this.showDeleteModal = false
+        this.showAlert(this.$t('settings.alerts.deleteSuccess'), '', 'success')
+        setTimeout(() => this.$router.push('/login'), 2000)
+      } catch (error) {
+        console.error('Failed to delete organization:', error)
+        this.deleting = false
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('settings.alerts.deleteError'), 'error')
+      }
     }
-  }
+}
 }
 </script>
 
@@ -1213,5 +1339,100 @@ export default {
   color: var(--primary-dark);
   font-size: 0.875rem;
   font-weight: 600;
+}
+
+/* Alert / Confirm / Delete Modal Styles */
+.alert-modal-overlay {
+  z-index: 2000;
+}
+
+.alert-modal-content {
+  max-width: 420px;
+  text-align: center;
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.delete-modal-content {
+  max-width: 480px;
+}
+
+.alert-header-centered {
+  padding: 2rem 2rem 1rem;
+}
+
+.alert-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.alert-icon-circle.success {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.alert-icon-circle.error {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.alert-icon-circle.info {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+.alert-icon-circle.warning {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.alert-body-centered {
+  padding: 0 2rem 1rem;
+}
+
+.alert-body-centered p {
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.modal-footer {
+  padding: 1.5rem 2rem 2rem;
+  display: flex;
+  justify-content: flex-end;
+  border-top: none;
+}
+
+.modal-footer.centered {
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.btn-lg {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+}
+
+.cancel-btn {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #e5e7eb;
 }
 </style>

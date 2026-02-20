@@ -462,7 +462,13 @@
             "bulkRequestError": "Sample errors:",
             "bulkRequestMore": "...and {count} more.",
             "done": "Done!",
-            "doneWithErrors": "Completed with errors"
+            "doneWithErrors": "Completed with errors",
+            "errorTitle": "Error",
+            "warningTitle": "Warning",
+            "infoTitle": "Info",
+            "successTitle": "Done!",
+            "swishNotConfiguredTitle": "Swish Not Configured",
+            "noPermissionTitle": "No Permission"
         },
         "roles": {
             "OWNER": "Owner",
