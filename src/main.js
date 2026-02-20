@@ -7,8 +7,8 @@ import './assets/style.css'
 const app = createApp(App)
 
 app.config.errorHandler = (err, vm, info) => {
-  console.error('Global Error Handler:', err, info)
-  alert(`Error: ${err.message}\nCheck console for details.`)
+    console.error('Global Error Handler:', err, info)
+    alert(`Error: ${err.message}\nCheck console for details.`)
 }
 
 app.use(router)
