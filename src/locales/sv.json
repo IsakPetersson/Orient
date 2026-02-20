@@ -92,6 +92,8 @@
         "emailVerified": "Din e-postadress har bekräftats! Du kan nu logga in.",
         "emailVerifyFailed": "Den här verifieringslänken är ogiltig eller har redan använts.",
         "verifyEmailBanner": "Vänligen verifiera din e-postadress. Kontrollera din inkorg för verifieringslänken.",
+        "verifyEmailTitle": "Verifiera din e-post",
+        "verifyEmailGateDesc": "Vi skickade en verifieringslänk till {email}. Kontrollera din inkorg och klicka på länken för att fortsätta.",
         "resendVerification": "Skicka om e-post",
         "verificationEmailSent": "Verifieringsmail skickat! Kontrollera din inkorg."
     },

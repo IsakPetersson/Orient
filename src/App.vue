@@ -95,23 +95,23 @@
     </aside>
 
     <div class="main-content">
-      <!-- Email verification banner -->
-      <div
-        v-if="user && !user.emailVerified && !verifyBannerDismissed"
-        class="verify-email-banner"
-      >
-        <span class="verify-banner-icon">⚠️</span>
-        <span class="verify-banner-text">{{ $t('auth.verifyEmailBanner') }}</span>
-        <button
-          class="verify-resend-btn"
-          :disabled="resendLoading || resendSent"
-          @click="resendVerificationEmail"
-        >
-          {{ resendSent ? $t('auth.verificationEmailSent') : (resendLoading ? $t('auth.sending') : $t('auth.resendVerification')) }}
-        </button>
-        <button class="verify-dismiss-btn" @click="verifyBannerDismissed = true">&times;</button>
+      <!-- Email verification gate -->
+      <div v-if="user && !user.emailVerified" class="verify-gate">
+        <div class="verify-gate-card">
+          <div class="verify-gate-icon">✉️</div>
+          <h2>{{ $t('auth.verifyEmailTitle') }}</h2>
+          <p>{{ $t('auth.verifyEmailGateDesc', { email: user.email }) }}</p>
+          <button
+            class="btn btn-primary"
+            :disabled="resendLoading || resendSent"
+            @click="resendVerificationEmail"
+          >
+            {{ resendSent ? $t('auth.verificationEmailSent') : (resendLoading ? $t('auth.sending') : $t('auth.resendVerification')) }}
+          </button>
+          <button class="btn-link" style="margin-top:12px;" @click="handleLogout">{{ $t('nav.logout') }}</button>
+        </div>
       </div>
-      <router-view />
+      <router-view v-else />
     </div>
 
     <!-- Organizations Modal -->
@@ -731,47 +731,41 @@ export default {
   text-overflow: ellipsis;
 }
 
-.verify-email-banner {
+.verify-gate {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: #fef3c7;
-  border-bottom: 2px solid #f59e0b;
-  padding: 10px 20px;
-  font-size: 13.5px;
-  color: #78350f;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+  background: var(--background, #f4f4f5);
 }
-.verify-banner-icon {
-  font-size: 16px;
-  flex-shrink: 0;
+.verify-gate-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  padding: 48px 40px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
-.verify-banner-text {
-  flex: 1;
+.verify-gate-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
 }
-.verify-resend-btn {
-  background: #f59e0b;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 5px 14px;
-  font-size: 12.5px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
+.verify-gate-card h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #111827;
 }
-.verify-resend-btn:disabled {
-  opacity: 0.65;
-  cursor: default;
-}
-.verify-dismiss-btn {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: #92400e;
-  cursor: pointer;
-  padding: 0 4px;
-  line-height: 1;
-  flex-shrink: 0;
+.verify-gate-card p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
 }
 
 .main-content {

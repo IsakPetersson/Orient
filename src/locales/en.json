@@ -92,6 +92,8 @@
         "emailVerified": "Your email address has been verified! You can now log in.",
         "emailVerifyFailed": "This verification link is invalid or has already been used.",
         "verifyEmailBanner": "Please verify your email address. Check your inbox for the verification link.",
+        "verifyEmailTitle": "Verify your email",
+        "verifyEmailGateDesc": "We sent a verification link to {email}. Please check your inbox and click the link to continue.",
         "resendVerification": "Resend Email",
         "verificationEmailSent": "Verification email sent! Check your inbox."
     },
