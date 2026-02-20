@@ -4,6 +4,7 @@ import en from './locales/en.json'
 
 const i18n = createI18n({
     legacy: false, // you must set `false`, to use Composition API
+    globalInjection: true, // Inject $t, $d, etc. globally
     locale: 'sv', // set locale
     fallbackLocale: 'en', // set fallback locale
     messages: {
