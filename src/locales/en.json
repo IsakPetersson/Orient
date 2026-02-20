@@ -259,7 +259,7 @@
     "dashboard": {
         "loading": "Loading dashboard...",
         "title": "Dashboard",
-        "swishStatus": "Swish Status",
+        "swishStatusBtn": "Swish Status",
         "membersBtn": "Members",
         "settingsBtn": "Settings",
         "quickActions": "Quick Actions",

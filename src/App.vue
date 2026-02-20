@@ -321,7 +321,7 @@ export default {
   },
   methods: {
     translateRole(role) {
-      return this.$t(`roles.${role}`)
+      return this.$t(`dashboard.roles.${role}`)
     },
     async checkAuth() {
       const user = await getCurrentUser()

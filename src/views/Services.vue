@@ -25,7 +25,7 @@
           <div class="header-actions">
             <button class="quick-action-card header-btn" @click="handleViewSwishStatus">
               <span class="action-icon">⇄</span>
-              <span class="action-text">{{ $t('dashboard.swishStatus') }}</span>
+              <span class="action-text">{{ $t('dashboard.swishStatusBtn') }}</span>
             </button>
             <button class="quick-action-card header-btn" @click="handleViewMembers">
               <img src="../assets/images/members-icon.png" alt="Members" class="action-icon-img" />
@@ -1516,7 +1516,7 @@ export default {
       })
     },
     translateRole(role) {
-      return this.$t(`roles.${role}`)
+      return this.$t(`dashboard.roles.${role}`)
     },
     translateMemberType(type) {
       if (!type) return ''

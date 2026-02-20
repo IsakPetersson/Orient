@@ -259,7 +259,7 @@
     "dashboard": {
         "loading": "Laddar dashboard...",
         "title": "Dashboard",
-        "swishStatus": "Swish Status",
+        "swishStatusBtn": "Swish Status",
         "membersBtn": "Medlemmar",
         "settingsBtn": "Inställningar",
         "quickActions": "Snabbknappar",
