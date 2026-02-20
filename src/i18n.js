@@ -6,7 +6,7 @@ const i18n = createI18n({
     legacy: true, // Set to true for Options API support (this.$t)
     locale: 'sv', // set locale
     fallbackLocale: 'en', // set fallback locale
-    globalInjection: true,
+    globalInjection: true, // Ensure global injection is enabled
     messages: {
         sv,
         en
