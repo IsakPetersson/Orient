@@ -4,8 +4,6 @@ import { requireAuth } from '../lib/session.js'
 import { getOrgIdFromHeader, requireOrgAdmin, requireOrgMember } from '../lib/org.js'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 function fromAddress(): string {
     return process.env.RESEND_FROM_EMAIL || 'Orient <noreply@orient.app>'
 }
@@ -237,6 +235,11 @@ async function handleSendEmail(
   </table>
 </body>
 </html>`
+
+    if (!process.env.RESEND_API_KEY) {
+        return res.status(503).json({ error: 'Email sending is not configured on this server.' })
+    }
+    const resend = new Resend(process.env.RESEND_API_KEY)
 
     await resend.emails.send({
         from: fromAddress(),
