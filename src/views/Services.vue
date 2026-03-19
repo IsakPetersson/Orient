@@ -3096,7 +3096,7 @@ export default {
   min-height: 0;
   overflow: hidden;
   grid-column: 4;
-  grid-row: 1 / 3;
+  grid-row: 1;
 }
 
 /* Bottom Row */
