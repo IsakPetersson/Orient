@@ -82,15 +82,16 @@
           <span class="nav-text">{{ $t('nav.organizations') }}</span>
         </a>
         
-        <div class="user-info">
+        <router-link to="/profile" class="user-info user-info-link">
           <div class="user-avatar">
-            <span class="avatar-initial">{{ userInitial }}</span>
+            <img v-if="user.avatarUrl" :src="user.avatarUrl" alt="Avatar" class="avatar-photo" />
+            <span v-else class="avatar-initial">{{ userInitial }}</span>
           </div>
           <div class="user-details">
             <div class="user-name">{{ user.name }}</div>
             <div class="user-email">{{ user.email }}</div>
           </div>
-        </div>
+        </router-link>
       </div>
     </aside>
 
@@ -690,6 +691,16 @@ export default {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
+.user-info-link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.user-info-link:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
 .user-avatar {
   width: clamp(36px, 6vw, 44px);
   height: clamp(36px, 6vw, 44px);
@@ -705,6 +716,13 @@ export default {
   font-size: clamp(1rem, 2vh, 1.25rem);
   font-weight: 700;
   color: var(--text-light);
+}
+
+.avatar-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .user-details {
