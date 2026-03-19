@@ -160,20 +160,12 @@
                   v-for="ev in selectedDayEvents"
                   :key="ev.id"
                   class="cal-event-row"
-                  :class="{ 'cal-event-expanded': Number(selectedEventId) === Number(ev.id) }"
-                  @click="toggleEventDetail(ev.id)"
+                  @click="openEventDetailModal(ev)"
                 >
                   <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
                   <div class="cal-event-info">
                     <span class="cal-event-title">{{ ev.title }}</span>
-                    <template v-if="Number(selectedEventId) !== Number(ev.id)">
-                      <span v-if="ev.description" class="cal-event-desc">{{ ev.description }}</span>
-                    </template>
-                    <div v-if="Number(selectedEventId) === Number(ev.id)" class="cal-event-detail">
-                      <span class="cal-event-type-badge" :class="calendarEventTypeClass(ev.type)">{{ $t('calendar.types.' + (ev.type || 'event')) }}</span>
-                      <p v-if="ev.description" class="cal-event-detail-desc">{{ ev.description }}</p>
-                      <span v-else class="cal-event-detail-empty">{{ $t('calendar.noDescription') }}</span>
-                    </div>
+                    <span v-if="ev.description" class="cal-event-desc">{{ ev.description }}</span>
                   </div>
                   <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)" :title="$t('calendar.deleteEvent')">×</button>
                 </div>
@@ -185,19 +177,12 @@
                     v-for="ev in upcomingEvents"
                     :key="ev.id"
                     class="cal-event-row"
-                    :class="{ 'cal-event-expanded': Number(selectedEventId) === Number(ev.id) }"
-                    @click="toggleEventDetail(ev.id)"
+                    @click="openEventDetailModal(ev)"
                   >
                     <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
                     <div class="cal-event-info">
                       <span class="cal-event-title">{{ ev.title }}</span>
-                      <span v-if="Number(selectedEventId) !== Number(ev.id)" class="cal-event-date">{{ formatCalendarDate(ev.date) }}</span>
-                      <div v-if="Number(selectedEventId) === Number(ev.id)" class="cal-event-detail">
-                        <span class="cal-event-type-badge" :class="calendarEventTypeClass(ev.type)">{{ $t('calendar.types.' + (ev.type || 'event')) }}</span>
-                        <p v-if="ev.description" class="cal-event-detail-desc">{{ ev.description }}</p>
-                        <span v-else class="cal-event-detail-empty">{{ $t('calendar.noDescription') }}</span>
-                        <span class="cal-event-detail-date">{{ formatCalendarDate(ev.date) }}</span>
-                      </div>
+                      <span class="cal-event-date">{{ formatCalendarDate(ev.date) }}</span>
                     </div>
                     <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)">×</button>
                   </div>
@@ -913,6 +898,36 @@
       </div>
     </div>
 
+    <!-- Event Detail Modal -->
+    <div v-if="showEventDetailModal && selectedEvent" class="modal-overlay" @click.self="closeEventDetailModal">
+      <div class="modal-content event-detail-modal">
+        <div class="modal-header">
+          <h3>{{ $t('calendar.eventDetails') }}</h3>
+          <button class="close-btn" @click="closeEventDetailModal">×</button>
+        </div>
+        <div class="modal-body event-detail-body">
+          <h4 class="event-detail-title">{{ selectedEvent.title }}</h4>
+          <div class="event-detail-meta">
+            <span class="event-detail-type-badge" :class="calendarEventTypeClass(selectedEvent.type)">
+              {{ $t('calendar.types.' + (selectedEvent.type || 'event')) }}
+            </span>
+            <span class="event-detail-date">
+              {{ selectedEvent.date ? new Date(selectedEvent.date).toLocaleDateString($i18n.locale === 'sv' ? 'sv-SE' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '' }}
+            </span>
+          </div>
+          <div class="event-detail-section">
+            <label>{{ $t('calendar.eventDescription') }}</label>
+            <p v-if="selectedEvent.description" class="event-detail-desc">{{ selectedEvent.description }}</p>
+            <p v-else class="event-detail-empty">{{ $t('calendar.noDescription') }}</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-btn" @click="closeEventDetailModal">{{ $t('calendar.cancel') }}</button>
+          <button class="event-detail-delete-btn" @click="deleteCalendarEvent(selectedEvent.id); closeEventDetailModal()">{{ $t('calendar.deleteEvent') }}</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Add Event Modal -->
     <div v-if="showAddEventModal" class="modal-overlay" @click.self="closeAddEventModal">
       <div class="modal-content event-modal-content">
@@ -1198,7 +1213,8 @@ export default {
         description: '',
         type: 'event'
       },
-      selectedEventId: null
+      selectedEvent: null,
+      showEventDetailModal: false
     }
   },
   async mounted() {
@@ -1818,7 +1834,7 @@ export default {
     },
     calendarSelectDay(day) {
       this.selectedDay = day.date
-      this.selectedEventId = null
+      this.selectedEvent = null
     },
     calendarDayHasEvent(day) {
       const ds = day.date.toDateString()
@@ -1885,9 +1901,13 @@ export default {
         this.showAlert(this.$t('calendar.deleteError'), '', 'error')
       }
     },
-    toggleEventDetail(evId) {
-      const id = Number(evId)
-      this.selectedEventId = Number(this.selectedEventId) === id ? null : id
+    openEventDetailModal(ev) {
+      this.selectedEvent = ev
+      this.showEventDetailModal = true
+    },
+    closeEventDetailModal() {
+      this.showEventDetailModal = false
+      this.selectedEvent = null
     },
     calendarEventTypeClass(type) {
       const map = { competition: 'type-competition', training: 'type-training', meeting: 'type-meeting', other: 'type-other' }
@@ -4743,13 +4763,6 @@ export default {
   background: #f9fafb;
 }
 
-.cal-event-row.cal-event-expanded {
-  background: #f1f5f9;
-  padding: 0.5rem;
-  border-radius: 6px;
-  margin: 2px 0;
-}
-
 .cal-event-row:last-child {
   border-bottom: none;
 }
@@ -4793,49 +4806,6 @@ export default {
   text-overflow: ellipsis;
 }
 
-.cal-event-detail {
-  margin-top: 0.35rem;
-  padding-top: 0.35rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.cal-event-type-badge {
-  display: inline-block;
-  font-size: 0.65rem;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  margin-bottom: 0.25rem;
-}
-
-.cal-event-type-badge.type-event { background: #d1fae5; color: #065f46; }
-.cal-event-type-badge.type-competition { background: #fee2e2; color: #b91c1c; }
-.cal-event-type-badge.type-training { background: #dbeafe; color: #1d4ed8; }
-.cal-event-type-badge.type-meeting { background: #fef3c7; color: #b45309; }
-.cal-event-type-badge.type-other { background: #f3f4f6; color: #4b5563; }
-
-.cal-event-detail-desc {
-  font-size: 0.8rem;
-  color: #374151;
-  margin: 0.25rem 0 0;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.cal-event-detail-empty {
-  font-size: 0.75rem;
-  color: #9ca3af;
-  font-style: italic;
-}
-
-.cal-event-detail-date {
-  font-size: 0.72rem;
-  color: #6b7280;
-  margin-top: 0.25rem;
-}
-
 .cal-event-delete {
   background: none;
   border: none;
@@ -4856,6 +4826,100 @@ export default {
 .event-modal-content {
   max-width: 460px;
   width: 95%;
+}
+
+/* Event Detail Modal */
+.event-detail-modal {
+  max-width: 480px;
+  width: 95%;
+}
+
+.event-detail-body {
+  padding: 1.5rem 2rem;
+}
+
+.event-detail-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 1rem;
+  line-height: 1.3;
+}
+
+.event-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.event-detail-type-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.event-detail-type-badge.type-event { background: #d1fae5; color: #065f46; }
+.event-detail-type-badge.type-competition { background: #fee2e2; color: #b91c1c; }
+.event-detail-type-badge.type-training { background: #dbeafe; color: #1d4ed8; }
+.event-detail-type-badge.type-meeting { background: #fef3c7; color: #b45309; }
+.event-detail-type-badge.type-other { background: #f3f4f6; color: #4b5563; }
+
+.event-detail-date {
+  font-size: 0.95rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.event-detail-section {
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.event-detail-section label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.event-detail-desc {
+  font-size: 1rem;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.event-detail-empty {
+  font-size: 0.95rem;
+  color: #9ca3af;
+  font-style: italic;
+  margin: 0;
+}
+
+.event-detail-delete-btn {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #fee2e2;
+  color: #b91c1c;
+  transition: background 0.2s;
+}
+
+.event-detail-delete-btn:hover {
+  background: #fecaca;
 }
 </style>
 

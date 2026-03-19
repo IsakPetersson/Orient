@@ -650,6 +650,7 @@
         "creating": "Sparar...",
         "create": "Spara händelse",
         "cancel": "Avbryt",
+        "eventDetails": "Händelsedetaljer",
         "deleteEvent": "Ta bort händelse",
         "titleRequired": "Titel krävs",
         "dateRequired": "Datum krävs",

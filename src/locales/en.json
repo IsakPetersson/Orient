@@ -650,6 +650,7 @@
         "creating": "Saving...",
         "create": "Save Event",
         "cancel": "Cancel",
+        "eventDetails": "Event Details",
         "deleteEvent": "Delete Event",
         "titleRequired": "Title is required",
         "dateRequired": "Date is required",
