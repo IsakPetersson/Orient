@@ -624,5 +624,37 @@
         "passwordTooShort": "Lösenordet måste vara minst 8 tecken.",
         "passwordMismatch": "Lösenorden matchar inte.",
         "fillAllFields": "Fyll i alla fält."
+    },
+    "calendar": {
+        "title": "Kalender",
+        "addEvent": "Lägg till händelse",
+        "noEvents": "Inga händelser denna dag",
+        "noUpcoming": "Inga kommande händelser",
+        "upcomingEvents": "Kommande händelser",
+        "today": "Idag",
+        "eventTitle": "Titel",
+        "eventTitlePlaceholder": "Händelsenamn",
+        "eventDate": "Datum",
+        "eventEndDate": "Slutdatum (frivilligt)",
+        "eventDescription": "Beskrivning (frivilligt)",
+        "eventDescPlaceholder": "Lägg till detaljer...",
+        "eventType": "Typ",
+        "types": {
+            "event": "Händelse",
+            "competition": "Tävling",
+            "training": "Träning",
+            "meeting": "Möte",
+            "other": "Övrigt"
+        },
+        "creating": "Sparar...",
+        "create": "Spara händelse",
+        "cancel": "Avbryt",
+        "deleteEvent": "Ta bort händelse",
+        "titleRequired": "Titel krävs",
+        "dateRequired": "Datum krävs",
+        "createError": "Kunde inte skapa händelse",
+        "deleteError": "Kunde inte ta bort händelse",
+        "weekdays": ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"],
+        "months": ["Januari","Februari","Mars","April","Maj","Juni","Juli","Augusti","September","Oktober","November","December"]
     }
 }

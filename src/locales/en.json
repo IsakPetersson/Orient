@@ -624,5 +624,37 @@
         "passwordTooShort": "Password must be at least 8 characters.",
         "passwordMismatch": "Passwords do not match.",
         "fillAllFields": "Please fill in all fields."
+    },
+    "calendar": {
+        "title": "Calendar",
+        "addEvent": "Add Event",
+        "noEvents": "No events on this day",
+        "noUpcoming": "No upcoming events",
+        "upcomingEvents": "Upcoming Events",
+        "today": "Today",
+        "eventTitle": "Title",
+        "eventTitlePlaceholder": "Event name",
+        "eventDate": "Date",
+        "eventEndDate": "End Date (optional)",
+        "eventDescription": "Description (optional)",
+        "eventDescPlaceholder": "Add details...",
+        "eventType": "Type",
+        "types": {
+            "event": "Event",
+            "competition": "Competition",
+            "training": "Training",
+            "meeting": "Meeting",
+            "other": "Other"
+        },
+        "creating": "Saving...",
+        "create": "Save Event",
+        "cancel": "Cancel",
+        "deleteEvent": "Delete Event",
+        "titleRequired": "Title is required",
+        "dateRequired": "Date is required",
+        "createError": "Could not create event",
+        "deleteError": "Could not delete event",
+        "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "months": ["January","February","March","April","May","June","July","August","September","October","November","December"]
     }
 }

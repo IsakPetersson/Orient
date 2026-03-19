@@ -171,8 +171,79 @@
             </div>
           </div>
 
-          <!-- Bottom Right 1 - Empty placeholder -->
+          <!-- Bottom Right 1 - Calendar -->
           <div class="bottom-right-1">
+            <div class="panel calendar-panel">
+              <div class="panel-header calendar-header">
+                <div class="calendar-nav">
+                  <button class="cal-nav-btn" @click="calendarPrevMonth">&#8249;</button>
+                  <span class="cal-month-label">
+                    {{ $t('calendar.months')[calendarMonth] }} {{ calendarYear }}
+                  </span>
+                  <button class="cal-nav-btn" @click="calendarNextMonth">&#8250;</button>
+                </div>
+                <div class="calendar-header-actions">
+                  <button class="cal-today-btn" @click="calendarGoToday">{{ $t('calendar.today') }}</button>
+                  <button class="cal-add-btn" @click="openAddEventModal(selectedDay ? { date: selectedDay } : null)">+ {{ $t('calendar.addEvent') }}</button>
+                </div>
+              </div>
+
+              <!-- Day-of-week labels -->
+              <div class="cal-weekdays">
+                <span v-for="wd in $t('calendar.weekdays')" :key="wd">{{ wd }}</span>
+              </div>
+
+              <!-- Day grid -->
+              <div class="cal-grid">
+                <div
+                  v-for="(day, i) in calendarDays"
+                  :key="i"
+                  class="cal-day"
+                  :class="{
+                    'cal-other-month': !day.currentMonth,
+                    'cal-today': calendarIsToday(day),
+                    'cal-selected': calendarIsSelected(day),
+                    'cal-has-event': calendarDayHasEvent(day)
+                  }"
+                  @click="calendarSelectDay(day)"
+                >
+                  <span class="cal-day-num">{{ day.date.getDate() }}</span>
+                  <span v-if="calendarDayHasEvent(day)" class="cal-dot"></span>
+                </div>
+              </div>
+
+              <!-- Events for selected day -->
+              <div class="cal-events-section">
+                <div v-if="selectedDay" class="cal-selected-date-label">
+                  {{ selectedDay.toLocaleDateString($i18n.locale === 'sv' ? 'sv-SE' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) }}
+                </div>
+                <div v-if="selectedDay && selectedDayEvents.length === 0" class="cal-no-events">
+                  {{ $t('calendar.noEvents') }}
+                </div>
+                <div v-for="ev in selectedDayEvents" :key="ev.id" class="cal-event-row">
+                  <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
+                  <div class="cal-event-info">
+                    <span class="cal-event-title">{{ ev.title }}</span>
+                    <span v-if="ev.description" class="cal-event-desc">{{ ev.description }}</span>
+                  </div>
+                  <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)" title="Ta bort">×</button>
+                </div>
+
+                <!-- Upcoming events (when no day selected) -->
+                <template v-if="!selectedDay">
+                  <div class="cal-upcoming-label">{{ $t('calendar.upcomingEvents') }}</div>
+                  <div v-if="upcomingEvents.length === 0" class="cal-no-events">{{ $t('calendar.noUpcoming') }}</div>
+                  <div v-for="ev in upcomingEvents" :key="ev.id" class="cal-event-row">
+                    <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
+                    <div class="cal-event-info">
+                      <span class="cal-event-title">{{ ev.title }}</span>
+                      <span class="cal-event-date">{{ formatCalendarDate(ev.date) }}</span>
+                    </div>
+                    <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)">×</button>
+                  </div>
+                </template>
+              </div>
+            </div>
           </div>
 
           <!-- Bottom Right 2 - Recent Activity -->
@@ -831,6 +902,62 @@
       </div>
     </div>
 
+    <!-- Add Event Modal -->
+    <div v-if="showAddEventModal" class="modal-overlay" @click.self="closeAddEventModal">
+      <div class="modal-content event-modal-content">
+        <div class="modal-header">
+          <h3>{{ $t('calendar.addEvent') }}</h3>
+          <button class="close-btn" @click="closeAddEventModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>{{ $t('calendar.eventTitle') }}</label>
+            <input
+              v-model="newEvent.title"
+              class="form-input"
+              :placeholder="$t('calendar.eventTitlePlaceholder')"
+              maxlength="100"
+            />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ $t('calendar.eventDate') }}</label>
+              <input v-model="newEvent.date" type="date" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label>{{ $t('calendar.eventEndDate') }}</label>
+              <input v-model="newEvent.endDate" type="date" class="form-input" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>{{ $t('calendar.eventType') }}</label>
+            <select v-model="newEvent.type" class="form-input">
+              <option value="event">{{ $t('calendar.types.event') }}</option>
+              <option value="competition">{{ $t('calendar.types.competition') }}</option>
+              <option value="training">{{ $t('calendar.types.training') }}</option>
+              <option value="meeting">{{ $t('calendar.types.meeting') }}</option>
+              <option value="other">{{ $t('calendar.types.other') }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>{{ $t('calendar.eventDescription') }}</label>
+            <textarea
+              v-model="newEvent.description"
+              class="form-input"
+              :placeholder="$t('calendar.eventDescPlaceholder')"
+              rows="2"
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-btn" @click="closeAddEventModal">{{ $t('calendar.cancel') }}</button>
+          <button class="submit-btn" :disabled="creatingEvent" @click="createCalendarEvent">
+            {{ creatingEvent ? $t('calendar.creating') : $t('calendar.create') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- No Organization Modal -->
     <div v-if="showNoOrgModal" class="modal-overlay auth-modal-overlay">
       <div class="modal-content auth-modal-content">
@@ -1045,7 +1172,21 @@ export default {
       alerts: [],
       incomeBreakdown: [],
       expenseBreakdown: [],
-      accounts: []
+      accounts: [],
+      // Calendar
+      calendarYear: new Date().getFullYear(),
+      calendarMonth: new Date().getMonth(), // 0-indexed
+      calendarEvents: [],
+      selectedDay: null,
+      showAddEventModal: false,
+      creatingEvent: false,
+      newEvent: {
+        title: '',
+        date: '',
+        endDate: '',
+        description: '',
+        type: 'event'
+      }
     }
   },
   async mounted() {
@@ -1066,6 +1207,39 @@ export default {
     },
     currentUserInitial() {
       return (this.currentUserName || 'U').charAt(0).toUpperCase()
+    },
+    calendarDays() {
+      const year = this.calendarYear
+      const month = this.calendarMonth
+      const firstDay = new Date(year, month, 1)
+      const lastDay = new Date(year, month + 1, 0)
+      // Monday-first: getDay() returns 0=Sun, so shift
+      const startDow = (firstDay.getDay() + 6) % 7
+      const days = []
+      for (let i = 0; i < startDow; i++) {
+        const d = new Date(year, month, -startDow + i + 1)
+        days.push({ date: d, currentMonth: false })
+      }
+      for (let d = 1; d <= lastDay.getDate(); d++) {
+        days.push({ date: new Date(year, month, d), currentMonth: true })
+      }
+      const remaining = 42 - days.length
+      for (let i = 1; i <= remaining; i++) {
+        days.push({ date: new Date(year, month + 1, i), currentMonth: false })
+      }
+      return days
+    },
+    selectedDayEvents() {
+      if (!this.selectedDay) return []
+      const sel = this.selectedDay.toDateString()
+      return this.calendarEvents.filter(e => new Date(e.date).toDateString() === sel)
+    },
+    upcomingEvents() {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      return this.calendarEvents
+        .filter(e => new Date(e.date) >= today)
+        .slice(0, 5)
     },
     descriptionPresets() {
       return [
@@ -1115,6 +1289,7 @@ export default {
         } else {
           this.updateDashboardState(data)
         }
+        await this.loadCalendarEvents()
       } catch (error) {
         console.error('Failed to load dashboard:', error)
         this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.loadError'), 'error')
@@ -1580,6 +1755,127 @@ export default {
         notes: ''
       }
     },
+
+    // --- Calendar methods ---
+    async loadCalendarEvents() {
+      if (!this.organizationId) return
+      try {
+        const res = await fetch(
+          `/api/events?year=${this.calendarYear}&month=${this.calendarMonth + 1}`,
+          { headers: { 'x-org-id': String(this.organizationId) } }
+        )
+        if (res.ok) {
+          const data = await res.json()
+          this.calendarEvents = data.events || []
+        }
+      } catch (e) {
+        console.error('Failed to load calendar events:', e)
+      }
+    },
+    async calendarPrevMonth() {
+      if (this.calendarMonth === 0) {
+        this.calendarMonth = 11
+        this.calendarYear--
+      } else {
+        this.calendarMonth--
+      }
+      this.selectedDay = null
+      await this.loadCalendarEvents()
+    },
+    async calendarNextMonth() {
+      if (this.calendarMonth === 11) {
+        this.calendarMonth = 0
+        this.calendarYear++
+      } else {
+        this.calendarMonth++
+      }
+      this.selectedDay = null
+      await this.loadCalendarEvents()
+    },
+    calendarGoToday() {
+      const now = new Date()
+      this.calendarYear = now.getFullYear()
+      this.calendarMonth = now.getMonth()
+      this.selectedDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      this.loadCalendarEvents()
+    },
+    calendarSelectDay(day) {
+      this.selectedDay = day.date
+    },
+    calendarDayHasEvent(day) {
+      const ds = day.date.toDateString()
+      return this.calendarEvents.some(e => new Date(e.date).toDateString() === ds)
+    },
+    calendarIsToday(day) {
+      return day.date.toDateString() === new Date().toDateString()
+    },
+    calendarIsSelected(day) {
+      return this.selectedDay && day.date.toDateString() === this.selectedDay.toDateString()
+    },
+    openAddEventModal(day) {
+      const dateStr = day
+        ? day.date.toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0]
+      this.newEvent = { title: '', date: dateStr, endDate: '', description: '', type: 'event' }
+      this.showAddEventModal = true
+    },
+    closeAddEventModal() {
+      this.showAddEventModal = false
+      this.newEvent = { title: '', date: '', endDate: '', description: '', type: 'event' }
+    },
+    async createCalendarEvent() {
+      if (!this.newEvent.title.trim()) {
+        this.showAlert(this.$t('calendar.titleRequired'), '', 'error')
+        return
+      }
+      if (!this.newEvent.date) {
+        this.showAlert(this.$t('calendar.dateRequired'), '', 'error')
+        return
+      }
+      this.creatingEvent = true
+      try {
+        const res = await fetch('/api/events?action=create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-org-id': String(this.organizationId) },
+          body: JSON.stringify(this.newEvent)
+        })
+        if (res.ok) {
+          await this.loadCalendarEvents()
+          this.closeAddEventModal()
+        } else {
+          this.showAlert(this.$t('calendar.createError'), '', 'error')
+        }
+      } catch (e) {
+        this.showAlert(this.$t('calendar.createError'), '', 'error')
+      } finally {
+        this.creatingEvent = false
+      }
+    },
+    async deleteCalendarEvent(id) {
+      try {
+        const res = await fetch('/api/events?action=delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-org-id': String(this.organizationId) },
+          body: JSON.stringify({ id })
+        })
+        if (res.ok) {
+          await this.loadCalendarEvents()
+        } else {
+          this.showAlert(this.$t('calendar.deleteError'), '', 'error')
+        }
+      } catch (e) {
+        this.showAlert(this.$t('calendar.deleteError'), '', 'error')
+      }
+    },
+    calendarEventTypeClass(type) {
+      const map = { competition: 'type-competition', training: 'type-training', meeting: 'type-meeting', other: 'type-other' }
+      return map[type] || 'type-event'
+    },
+    formatCalendarDate(dateStr) {
+      const d = new Date(dateStr)
+      return d.toLocaleDateString(this.$i18n.locale === 'sv' ? 'sv-SE' : 'en-GB', { day: 'numeric', month: 'short' })
+    },
+
     async handleAction(action) {
       console.log('Action:', action)
       if (action === 'upload-receipt') {
@@ -4185,6 +4481,279 @@ export default {
   font-size: 0.8rem;
   color: #9ca3af;
   margin: 0;
+}
+
+/* ── Calendar Panel ─────────────────────────────────────────────────────── */
+.calendar-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cal-nav-btn {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.cal-nav-btn:hover {
+  background: #f3f4f6;
+}
+
+.cal-month-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #111827;
+  min-width: 130px;
+  text-align: center;
+}
+
+.calendar-header-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.cal-today-btn {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: #374151;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.cal-today-btn:hover {
+  background: #e5e7eb;
+}
+
+.cal-add-btn {
+  background: #2d6a4f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.cal-add-btn:hover {
+  background: #1b4332;
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 0.4rem 0.75rem 0;
+  gap: 2px;
+}
+
+.cal-weekdays span {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 0.25rem 0.75rem;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.12s;
+  min-width: 0;
+}
+
+.cal-day:hover {
+  background: #f3f4f6;
+}
+
+.cal-day-num {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #374151;
+  line-height: 1;
+}
+
+.cal-day.cal-other-month .cal-day-num {
+  color: #d1d5db;
+}
+
+.cal-day.cal-today {
+  background: #d1fae5;
+}
+
+.cal-day.cal-today .cal-day-num {
+  color: #065f46;
+  font-weight: 700;
+}
+
+.cal-day.cal-selected {
+  background: #2d6a4f;
+}
+
+.cal-day.cal-selected .cal-day-num {
+  color: #fff;
+  font-weight: 700;
+}
+
+.cal-day.cal-selected .cal-dot {
+  background: #a7f3d0;
+}
+
+.cal-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #2d6a4f;
+  margin-top: 2px;
+}
+
+.cal-events-section {
+  padding: 0.5rem 1rem 0.75rem;
+  border-top: 1px solid #f1f5f9;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 130px;
+}
+
+.cal-selected-date-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.4rem;
+  text-transform: capitalize;
+}
+
+.cal-upcoming-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.cal-no-events {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.cal-event-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid #f9fafb;
+}
+
+.cal-event-row:last-child {
+  border-bottom: none;
+}
+
+.cal-event-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.cal-event-dot.type-event { background: #2d6a4f; }
+.cal-event-dot.type-competition { background: #dc2626; }
+.cal-event-dot.type-training { background: #2563eb; }
+.cal-event-dot.type-meeting { background: #d97706; }
+.cal-event-dot.type-other { background: #6b7280; }
+
+.cal-event-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.cal-event-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-event-desc,
+.cal-event-date {
+  font-size: 0.72rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-event-delete {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.12s;
+}
+
+.cal-event-delete:hover {
+  color: #dc2626;
+}
+
+/* Add Event Modal */
+.event-modal-content {
+  max-width: 460px;
+  width: 95%;
 }
 </style>
 
