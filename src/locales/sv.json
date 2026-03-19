@@ -506,7 +506,7 @@
             "recipientName": "Mottagarens Namn",
             "placeholderName": "För- och efternamn",
             "recipientEmail": "E-postadress (för utskick)",
-            "placeholderEmail": "mottagare@example.com",
+            "placeholderEmail": "t.ex. din e-postadress",
             "description": "Beskrivning / Avser",
             "placeholderDescription": "t.ex. Medlemsavgift 2026",
             "amount": "Belopp (kr)",

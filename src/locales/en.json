@@ -506,7 +506,7 @@
             "recipientName": "Recipient Name",
             "placeholderName": "Full name",
             "recipientEmail": "Email Address (for delivery)",
-            "placeholderEmail": "recipient@example.com",
+            "placeholderEmail": "e.g. their email address",
             "description": "Description / Re",
             "placeholderDescription": "e.g. Membership fee 2026",
             "amount": "Amount (kr)",
