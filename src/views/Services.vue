@@ -12,6 +12,13 @@
         <div class="header-bar">
           <div class="welcome-text">
             <h1>{{ $t('dashboard.title') }}</h1>
+            <button class="user-profile-chip" @click="$router.push('/profile')">
+              <div v-if="currentUserAvatar" class="chip-avatar">
+                <img :src="currentUserAvatar" alt="Profile" class="chip-avatar-img" />
+              </div>
+              <div v-else class="chip-avatar chip-avatar-initial">{{ currentUserInitial }}</div>
+              <span class="chip-name">{{ currentUserName || $t('dashboard.profileBtn') }}</span>
+            </button>
           </div>
           <div class="org-name-container">
               <img v-if="organizationLogo" :src="organizationLogo" alt="Logo" class="org-logo"/>
@@ -34,13 +41,6 @@
             <button class="quick-action-card header-btn" @click="handleViewSettings" v-if="currentUserRole === 'OWNER' || currentUserRole === 'ADMIN'">
               <span class="action-icon">⚙</span>
               <span class="action-text">{{ $t('dashboard.settingsBtn') }}</span>
-            </button>
-            <button class="quick-action-card header-btn profile-btn" @click="$router.push('/profile')">
-              <div v-if="currentUserAvatar" class="header-avatar">
-                <img :src="currentUserAvatar" alt="Profile" class="header-avatar-img" />
-              </div>
-              <span v-else class="action-icon header-avatar-initial">{{ currentUserInitial }}</span>
-              <span class="action-text">{{ $t('dashboard.profileBtn') }}</span>
             </button>
           </div>
         </div>
@@ -4054,8 +4054,29 @@ export default {
   border: 1px solid #e5e7eb;
 }
 
-/* ── Header profile avatar ──────────────────────────────────────────────── */
-.header-avatar {
+/* ── User profile chip (header) ─────────────────────────────────────────── */
+.user-profile-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0.75rem 0.3rem 0.35rem;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text, #111827);
+}
+
+.user-profile-chip:hover {
+  background: #f1f5f9;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.chip-avatar {
   width: 26px;
   height: 26px;
   border-radius: 50%;
@@ -4063,24 +4084,27 @@ export default {
   flex-shrink: 0;
 }
 
-.header-avatar-img {
+.chip-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.header-avatar-initial {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
+.chip-avatar-initial {
   background: linear-gradient(135deg, #4f46e5, #7c3aed);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #fff;
-  flex-shrink: 0;
+}
+
+.chip-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── Invoice Modal ──────────────────────────────────────────────────────── */
