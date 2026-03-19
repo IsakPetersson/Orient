@@ -48,6 +48,7 @@ model Organization {
   invites       OrganizationInvite[]
   members       Member[]
   swishRequests SwishPaymentRequest[]
+  invoices      Invoice[]
 }
 
 model OrganizationMembership {
@@ -127,6 +128,7 @@ model Member {
 
   organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   swishPaymentRequests SwishPaymentRequest[]
+  invoices             Invoice[]
 
   @@index([organizationId])
 }
@@ -160,6 +162,28 @@ model SwishPaymentRequest {
 
   @@index([organizationId, createdAt])
   @@index([payeePaymentReference])
+}
+
+model Invoice {
+  id             Int       @id @default(autoincrement())
+  organizationId Int
+  memberId       Int?
+  invoiceNumber  String
+  recipientName  String
+  recipientEmail String?
+  description    String
+  amount         Float
+  dueDate        DateTime?
+  status         String    @default("DRAFT") // DRAFT, SENT, PAID, CANCELLED
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  member       Member?      @relation(fields: [memberId], references: [id])
+
+  @@unique([organizationId, invoiceNumber])
+  @@index([organizationId])
 }
 
 model RegistrationCode {

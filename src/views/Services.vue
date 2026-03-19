@@ -52,9 +52,9 @@
                   <span class="action-text">{{ $t('dashboard.uploadReceipt') }}</span>
                   <span class="coming-soon-badge">{{ $t('dashboard.comingSoon') }}</span>
                 </button>
-                <button class="quick-action-card" @click="handleAction('download-pdf')" :disabled="downloadingPdf">
-                  <img src="../assets/images/arrow-icon.png" alt="PDF" class="action-icon-img" />
-                  <span class="action-text">{{ downloadingPdf ? $t('dashboard.downloadingPdf') : $t('dashboard.downloadPdf') }}</span>
+                <button class="quick-action-card" @click="handleAction('create-invoice')">
+                  <span class="action-icon"><div class="thick-square"></div></span>
+                  <span class="action-text">{{ $t('dashboard.createInvoice') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('download-accounting')" :disabled="downloadingSie">
                   <img src="../assets/images/arrow-icon.png" alt="Download" class="action-icon-img" />
@@ -64,10 +64,9 @@
                   <span class="action-icon">$</span>
                   <span class="action-text">{{ $t('dashboard.swishPay') }}</span>
                 </button>
-                <button class="quick-action-card coming-soon-card" @click="handleAction('create-invoice')">
-                  <span class="action-icon"><div class="thick-square"></div></span>
-                  <span class="action-text">{{ $t('dashboard.createInvoice') }}</span>
-                  <span class="coming-soon-badge">{{ $t('dashboard.comingSoon') }}</span>
+                <button class="quick-action-card" @click="handleAction('download-pdf')" :disabled="downloadingPdf">
+                  <img src="../assets/images/arrow-icon.png" alt="PDF" class="action-icon-img" />
+                  <span class="action-text">{{ downloadingPdf ? $t('dashboard.downloadingPdf') : $t('dashboard.downloadPdf') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('add-member')">
                   <span class="action-icon">+</span>
@@ -701,6 +700,121 @@
       </div>
     </div>
 
+    <!-- Invoice Modal -->
+    <div v-if="showInvoiceModal" class="modal-overlay" @click.self="closeInvoiceModal">
+      <div class="modal-content invoice-modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>{{ $t('dashboard.invoiceModal.title') }}</h2>
+          <button class="close-btn" @click="closeInvoiceModal">×</button>
+        </div>
+
+        <!-- Step 1: Fill in form -->
+        <div v-if="invoiceStep === 'form'" class="modal-body">
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.selectMember') }}</label>
+            <select class="form-select" @change="onInvoiceMemberSelect($event)">
+              <option value="">{{ $t('dashboard.invoiceModal.selectMemberPlaceholder') }}</option>
+              <option v-for="m in clubMembers" :key="m.id" :value="m.id">
+                {{ m.name }} ({{ m.email }})
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.recipientName') }} *</label>
+            <input type="text" v-model="newInvoice.recipientName" :placeholder="$t('dashboard.invoiceModal.placeholderName')" />
+          </div>
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.recipientEmail') }}</label>
+            <input type="email" v-model="newInvoice.recipientEmail" :placeholder="$t('dashboard.invoiceModal.placeholderEmail')" />
+          </div>
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.description') }} *</label>
+            <div class="preset-buttons">
+              <button
+                type="button"
+                v-for="preset in descriptionPresets"
+                :key="preset"
+                class="preset-btn"
+                @click="newInvoice.description = preset"
+                :class="{ active: newInvoice.description === preset }"
+              >{{ preset }}</button>
+            </div>
+            <input type="text" v-model="newInvoice.description" :placeholder="$t('dashboard.invoiceModal.placeholderDescription')" />
+          </div>
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.amount') }} *</label>
+            <input type="number" v-model.number="newInvoice.amount" min="1" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.dueDate') }}</label>
+            <input type="date" v-model="newInvoice.dueDate" />
+          </div>
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.notes') }}</label>
+            <textarea v-model="newInvoice.notes" rows="2" :placeholder="$t('dashboard.invoiceModal.placeholderNotes')"></textarea>
+          </div>
+        </div>
+
+        <!-- Step 2: PDF preview -->
+        <div v-if="invoiceStep === 'preview'" class="modal-body invoice-preview-body">
+          <div class="invoice-preview-card">
+            <div class="invoice-preview-header">
+              <div>
+                <div class="invoice-preview-org">{{ organizationName }}</div>
+                <div class="invoice-preview-label">Faktura</div>
+              </div>
+              <div class="invoice-preview-number">{{ pendingInvoice ? pendingInvoice.invoiceNumber : '' }}</div>
+            </div>
+            <div class="invoice-preview-meta">
+              <div>
+                <span class="preview-meta-label">{{ $t('dashboard.invoiceModal.previewTo') }}</span>
+                <span class="preview-meta-value">{{ newInvoice.recipientName }}</span>
+              </div>
+              <div v-if="newInvoice.dueDate">
+                <span class="preview-meta-label">{{ $t('dashboard.invoiceModal.dueDate') }}</span>
+                <span class="preview-meta-value">{{ newInvoice.dueDate }}</span>
+              </div>
+            </div>
+            <div class="invoice-preview-desc">
+              <span class="preview-meta-label">{{ $t('dashboard.invoiceModal.description') }}</span>
+              <p>{{ newInvoice.description }}</p>
+            </div>
+            <div v-if="newInvoice.notes" class="invoice-preview-desc">
+              <span class="preview-meta-label">{{ $t('dashboard.invoiceModal.notes') }}</span>
+              <p>{{ newInvoice.notes }}</p>
+            </div>
+            <div class="invoice-preview-total">
+              <span>{{ $t('dashboard.invoiceModal.amount') }}</span>
+              <span class="preview-total-amount">{{ Number(newInvoice.amount).toLocaleString('sv-SE', { minimumFractionDigits: 2 }) }} kr</span>
+            </div>
+          </div>
+          <div class="invoice-preview-actions">
+            <button class="invoice-action-btn pdf-btn" @click="downloadInvoicePdf" :disabled="generatingInvoicePdf">
+              {{ generatingInvoicePdf ? $t('dashboard.invoiceModal.generatingPdf') : $t('dashboard.invoiceModal.downloadPdf') }}
+            </button>
+            <button
+              v-if="newInvoice.recipientEmail"
+              class="invoice-action-btn send-btn"
+              @click="sendInvoiceEmail"
+              :disabled="sendingInvoiceEmail"
+            >
+              {{ sendingInvoiceEmail ? $t('dashboard.invoiceModal.sending') : $t('dashboard.invoiceModal.sendEmail') }}
+            </button>
+            <p v-else class="invoice-no-email-note">{{ $t('dashboard.invoiceModal.noEmailNote') }}</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button v-if="invoiceStep === 'form'" class="cancel-btn" @click="closeInvoiceModal">{{ $t('dashboard.invoiceModal.cancel') }}</button>
+          <button v-if="invoiceStep === 'form'" class="upload-btn" @click="createInvoice" :disabled="creatingInvoice">
+            {{ creatingInvoice ? $t('dashboard.invoiceModal.creating') : $t('dashboard.invoiceModal.create') }}
+          </button>
+          <button v-if="invoiceStep === 'preview'" class="cancel-btn" @click="invoiceStep = 'form'">{{ $t('dashboard.invoiceModal.back') }}</button>
+          <button v-if="invoiceStep === 'preview'" class="cancel-btn" @click="closeInvoiceModal">{{ $t('dashboard.invoiceModal.done') }}</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Authentication Required Modal -->
     <div v-if="showAuthModal" class="modal-overlay auth-modal-overlay" @click.self="goToLogin">
       <div class="modal-content auth-modal-content">
@@ -911,6 +1025,21 @@ export default {
       recentTransactions: [],
       downloadingSie: false,
       downloadingPdf: false,
+      showInvoiceModal: false,
+      invoiceStep: 'form', // 'form' | 'preview'
+      creatingInvoice: false,
+      generatingInvoicePdf: false,
+      sendingInvoiceEmail: false,
+      pendingInvoice: null,
+      newInvoice: {
+        memberId: null,
+        recipientName: '',
+        recipientEmail: '',
+        description: '',
+        amount: 0,
+        dueDate: '',
+        notes: ''
+      },
       alerts: [],
       incomeBreakdown: [],
       expenseBreakdown: [],
@@ -1235,6 +1364,214 @@ export default {
         this.downloadingPdf = false
       }
     },
+    onInvoiceMemberSelect(event) {
+      const memberId = parseInt(event.target.value)
+      if (memberId) {
+        const member = this.clubMembers.find(m => m.id === memberId)
+        if (member) {
+          this.newInvoice.memberId = member.id
+          this.newInvoice.recipientName = member.name
+          this.newInvoice.recipientEmail = member.email || ''
+          if (!this.newInvoice.amount && member.fee) {
+            this.newInvoice.amount = member.fee
+          }
+        }
+      } else {
+        this.newInvoice.memberId = null
+      }
+    },
+    async createInvoice() {
+      if (!this.newInvoice.recipientName || !this.newInvoice.description || !this.newInvoice.amount) {
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.invoiceModal.validationError'), 'error')
+        return
+      }
+      try {
+        this.creatingInvoice = true
+        const response = await fetch('/api/invoice?action=create', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-org-id': String(this.organizationId)
+          },
+          body: JSON.stringify({
+            memberId: this.newInvoice.memberId,
+            recipientName: this.newInvoice.recipientName,
+            recipientEmail: this.newInvoice.recipientEmail || null,
+            description: this.newInvoice.description,
+            amount: this.newInvoice.amount,
+            dueDate: this.newInvoice.dueDate || null,
+            notes: this.newInvoice.notes || null
+          })
+        })
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}))
+          throw new Error(data.error || 'Failed to create invoice')
+        }
+        this.pendingInvoice = await response.json()
+        this.invoiceStep = 'preview'
+      } catch (error) {
+        console.error('Invoice creation failed:', error)
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.invoiceModal.createError'), 'error')
+      } finally {
+        this.creatingInvoice = false
+      }
+    },
+    async downloadInvoicePdf() {
+      try {
+        this.generatingInvoicePdf = true
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+        const pageW = doc.internal.pageSize.getWidth()
+        const margin = 20
+        const colRight = pageW - margin
+        let y = 20
+
+        // Header block
+        doc.setFillColor(30, 41, 59)
+        doc.rect(0, 0, pageW, 38, 'F')
+        doc.setFontSize(18)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(255, 255, 255)
+        doc.text(this.organizationName || 'Organisation', margin, 18)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(148, 163, 184)
+        doc.text('FAKTURA', margin, 28)
+        doc.setTextColor(0, 0, 0)
+        y = 52
+
+        // Invoice number + dates row
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Fakturanummer', margin, y)
+        doc.text('Förfallodatum', pageW / 2 + 10, y)
+        y += 6
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(14)
+        doc.text(this.pendingInvoice?.invoiceNumber || '', margin, y)
+        doc.text(this.newInvoice.dueDate || '–', pageW / 2 + 10, y)
+        y += 10
+
+        // Divider
+        doc.setDrawColor(229, 231, 235)
+        doc.line(margin, y, colRight, y)
+        y += 8
+
+        // Recipient
+        doc.setFontSize(9)
+        doc.setTextColor(107, 114, 128)
+        doc.text('TILL', margin, y)
+        y += 5
+        doc.setFontSize(12)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(17, 24, 39)
+        doc.text(this.newInvoice.recipientName, margin, y)
+        if (this.newInvoice.recipientEmail) {
+          y += 6
+          doc.setFontSize(10)
+          doc.setFont('helvetica', 'normal')
+          doc.setTextColor(107, 114, 128)
+          doc.text(this.newInvoice.recipientEmail, margin, y)
+        }
+        y += 10
+
+        // Description
+        doc.setFontSize(9)
+        doc.setTextColor(107, 114, 128)
+        doc.text('AVSER', margin, y)
+        y += 5
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(55, 65, 81)
+        const descLines = doc.splitTextToSize(this.newInvoice.description, colRight - margin)
+        doc.text(descLines, margin, y)
+        y += descLines.length * 6 + 4
+
+        // Notes (if any)
+        if (this.newInvoice.notes) {
+          doc.setFontSize(9)
+          doc.setTextColor(107, 114, 128)
+          doc.text('NOTERING', margin, y)
+          y += 5
+          doc.setFontSize(10)
+          doc.setTextColor(55, 65, 81)
+          const noteLines = doc.splitTextToSize(this.newInvoice.notes, colRight - margin)
+          doc.text(noteLines, margin, y)
+          y += noteLines.length * 5 + 6
+        }
+
+        // Amount box
+        doc.setFillColor(248, 250, 252)
+        doc.roundedRect(margin, y, colRight - margin, 18, 3, 3, 'F')
+        doc.setFontSize(11)
+        doc.setTextColor(107, 114, 128)
+        doc.setFont('helvetica', 'normal')
+        doc.text('Belopp att betala', margin + 5, y + 11)
+        doc.setFontSize(16)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(17, 24, 39)
+        const amountStr = Number(this.newInvoice.amount).toLocaleString('sv-SE', { minimumFractionDigits: 2 }) + ' kr'
+        doc.text(amountStr, colRight - 4, y + 11, { align: 'right' })
+        y += 26
+
+        // Generated line
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(156, 163, 175)
+        doc.text(`Skapad ${new Date().toLocaleDateString('sv-SE')} via Orient`, margin, y)
+
+        const filename = `faktura-${this.pendingInvoice?.invoiceNumber || 'draft'}.pdf`
+        doc.save(filename)
+      } catch (error) {
+        console.error('Invoice PDF failed:', error)
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.invoiceModal.pdfError'), 'error')
+      } finally {
+        this.generatingInvoicePdf = false
+      }
+    },
+    async sendInvoiceEmail() {
+      if (!this.pendingInvoice) return
+      try {
+        this.sendingInvoiceEmail = true
+        const response = await fetch('/api/invoice?action=send-email', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-org-id': String(this.organizationId)
+          },
+          body: JSON.stringify({ invoiceId: this.pendingInvoice.id })
+        })
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}))
+          throw new Error(data.error || 'Failed to send email')
+        }
+        this.showAlert(this.$t('dashboard.alerts.successTitle'), this.$t('dashboard.invoiceModal.emailSent', { email: this.newInvoice.recipientEmail }), 'success')
+        this.pendingInvoice = { ...this.pendingInvoice, status: 'SENT' }
+      } catch (error) {
+        console.error('Invoice email failed:', error)
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.invoiceModal.emailError'), 'error')
+      } finally {
+        this.sendingInvoiceEmail = false
+      }
+    },
+    closeInvoiceModal() {
+      this.showInvoiceModal = false
+      this.invoiceStep = 'form'
+      this.pendingInvoice = null
+      this.creatingInvoice = false
+      this.generatingInvoicePdf = false
+      this.sendingInvoiceEmail = false
+      this.newInvoice = {
+        memberId: null,
+        recipientName: '',
+        recipientEmail: '',
+        description: '',
+        amount: 0,
+        dueDate: '',
+        notes: ''
+      }
+    },
     async handleAction(action) {
       console.log('Action:', action)
       if (action === 'upload-receipt') {
@@ -1249,6 +1586,17 @@ export default {
         await this.downloadSieFile()
       } else if (action === 'download-pdf') {
         await this.downloadPdfFile()
+      } else if (action === 'create-invoice') {
+        if (this.clubMembers.length === 0) {
+          try {
+            const response = await getOrganizationMembers(this.organizationId)
+            this.teamMembers = response.teamMembers
+            this.clubMembers = response.clubMembers
+          } catch (error) {
+            console.error('Failed to load members for invoice:', error)
+          }
+        }
+        this.showInvoiceModal = true
       } else if (action === 'swish-payment') {
         // Load members if not already loaded, so we can pick from the list
         if (this.clubMembers.length === 0) {
@@ -3689,6 +4037,145 @@ export default {
   margin-right: 8px;
   vertical-align: middle;
   border: 1px solid #e5e7eb;
+}
+
+/* ── Invoice Modal ──────────────────────────────────────────────────────── */
+.invoice-modal-content {
+  max-width: 560px;
+  width: 100%;
+}
+
+.invoice-preview-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.invoice-preview-card {
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+
+.invoice-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: #1e293b;
+  color: #fff;
+  padding: 1.1rem 1.4rem;
+}
+
+.invoice-preview-org {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.invoice-preview-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 2px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.invoice-preview-number {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.invoice-preview-meta {
+  display: flex;
+  gap: 2rem;
+  padding: 0.9rem 1.4rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.preview-meta-label {
+  display: block;
+  font-size: 0.72rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.preview-meta-value {
+  font-weight: 600;
+  color: #111827;
+}
+
+.invoice-preview-desc {
+  padding: 0.75rem 1.4rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.invoice-preview-desc p {
+  margin: 4px 0 0;
+  color: #374151;
+}
+
+.invoice-preview-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1.4rem;
+  background: #f8fafc;
+  font-weight: 600;
+  color: #374151;
+}
+
+.preview-total-amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.invoice-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.invoice-action-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.invoice-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.invoice-action-btn:not(:disabled):hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.invoice-action-btn.pdf-btn {
+  background: #1e293b;
+  color: #fff;
+}
+
+.invoice-action-btn.send-btn {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.invoice-no-email-note {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0;
 }
 </style>
 
