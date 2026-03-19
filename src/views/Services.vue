@@ -156,23 +156,48 @@
                 <div v-if="selectedDay && selectedDayEvents.length === 0" class="cal-no-events">
                   {{ $t('calendar.noEvents') }}
                 </div>
-                <div v-for="ev in selectedDayEvents" :key="ev.id" class="cal-event-row">
+                <div
+                  v-for="ev in selectedDayEvents"
+                  :key="ev.id"
+                  class="cal-event-row"
+                  :class="{ 'cal-event-expanded': selectedEventId === ev.id }"
+                  @click="toggleEventDetail(ev.id)"
+                >
                   <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
                   <div class="cal-event-info">
                     <span class="cal-event-title">{{ ev.title }}</span>
-                    <span v-if="ev.description" class="cal-event-desc">{{ ev.description }}</span>
+                    <template v-if="selectedEventId !== ev.id">
+                      <span v-if="ev.description" class="cal-event-desc">{{ ev.description }}</span>
+                    </template>
+                    <div v-if="selectedEventId === ev.id" class="cal-event-detail">
+                      <span class="cal-event-type-badge" :class="calendarEventTypeClass(ev.type)">{{ $t('calendar.types.' + (ev.type || 'event')) }}</span>
+                      <p v-if="ev.description" class="cal-event-detail-desc">{{ ev.description }}</p>
+                      <span v-else class="cal-event-detail-empty">{{ $t('calendar.noDescription') }}</span>
+                    </div>
                   </div>
-                  <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)" title="Ta bort">×</button>
+                  <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)" :title="$t('calendar.deleteEvent')">×</button>
                 </div>
 
                 <template v-if="!selectedDay">
                   <div class="cal-upcoming-label">{{ $t('calendar.upcomingEvents') }}</div>
                   <div v-if="upcomingEvents.length === 0" class="cal-no-events">{{ $t('calendar.noUpcoming') }}</div>
-                  <div v-for="ev in upcomingEvents" :key="ev.id" class="cal-event-row">
+                  <div
+                    v-for="ev in upcomingEvents"
+                    :key="ev.id"
+                    class="cal-event-row"
+                    :class="{ 'cal-event-expanded': selectedEventId === ev.id }"
+                    @click="toggleEventDetail(ev.id)"
+                  >
                     <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
                     <div class="cal-event-info">
                       <span class="cal-event-title">{{ ev.title }}</span>
-                      <span class="cal-event-date">{{ formatCalendarDate(ev.date) }}</span>
+                      <span v-if="selectedEventId !== ev.id" class="cal-event-date">{{ formatCalendarDate(ev.date) }}</span>
+                      <div v-if="selectedEventId === ev.id" class="cal-event-detail">
+                        <span class="cal-event-type-badge" :class="calendarEventTypeClass(ev.type)">{{ $t('calendar.types.' + (ev.type || 'event')) }}</span>
+                        <p v-if="ev.description" class="cal-event-detail-desc">{{ ev.description }}</p>
+                        <span v-else class="cal-event-detail-empty">{{ $t('calendar.noDescription') }}</span>
+                        <span class="cal-event-detail-date">{{ formatCalendarDate(ev.date) }}</span>
+                      </div>
                     </div>
                     <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)">×</button>
                   </div>
@@ -1172,7 +1197,8 @@ export default {
         endDate: '',
         description: '',
         type: 'event'
-      }
+      },
+      selectedEventId: null
     }
   },
   async mounted() {
@@ -1787,6 +1813,7 @@ export default {
     },
     calendarSelectDay(day) {
       this.selectedDay = day.date
+      this.selectedEventId = null
     },
     calendarDayHasEvent(day) {
       const ds = day.date.toDateString()
@@ -1852,6 +1879,9 @@ export default {
       } catch (e) {
         this.showAlert(this.$t('calendar.deleteError'), '', 'error')
       }
+    },
+    toggleEventDetail(evId) {
+      this.selectedEventId = this.selectedEventId === evId ? null : evId
     },
     calendarEventTypeClass(type) {
       const map = { competition: 'type-competition', training: 'type-training', meeting: 'type-meeting', other: 'type-other' }
@@ -3716,6 +3746,30 @@ export default {
   background: #e2e8f0;
 }
 
+.submit-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--primary-light);
+  color: white;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background-color: var(--primary-medium);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.submit-btn:disabled {
+  background-color: #cbd5e1;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .upload-btn {
   background-color: var(--primary-light);
   color: white;
@@ -4675,6 +4729,19 @@ export default {
   gap: 0.5rem;
   padding: 0.3rem 0;
   border-bottom: 1px solid #f9fafb;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.cal-event-row:hover {
+  background: #f9fafb;
+}
+
+.cal-event-row.cal-event-expanded {
+  background: #f1f5f9;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin: 2px 0;
 }
 
 .cal-event-row:last-child {
@@ -4718,6 +4785,49 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.cal-event-detail {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.cal-event-type-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.cal-event-type-badge.type-event { background: #d1fae5; color: #065f46; }
+.cal-event-type-badge.type-competition { background: #fee2e2; color: #b91c1c; }
+.cal-event-type-badge.type-training { background: #dbeafe; color: #1d4ed8; }
+.cal-event-type-badge.type-meeting { background: #fef3c7; color: #b45309; }
+.cal-event-type-badge.type-other { background: #f3f4f6; color: #4b5563; }
+
+.cal-event-detail-desc {
+  font-size: 0.8rem;
+  color: #374151;
+  margin: 0.25rem 0 0;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cal-event-detail-empty {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.cal-event-detail-date {
+  font-size: 0.72rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
 }
 
 .cal-event-delete {

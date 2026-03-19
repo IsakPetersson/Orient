@@ -638,6 +638,7 @@
         "eventEndDate": "Slutdatum (frivilligt)",
         "eventDescription": "Beskrivning (frivilligt)",
         "eventDescPlaceholder": "Lägg till detaljer...",
+        "noDescription": "Ingen beskrivning",
         "eventType": "Typ",
         "types": {
             "event": "Händelse",
@@ -654,7 +655,7 @@
         "dateRequired": "Datum krävs",
         "createError": "Kunde inte skapa händelse",
         "deleteError": "Kunde inte ta bort händelse",
-        "weekdays": ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"],
+        "weekdays": ["M", "T", "O", "T", "F", "L", "S"],
         "months": ["Januari","Februari","Mars","April","Maj","Juni","Juli","Augusti","September","Oktober","November","December"]
     }
 }
