@@ -45,8 +45,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return res.status(404).json({ error: 'Invoice action not found' })
         }
     } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
         console.error('Invoice API error:', error)
-        return res.status(500).json({ error: 'Internal server error' })
+        return res.status(500).json({ error: 'Internal server error', detail: message })
     }
 }
 
