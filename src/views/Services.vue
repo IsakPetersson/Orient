@@ -35,6 +35,13 @@
               <span class="action-icon">⚙</span>
               <span class="action-text">{{ $t('dashboard.settingsBtn') }}</span>
             </button>
+            <button class="quick-action-card header-btn profile-btn" @click="$router.push('/profile')">
+              <div v-if="currentUserAvatar" class="header-avatar">
+                <img :src="currentUserAvatar" alt="Profile" class="header-avatar-img" />
+              </div>
+              <span v-else class="action-icon header-avatar-initial">{{ currentUserInitial }}</span>
+              <span class="action-text">{{ $t('dashboard.profileBtn') }}</span>
+            </button>
           </div>
         </div>
 
@@ -1023,6 +1030,8 @@ export default {
         memberId: null
       },
       recentTransactions: [],
+      currentUserAvatar: null,
+      currentUserName: '',
       downloadingSie: false,
       downloadingPdf: false,
       showInvoiceModal: false,
@@ -1052,12 +1061,18 @@ export default {
       this.showAuthModal = true
       return
     }
-    
+
+    this.currentUserName = user.name || ''
+    this.currentUserAvatar = user.avatarUrl || null
+
     await this.loadDashboard()
   },
   computed: {
     monthlyResult() {
       return this.monthlyIncome - this.monthlyExpenses
+    },
+    currentUserInitial() {
+      return (this.currentUserName || 'U').charAt(0).toUpperCase()
     },
     descriptionPresets() {
       return [
@@ -4037,6 +4052,35 @@ export default {
   margin-right: 8px;
   vertical-align: middle;
   border: 1px solid #e5e7eb;
+}
+
+/* ── Header profile avatar ──────────────────────────────────────────────── */
+.header-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.header-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.header-avatar-initial {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
 }
 
 /* ── Invoice Modal ──────────────────────────────────────────────────────── */

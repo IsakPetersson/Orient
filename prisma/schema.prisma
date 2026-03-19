@@ -18,6 +18,8 @@ model User {
   email              String   @unique
   name               String
   password           String
+  phone              String?
+  avatarUrl          String?
   emailVerified      Boolean  @default(false)
   emailVerifyToken   String?  @unique
   createdAt          DateTime @default(now())

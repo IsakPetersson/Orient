@@ -27,6 +27,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return await handleForgotPassword(req, res)
             case 'reset':
                 return await handleResetPassword(req, res)
+            case 'update-profile':
+                return await handleUpdateProfile(req, res)
+            case 'change-password':
+                return await handleChangePassword(req, res)
             default:
                 return res.status(404).json({ error: 'Not found' })
         }
@@ -154,10 +158,70 @@ async function handleMe(req: VercelRequest, res: VercelResponse) {
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true, email: true, name: true, emailVerified: true, createdAt: true }
+        select: { id: true, email: true, name: true, phone: true, avatarUrl: true, emailVerified: true, createdAt: true }
     })
 
     return res.status(200).json(user)
+}
+
+async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const userId = requireAuth(req, res)
+    if (!userId) return
+
+    const { name, phone, avatarUrl } = req.body ?? {}
+
+    if (name !== undefined && String(name).trim().length < 1) {
+        return res.status(400).json({ error: 'Name cannot be empty' })
+    }
+
+    // Limit avatar data URL size to ~1MB
+    if (avatarUrl !== undefined && avatarUrl !== null && String(avatarUrl).length > 1_100_000) {
+        return res.status(400).json({ error: 'Avatar image is too large. Please use a smaller image.' })
+    }
+
+    const updated = await prisma.user.update({
+        where: { id: userId },
+        data: {
+            ...(name !== undefined ? { name: String(name).trim() } : {}),
+            ...(phone !== undefined ? { phone: phone ? String(phone).trim() : null } : {}),
+            ...(avatarUrl !== undefined ? { avatarUrl: avatarUrl || null } : {})
+        },
+        select: { id: true, email: true, name: true, phone: true, avatarUrl: true, emailVerified: true, createdAt: true }
+    })
+
+    return res.status(200).json(updated)
+}
+
+async function handleChangePassword(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const userId = requireAuth(req, res)
+    if (!userId) return
+
+    const { currentPassword, newPassword } = req.body ?? {}
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Missing required fields' })
+    }
+    if (String(newPassword).length < 8) {
+        return res.status(400).json({ error: 'New password must be at least 8 characters' })
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) return res.status(404).json({ error: 'User not found' })
+
+    const ok = await bcrypt.compare(String(currentPassword), user.password)
+    if (!ok) return res.status(401).json({ error: 'Current password is incorrect' })
+
+    const hash = await bcrypt.hash(String(newPassword), 12)
+    await prisma.user.update({ where: { id: userId }, data: { password: hash } })
+
+    return res.status(200).json({ ok: true })
 }
 
 async function handleVerifyEmail(req: VercelRequest, res: VercelResponse) {
