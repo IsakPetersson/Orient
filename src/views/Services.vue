@@ -52,10 +52,9 @@
                   <span class="action-text">{{ $t('dashboard.uploadReceipt') }}</span>
                   <span class="coming-soon-badge">{{ $t('dashboard.comingSoon') }}</span>
                 </button>
-                <button class="quick-action-card coming-soon-card" @click="handleAction('start-accounting')">
-                  <span class="action-icon">▶</span>
-                  <span class="action-text">{{ $t('dashboard.startAccounting') }}</span>
-                  <span class="coming-soon-badge">{{ $t('dashboard.comingSoon') }}</span>
+                <button class="quick-action-card" @click="handleAction('download-pdf')" :disabled="downloadingPdf">
+                  <img src="../assets/images/arrow-icon.png" alt="PDF" class="action-icon-img" />
+                  <span class="action-text">{{ downloadingPdf ? $t('dashboard.downloadingPdf') : $t('dashboard.downloadPdf') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('download-accounting')" :disabled="downloadingSie">
                   <img src="../assets/images/arrow-icon.png" alt="Download" class="action-icon-img" />
@@ -839,6 +838,7 @@
 import { getCurrentUser } from '../lib/auth'
 import { getUserOrganizations } from '../lib/orgs'
 import { getDashboardData, createTransaction, createAccount, getOrganizationMembers, createMember } from '../lib/dashboard'
+import { jsPDF } from 'jspdf'
 
 export default {
   name: 'Dashboard',
@@ -910,6 +910,7 @@ export default {
       },
       recentTransactions: [],
       downloadingSie: false,
+      downloadingPdf: false,
       alerts: [],
       incomeBreakdown: [],
       expenseBreakdown: [],
@@ -1065,6 +1066,175 @@ export default {
         this.downloadingSie = false
       }
     },
+    async downloadPdfFile() {
+      try {
+        this.downloadingPdf = true
+
+        // Ensure members are loaded
+        if (this.clubMembers.length === 0) {
+          const response = await getOrganizationMembers(this.organizationId)
+          this.teamMembers = response.teamMembers
+          this.clubMembers = response.clubMembers
+        }
+
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+        const pageW = doc.internal.pageSize.getWidth()
+        const margin = 14
+        const colRight = pageW - margin
+        let y = 18
+
+        // ── Header ──────────────────────────────────────────────────────────
+        doc.setFontSize(20)
+        doc.setFont('helvetica', 'bold')
+        doc.text(this.organizationName || 'Organisation', margin, y)
+        y += 7
+
+        doc.setFontSize(9)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(120)
+        const generated = new Date().toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' })
+        doc.text(`Genererad: ${generated}`, margin, y)
+        doc.setTextColor(0)
+        y += 8
+
+        // Divider
+        doc.setDrawColor(200)
+        doc.line(margin, y, colRight, y)
+        y += 8
+
+        // ── Financial Summary ────────────────────────────────────────────────
+        doc.setFontSize(13)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Ekonomisk Oversikt', margin, y)
+        y += 6
+
+        const summaryRows = [
+          ['Kassa & Bank', `${this.cashAndBank.toLocaleString('sv-SE')} kr`],
+          ['Manadsintakter', `+${this.monthlyIncome.toLocaleString('sv-SE')} kr`],
+          ['Manadskostnader', `-${this.monthlyExpenses.toLocaleString('sv-SE')} kr`],
+          ['Resultat', `${this.monthlyResult >= 0 ? '+' : ''}${this.monthlyResult.toLocaleString('sv-SE')} kr`],
+        ]
+
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        summaryRows.forEach(([label, value]) => {
+          doc.text(label, margin, y)
+          doc.text(value, colRight, y, { align: 'right' })
+          y += 6
+        })
+        y += 4
+
+        // ── Members ──────────────────────────────────────────────────────────
+        doc.setDrawColor(200)
+        doc.line(margin, y, colRight, y)
+        y += 6
+
+        doc.setFontSize(13)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Medlemmar', margin, y)
+        y += 6
+
+        // Member summary line
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.text(`Totalt: ${this.totalMembers}   Betalat: ${this.paidMembers}   Obetalt: ${this.unpaidMembers}`, margin, y)
+        y += 7
+
+        if (this.clubMembers.length > 0) {
+          // Table header
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(9)
+          doc.text('Namn', margin, y)
+          doc.text('E-post', margin + 55, y)
+          doc.text('Avgift', margin + 115, y)
+          doc.text('Status', colRight, y, { align: 'right' })
+          y += 1
+          doc.setDrawColor(180)
+          doc.line(margin, y, colRight, y)
+          y += 4
+
+          doc.setFont('helvetica', 'normal')
+          for (const m of this.clubMembers) {
+            if (y > 270) {
+              doc.addPage()
+              y = 18
+            }
+            doc.text((m.name || '').substring(0, 28), margin, y)
+            doc.text((m.email || '').substring(0, 35), margin + 55, y)
+            doc.text(`${(m.fee ?? 0).toLocaleString('sv-SE')} kr`, margin + 115, y)
+            doc.text(m.paid ? 'Betalt' : 'Obetalt', colRight, y, { align: 'right' })
+            y += 5
+          }
+        }
+        y += 4
+
+        // ── Transactions ─────────────────────────────────────────────────────
+        if (y > 240) { doc.addPage(); y = 18 }
+
+        doc.setDrawColor(200)
+        doc.line(margin, y, colRight, y)
+        y += 6
+
+        doc.setFontSize(13)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Senaste Transaktioner', margin, y)
+        y += 6
+
+        if (this.recentTransactions.length > 0) {
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(9)
+          doc.text('Datum', margin, y)
+          doc.text('Beskrivning', margin + 25, y)
+          doc.text('Kategori', margin + 95, y)
+          doc.text('Belopp', colRight, y, { align: 'right' })
+          y += 1
+          doc.setDrawColor(180)
+          doc.line(margin, y, colRight, y)
+          y += 4
+
+          doc.setFont('helvetica', 'normal')
+          for (const t of this.recentTransactions) {
+            if (y > 270) {
+              doc.addPage()
+              y = 18
+            }
+            const dateStr = t.date ? new Date(t.date).toLocaleDateString('sv-SE') : ''
+            const desc = (t.description || '').substring(0, 38)
+            const cat = (t.category || '').substring(0, 18)
+            const amount = t.type === 'INCOME'
+              ? `+${Number(t.amount).toLocaleString('sv-SE')} kr`
+              : `-${Number(t.amount).toLocaleString('sv-SE')} kr`
+            doc.text(dateStr, margin, y)
+            doc.text(desc, margin + 25, y)
+            doc.text(cat, margin + 95, y)
+            doc.text(amount, colRight, y, { align: 'right' })
+            y += 5
+          }
+        } else {
+          doc.setFontSize(10)
+          doc.setFont('helvetica', 'normal')
+          doc.text('Inga transaktioner registrerade.', margin, y)
+        }
+
+        // ── Footer ───────────────────────────────────────────────────────────
+        const pageCount = doc.internal.getNumberOfPages()
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i)
+          doc.setFontSize(8)
+          doc.setTextColor(160)
+          doc.text(`Sida ${i} av ${pageCount}`, pageW / 2, 290, { align: 'center' })
+          doc.setTextColor(0)
+        }
+
+        const orgSlug = (this.organizationName || 'rapport').toLowerCase().replace(/\s+/g, '-')
+        doc.save(`${orgSlug}-rapport-${new Date().toISOString().split('T')[0]}.pdf`)
+      } catch (error) {
+        console.error('PDF export failed:', error)
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.pdfError'), 'error')
+      } finally {
+        this.downloadingPdf = false
+      }
+    },
     async handleAction(action) {
       console.log('Action:', action)
       if (action === 'upload-receipt') {
@@ -1077,6 +1247,8 @@ export default {
         this.showExpenseModal = true
       } else if (action === 'download-accounting') {
         await this.downloadSieFile()
+      } else if (action === 'download-pdf') {
+        await this.downloadPdfFile()
       } else if (action === 'swish-payment') {
         // Load members if not already loaded, so we can pick from the list
         if (this.clubMembers.length === 0) {
