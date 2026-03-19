@@ -107,19 +107,77 @@
             </div>
           </div>
 
-          <!-- Top Right - Alerts/To Do -->
+          <!-- Right Column - Calendar -->
           <div class="right-column">
-            <div class="panel">
-              <div class="panel-header">
-                <h3>{{ $t('dashboard.todo') }}</h3>
-              </div>
-              <div class="alerts-compact">
-                <div v-for="alert in alerts" :key="alert.id" class="alert-row" :class="alert.type">
-                  <span class="alert-icon">!</span>
-                  <span class="alert-text">{{ alert.message }}</span>
+            <div class="panel calendar-panel">
+              <div class="panel-header calendar-header">
+                <div class="calendar-nav">
+                  <button class="cal-nav-btn" @click="calendarPrevMonth">&#8249;</button>
+                  <span class="cal-month-label">
+                    {{ $t('calendar.months')[calendarMonth] }} {{ calendarYear }}
+                  </span>
+                  <button class="cal-nav-btn" @click="calendarNextMonth">&#8250;</button>
+                </div>
+                <div class="calendar-header-actions">
+                  <button class="cal-today-btn" @click="calendarGoToday">{{ $t('calendar.today') }}</button>
+                  <button class="cal-add-btn" @click="openAddEventModal(selectedDay ? { date: selectedDay } : null)">+ {{ $t('calendar.addEvent') }}</button>
                 </div>
               </div>
-              <button class="alerts-action-btn" @click="handleViewAllAlerts" style="display: none;">{{ $t('dashboard.fixAll') }}</button>
+
+              <!-- Day-of-week labels -->
+              <div class="cal-weekdays">
+                <span v-for="wd in $t('calendar.weekdays')" :key="wd">{{ wd }}</span>
+              </div>
+
+              <!-- Day grid -->
+              <div class="cal-grid">
+                <div
+                  v-for="(day, i) in calendarDays"
+                  :key="i"
+                  class="cal-day"
+                  :class="{
+                    'cal-other-month': !day.currentMonth,
+                    'cal-today': calendarIsToday(day),
+                    'cal-selected': calendarIsSelected(day),
+                    'cal-has-event': calendarDayHasEvent(day)
+                  }"
+                  @click="calendarSelectDay(day)"
+                >
+                  <span class="cal-day-num">{{ day.date.getDate() }}</span>
+                  <span v-if="calendarDayHasEvent(day)" class="cal-dot"></span>
+                </div>
+              </div>
+
+              <!-- Events for selected day / upcoming list -->
+              <div class="cal-events-section">
+                <div v-if="selectedDay" class="cal-selected-date-label">
+                  {{ selectedDay.toLocaleDateString($i18n.locale === 'sv' ? 'sv-SE' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) }}
+                </div>
+                <div v-if="selectedDay && selectedDayEvents.length === 0" class="cal-no-events">
+                  {{ $t('calendar.noEvents') }}
+                </div>
+                <div v-for="ev in selectedDayEvents" :key="ev.id" class="cal-event-row">
+                  <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
+                  <div class="cal-event-info">
+                    <span class="cal-event-title">{{ ev.title }}</span>
+                    <span v-if="ev.description" class="cal-event-desc">{{ ev.description }}</span>
+                  </div>
+                  <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)" title="Ta bort">×</button>
+                </div>
+
+                <template v-if="!selectedDay">
+                  <div class="cal-upcoming-label">{{ $t('calendar.upcomingEvents') }}</div>
+                  <div v-if="upcomingEvents.length === 0" class="cal-no-events">{{ $t('calendar.noUpcoming') }}</div>
+                  <div v-for="ev in upcomingEvents" :key="ev.id" class="cal-event-row">
+                    <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
+                    <div class="cal-event-info">
+                      <span class="cal-event-title">{{ ev.title }}</span>
+                      <span class="cal-event-date">{{ formatCalendarDate(ev.date) }}</span>
+                    </div>
+                    <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)">×</button>
+                  </div>
+                </template>
+              </div>
             </div>
           </div>
 
@@ -171,80 +229,8 @@
             </div>
           </div>
 
-          <!-- Bottom Right 1 - Calendar -->
-          <div class="bottom-right-1">
-            <div class="panel calendar-panel">
-              <div class="panel-header calendar-header">
-                <div class="calendar-nav">
-                  <button class="cal-nav-btn" @click="calendarPrevMonth">&#8249;</button>
-                  <span class="cal-month-label">
-                    {{ $t('calendar.months')[calendarMonth] }} {{ calendarYear }}
-                  </span>
-                  <button class="cal-nav-btn" @click="calendarNextMonth">&#8250;</button>
-                </div>
-                <div class="calendar-header-actions">
-                  <button class="cal-today-btn" @click="calendarGoToday">{{ $t('calendar.today') }}</button>
-                  <button class="cal-add-btn" @click="openAddEventModal(selectedDay ? { date: selectedDay } : null)">+ {{ $t('calendar.addEvent') }}</button>
-                </div>
-              </div>
-
-              <!-- Day-of-week labels -->
-              <div class="cal-weekdays">
-                <span v-for="wd in $t('calendar.weekdays')" :key="wd">{{ wd }}</span>
-              </div>
-
-              <!-- Day grid -->
-              <div class="cal-grid">
-                <div
-                  v-for="(day, i) in calendarDays"
-                  :key="i"
-                  class="cal-day"
-                  :class="{
-                    'cal-other-month': !day.currentMonth,
-                    'cal-today': calendarIsToday(day),
-                    'cal-selected': calendarIsSelected(day),
-                    'cal-has-event': calendarDayHasEvent(day)
-                  }"
-                  @click="calendarSelectDay(day)"
-                >
-                  <span class="cal-day-num">{{ day.date.getDate() }}</span>
-                  <span v-if="calendarDayHasEvent(day)" class="cal-dot"></span>
-                </div>
-              </div>
-
-              <!-- Events for selected day -->
-              <div class="cal-events-section">
-                <div v-if="selectedDay" class="cal-selected-date-label">
-                  {{ selectedDay.toLocaleDateString($i18n.locale === 'sv' ? 'sv-SE' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) }}
-                </div>
-                <div v-if="selectedDay && selectedDayEvents.length === 0" class="cal-no-events">
-                  {{ $t('calendar.noEvents') }}
-                </div>
-                <div v-for="ev in selectedDayEvents" :key="ev.id" class="cal-event-row">
-                  <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
-                  <div class="cal-event-info">
-                    <span class="cal-event-title">{{ ev.title }}</span>
-                    <span v-if="ev.description" class="cal-event-desc">{{ ev.description }}</span>
-                  </div>
-                  <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)" title="Ta bort">×</button>
-                </div>
-
-                <!-- Upcoming events (when no day selected) -->
-                <template v-if="!selectedDay">
-                  <div class="cal-upcoming-label">{{ $t('calendar.upcomingEvents') }}</div>
-                  <div v-if="upcomingEvents.length === 0" class="cal-no-events">{{ $t('calendar.noUpcoming') }}</div>
-                  <div v-for="ev in upcomingEvents" :key="ev.id" class="cal-event-row">
-                    <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
-                    <div class="cal-event-info">
-                      <span class="cal-event-title">{{ ev.title }}</span>
-                      <span class="cal-event-date">{{ formatCalendarDate(ev.date) }}</span>
-                    </div>
-                    <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)">×</button>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </div>
+          <!-- Bottom Right 1 - empty -->
+          <div class="bottom-right-1"></div>
 
           <!-- Bottom Right 2 - Recent Activity -->
           <div class="bottom-right-2">
@@ -3107,10 +3093,10 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-height: 100%;
+  min-height: 0;
   overflow: hidden;
   grid-column: 4;
-  grid-row: 1;
+  grid-row: 1 / 3;
 }
 
 /* Bottom Row */
@@ -4657,7 +4643,7 @@ export default {
   border-top: 1px solid #f1f5f9;
   flex: 1;
   overflow-y: auto;
-  max-height: 130px;
+  min-height: 0;
 }
 
 .cal-selected-date-label {
