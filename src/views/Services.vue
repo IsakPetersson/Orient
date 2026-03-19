@@ -126,7 +126,7 @@
 
               <!-- Day-of-week labels -->
               <div class="cal-weekdays">
-                <span v-for="wd in $t('calendar.weekdays')" :key="wd">{{ wd }}</span>
+                <span v-for="(wd, i) in calendarWeekdays" :key="i">{{ wd }}</span>
               </div>
 
               <!-- Day grid -->
@@ -160,16 +160,16 @@
                   v-for="ev in selectedDayEvents"
                   :key="ev.id"
                   class="cal-event-row"
-                  :class="{ 'cal-event-expanded': selectedEventId === ev.id }"
+                  :class="{ 'cal-event-expanded': Number(selectedEventId) === Number(ev.id) }"
                   @click="toggleEventDetail(ev.id)"
                 >
                   <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
                   <div class="cal-event-info">
                     <span class="cal-event-title">{{ ev.title }}</span>
-                    <template v-if="selectedEventId !== ev.id">
+                    <template v-if="Number(selectedEventId) !== Number(ev.id)">
                       <span v-if="ev.description" class="cal-event-desc">{{ ev.description }}</span>
                     </template>
-                    <div v-if="selectedEventId === ev.id" class="cal-event-detail">
+                    <div v-if="Number(selectedEventId) === Number(ev.id)" class="cal-event-detail">
                       <span class="cal-event-type-badge" :class="calendarEventTypeClass(ev.type)">{{ $t('calendar.types.' + (ev.type || 'event')) }}</span>
                       <p v-if="ev.description" class="cal-event-detail-desc">{{ ev.description }}</p>
                       <span v-else class="cal-event-detail-empty">{{ $t('calendar.noDescription') }}</span>
@@ -185,14 +185,14 @@
                     v-for="ev in upcomingEvents"
                     :key="ev.id"
                     class="cal-event-row"
-                    :class="{ 'cal-event-expanded': selectedEventId === ev.id }"
+                    :class="{ 'cal-event-expanded': Number(selectedEventId) === Number(ev.id) }"
                     @click="toggleEventDetail(ev.id)"
                   >
                     <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
                     <div class="cal-event-info">
                       <span class="cal-event-title">{{ ev.title }}</span>
-                      <span v-if="selectedEventId !== ev.id" class="cal-event-date">{{ formatCalendarDate(ev.date) }}</span>
-                      <div v-if="selectedEventId === ev.id" class="cal-event-detail">
+                      <span v-if="Number(selectedEventId) !== Number(ev.id)" class="cal-event-date">{{ formatCalendarDate(ev.date) }}</span>
+                      <div v-if="Number(selectedEventId) === Number(ev.id)" class="cal-event-detail">
                         <span class="cal-event-type-badge" :class="calendarEventTypeClass(ev.type)">{{ $t('calendar.types.' + (ev.type || 'event')) }}</span>
                         <p v-if="ev.description" class="cal-event-detail-desc">{{ ev.description }}</p>
                         <span v-else class="cal-event-detail-empty">{{ $t('calendar.noDescription') }}</span>
@@ -1220,6 +1220,11 @@ export default {
     currentUserInitial() {
       return (this.currentUserName || 'U').charAt(0).toUpperCase()
     },
+    calendarWeekdays() {
+      return this.$i18n.locale === 'sv'
+        ? ['M', 'T', 'O', 'T', 'F', 'L', 'S']
+        : ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+    },
     calendarDays() {
       const year = this.calendarYear
       const month = this.calendarMonth
@@ -1881,7 +1886,8 @@ export default {
       }
     },
     toggleEventDetail(evId) {
-      this.selectedEventId = this.selectedEventId === evId ? null : evId
+      const id = Number(evId)
+      this.selectedEventId = Number(this.selectedEventId) === id ? null : id
     },
     calendarEventTypeClass(type) {
       const map = { competition: 'type-competition', training: 'type-training', meeting: 'type-meeting', other: 'type-other' }
