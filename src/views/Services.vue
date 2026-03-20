@@ -120,7 +120,7 @@
                 </div>
                 <div class="calendar-header-actions">
                   <button class="cal-today-btn" @click="calendarGoToday">{{ $t('calendar.today') }}</button>
-                  <button class="cal-add-btn" @click="openAddEventModal(selectedDay ? { date: selectedDay } : null)">+ {{ $t('calendar.addEvent') }}</button>
+                  <button class="cal-add-btn" @click="openAddEventModal(null)">+ {{ $t('calendar.addEvent') }}</button>
                 </div>
               </div>
 
@@ -138,7 +138,6 @@
                   :class="{
                     'cal-other-month': !day.currentMonth,
                     'cal-today': calendarIsToday(day),
-                    'cal-selected': calendarIsSelected(day),
                     'cal-has-event': calendarDayHasEvent(day)
                   }"
                   @click="calendarSelectDay(day)"
@@ -146,47 +145,6 @@
                   <span class="cal-day-num">{{ day.date.getDate() }}</span>
                   <span v-if="calendarDayHasEvent(day)" class="cal-dot"></span>
                 </div>
-              </div>
-
-              <!-- Events for selected day / upcoming list -->
-              <div class="cal-events-section">
-                <div v-if="selectedDay" class="cal-selected-date-label">
-                  {{ selectedDay.toLocaleDateString($i18n.locale === 'sv' ? 'sv-SE' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) }}
-                </div>
-                <div v-if="selectedDay && selectedDayEvents.length === 0" class="cal-no-events">
-                  {{ $t('calendar.noEvents') }}
-                </div>
-                <div
-                  v-for="ev in selectedDayEvents"
-                  :key="ev.id"
-                  class="cal-event-row"
-                  @click="openEventDetailModal(ev)"
-                >
-                  <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
-                  <div class="cal-event-info">
-                    <span class="cal-event-title">{{ ev.title }}</span>
-                    <span v-if="ev.description" class="cal-event-desc">{{ ev.description }}</span>
-                  </div>
-                  <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)" :title="$t('calendar.deleteEvent')">×</button>
-                </div>
-
-                <template v-if="!selectedDay">
-                  <div class="cal-upcoming-label">{{ $t('calendar.upcomingEvents') }}</div>
-                  <div v-if="upcomingEvents.length === 0" class="cal-no-events">{{ $t('calendar.noUpcoming') }}</div>
-                  <div
-                    v-for="ev in upcomingEvents"
-                    :key="ev.id"
-                    class="cal-event-row"
-                    @click="openEventDetailModal(ev)"
-                  >
-                    <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
-                    <div class="cal-event-info">
-                      <span class="cal-event-title">{{ ev.title }}</span>
-                      <span class="cal-event-date">{{ formatCalendarDate(ev.date) }}</span>
-                    </div>
-                    <button class="cal-event-delete" @click.stop="deleteCalendarEvent(ev.id)">×</button>
-                  </div>
-                </template>
               </div>
             </div>
           </div>
@@ -898,6 +856,40 @@
       </div>
     </div>
 
+    <!-- Day Modal -->
+    <div v-if="showDayModal && selectedDay" class="modal-overlay" @click.self="closeDayModal">
+      <div class="modal-content day-modal-content">
+        <div class="modal-header">
+          <h3 class="day-modal-date">
+            {{ selectedDay.toLocaleDateString($i18n.locale === 'sv' ? 'sv-SE' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) }}
+          </h3>
+          <button class="close-btn" @click="closeDayModal">×</button>
+        </div>
+        <div class="day-modal-body">
+          <div v-if="selectedDayEvents.length === 0" class="day-modal-empty">
+            {{ $t('calendar.noEvents') }}
+          </div>
+          <div
+            v-for="ev in selectedDayEvents"
+            :key="ev.id"
+            class="day-modal-event-row"
+            @click="openEventDetailModal(ev)"
+          >
+            <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
+            <div class="day-modal-event-info">
+              <span class="day-modal-event-title">{{ ev.title }}</span>
+              <span class="day-modal-event-type">{{ $t('calendar.types.' + (ev.type || 'event')) }}</span>
+            </div>
+            <span class="day-modal-event-chevron">›</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-btn" @click="closeDayModal">{{ $t('calendar.cancel') }}</button>
+          <button class="submit-btn" @click="openAddEventModal({ date: selectedDay })">+ {{ $t('calendar.addEvent') }}</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Event Detail Modal -->
     <div v-if="showEventDetailModal && selectedEvent" class="modal-overlay" @click.self="closeEventDetailModal">
       <div class="modal-content event-detail-modal">
@@ -1214,7 +1206,8 @@ export default {
         type: 'event'
       },
       selectedEvent: null,
-      showEventDetailModal: false
+      showEventDetailModal: false,
+      showDayModal: false
     }
   },
   async mounted() {
@@ -1835,6 +1828,10 @@ export default {
     calendarSelectDay(day) {
       this.selectedDay = day.date
       this.selectedEvent = null
+      this.showDayModal = true
+    },
+    closeDayModal() {
+      this.showDayModal = false
     },
     calendarDayHasEvent(day) {
       const ds = day.date.toDateString()
@@ -1848,9 +1845,10 @@ export default {
     },
     openAddEventModal(day) {
       const dateStr = day
-        ? day.date.toISOString().split('T')[0]
+        ? (day.date instanceof Date ? day.date : new Date(day.date)).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0]
       this.newEvent = { title: '', date: dateStr, endDate: '', description: '', type: 'event' }
+      this.showDayModal = false
       this.showAddEventModal = true
     },
     closeAddEventModal() {
@@ -1876,6 +1874,7 @@ export default {
         if (res.ok) {
           await this.loadCalendarEvents()
           this.closeAddEventModal()
+          if (this.selectedDay) this.showDayModal = true
         } else {
           this.showAlert(this.$t('calendar.createError'), '', 'error')
         }
@@ -1894,6 +1893,7 @@ export default {
         })
         if (res.ok) {
           await this.loadCalendarEvents()
+          if (this.selectedDay) this.showDayModal = true
         } else {
           this.showAlert(this.$t('calendar.deleteError'), '', 'error')
         }
@@ -1903,6 +1903,7 @@ export default {
     },
     openEventDetailModal(ev) {
       this.selectedEvent = ev
+      this.showDayModal = false
       this.showEventDetailModal = true
     },
     closeEventDetailModal() {
@@ -4718,53 +4719,72 @@ export default {
   margin-top: 2px;
 }
 
-.cal-events-section {
-  padding: 0.5rem 1rem 0.75rem;
-  border-top: 1px solid #f1f5f9;
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
+/* Day Modal */
+.day-modal-content {
+  max-width: 420px;
+  width: 95%;
 }
 
-.cal-selected-date-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.4rem;
+.day-modal-date {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
   text-transform: capitalize;
 }
 
-.cal-upcoming-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #9ca3af;
-  text-transform: uppercase;
-  margin-bottom: 0.4rem;
+.day-modal-body {
+  padding: 0.5rem 1.5rem 1rem;
+  min-height: 80px;
 }
 
-.cal-no-events {
-  font-size: 0.78rem;
-  color: #9ca3af;
+.day-modal-empty {
   text-align: center;
-  padding: 0.5rem 0;
+  color: #9ca3af;
+  font-size: 0.95rem;
+  padding: 1.5rem 0;
 }
 
-.cal-event-row {
+.day-modal-event-row {
   display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.3rem 0;
-  border-bottom: 1px solid #f9fafb;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
   cursor: pointer;
+  border-radius: 6px;
   transition: background 0.12s;
 }
 
-.cal-event-row:hover {
+.day-modal-event-row:hover {
   background: #f9fafb;
 }
 
-.cal-event-row:last-child {
+.day-modal-event-row:last-child {
   border-bottom: none;
+}
+
+.day-modal-event-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.day-modal-event-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.day-modal-event-type {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin-top: 1px;
+}
+
+.day-modal-event-chevron {
+  color: #9ca3af;
+  font-size: 1.25rem;
+  line-height: 1;
 }
 
 .cal-event-dot {
@@ -4780,31 +4800,6 @@ export default {
 .cal-event-dot.type-training { background: #2563eb; }
 .cal-event-dot.type-meeting { background: #d97706; }
 .cal-event-dot.type-other { background: #6b7280; }
-
-.cal-event-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-}
-
-.cal-event-title {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #111827;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cal-event-desc,
-.cal-event-date {
-  font-size: 0.72rem;
-  color: #6b7280;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 .cal-event-delete {
   background: none;
