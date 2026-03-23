@@ -216,7 +216,7 @@
                     <span class="activity-date">{{ transaction.date }}</span>
                   </div>
                   <div class="activity-amount" :class="transaction.type">
-                    {{ transaction.type === 'income' ? '+' : '-' }}{{ transaction.amount.toLocaleString() }} kr
+                    {{ transaction.type === 'income' ? '+' : '-' }}{{ Math.abs(transaction.amount).toLocaleString() }} kr
                   </div>
                 </div>
               </div>
