@@ -3,7 +3,7 @@
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
-        <h1>{{ $t('home.heroTitle') }} typskit</h1>
+        <h1>{{ $t('home.heroTitle') }}</h1>
         <p class="hero-subtitle">{{ $t('home.heroSubtitle') }}</p>
         <div class="hero-buttons">
           <button class="btn btn-primary" @click="$router.push('/login')">{{ $t('home.getStarted') }}</button>

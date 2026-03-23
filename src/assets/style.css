@@ -17,6 +17,8 @@
     --btn-dark-text: #ffffff;
     --input-bg: #ffffff;
     --overlay-bg: rgba(0, 0, 0, 0.5);
+    /* Icons on neutral / gray surfaces (feature cards, contact methods) */
+    --icon-on-surface: #1b4561;
 }
 
 [data-theme="dark"] {
@@ -37,6 +39,7 @@
     --btn-dark-text: #f8fafc;
     --input-bg: #1a2636;
     --overlay-bg: rgba(0, 0, 0, 0.72);
+    --icon-on-surface: #5eb3e0;
 }
 
 [data-theme="midnight"] {
@@ -57,6 +60,7 @@
     --btn-dark-text: #f4f9ff;
     --input-bg: #0f1a30;
     --overlay-bg: rgba(0, 0, 0, 0.65);
+    --icon-on-surface: #5eb8ff;
 }
 
 * {
@@ -189,7 +193,7 @@ body {
 
 .feature-icon {
     font-size: 3rem;
-    color: var(--primary-light);
+    color: var(--icon-on-surface);
     margin-bottom: 1rem;
 }
 
@@ -201,7 +205,6 @@ body {
 
 .feature-card p {
     color: var(--text-secondary);
-    opacity: 0.95;
 }
 
 /* About Section */
@@ -226,7 +229,7 @@ body {
     font-size: 1.1rem;
     margin-bottom: 1rem;
     line-height: 1.8;
-    opacity: 0.9;
+    color: var(--text);
 }
 
 /* Contact Section */
@@ -275,6 +278,22 @@ footer p {
     padding: 2rem;
 }
 
+/* Match home hero: body text on gradient was nearly the same hue as the background */
+.page-hero h1 {
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+    color: var(--text-light);
+    margin-bottom: 1rem;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.page-hero .hero-subtitle {
+    color: rgba(255, 255, 255, 0.92);
+    max-width: 40rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 /* Services Page Styles */
 .services-detailed {
     padding: 5rem 0;
@@ -296,7 +315,7 @@ footer p {
 
 .service-icon-large {
     font-size: 4rem;
-    color: var(--primary-light);
+    color: var(--icon-on-surface);
     margin-bottom: 1.5rem;
 }
 
@@ -310,7 +329,7 @@ footer p {
     font-size: 1.1rem;
     line-height: 1.8;
     margin-bottom: 1.5rem;
-    opacity: 0.9;
+    color: var(--text-secondary);
 }
 
 .service-features {
@@ -359,7 +378,7 @@ footer p {
     font-size: 1.1rem;
     line-height: 1.8;
     margin-bottom: 1.5rem;
-    opacity: 0.9;
+    color: var(--text);
 }
 
 .values-section {
@@ -395,7 +414,7 @@ footer p {
 .value-card p {
     font-size: 1rem;
     line-height: 1.6;
-    opacity: 0.9;
+    color: var(--text);
 }
 
 /* CTA Section */
@@ -440,7 +459,7 @@ footer p {
     font-size: 1.1rem;
     line-height: 1.8;
     margin-bottom: 2rem;
-    opacity: 0.9;
+    color: var(--text);
 }
 
 .contact-methods {
@@ -460,7 +479,7 @@ footer p {
 
 .method-icon {
     font-size: 2rem;
-    color: var(--primary-light);
+    color: var(--icon-on-surface);
     min-width: 50px;
     text-align: center;
 }
@@ -473,7 +492,7 @@ footer p {
 
 .method-details p {
     font-size: 1rem;
-    opacity: 0.8;
+    color: var(--text-secondary);
 }
 
 /* Contact Form */
@@ -558,7 +577,7 @@ footer p {
 .faq-item p {
     font-size: 1rem;
     line-height: 1.6;
-    opacity: 0.9;
+    color: var(--text-secondary);
 }
 
 /* Responsive Design */
