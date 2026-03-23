@@ -608,7 +608,7 @@ export default {
 }
 
 .logo-text:hover {
-  color: var(--background);
+  color: rgba(255, 255, 255, 0.85);
   transform: translateX(2px);
 }
 
@@ -754,8 +754,7 @@ export default {
 
 .user-email {
   font-size: clamp(0.75rem, 1.2vh, 0.85rem);
-  color: var(--background);
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.78);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -920,7 +919,7 @@ export default {
 
 .modal-header h2 {
   font-size: 1.75rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0;
 }
 
@@ -928,7 +927,7 @@ export default {
   background: none;
   border: none;
   font-size: 2rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0;
   width: 2rem;
@@ -940,7 +939,7 @@ export default {
 }
 
 .close-btn:hover {
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .modal-body {
@@ -953,7 +952,7 @@ export default {
 
 .organizations-section h3 {
   font-size: 1.25rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 1rem;
 }
 
@@ -971,8 +970,7 @@ export default {
   align-items: center;
   justify-content: center;
   min-height: 150px;
-  color: var(--text-dark);
-  opacity: 0.7;
+  color: var(--text-secondary);
 }
 
 .no-organizations p {
@@ -994,7 +992,7 @@ export default {
 }
 
 .organization-item.selected {
-  background-color: #e8f4f8;
+  background-color: var(--surface-alt);
   box-shadow: 0 0 0 2px var(--primary-light);
 }
 
@@ -1017,12 +1015,12 @@ export default {
 .org-name {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .org-role {
   font-size: 0.875rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   background-color: var(--background);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
@@ -1069,16 +1067,18 @@ export default {
 .form-group label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text);
   margin-bottom: 0.5rem;
 }
 
 .form-group input {
   padding: 0.875rem;
-  border: 2px solid var(--background);
+  border: 2px solid var(--border);
   border-radius: 6px;
   font-size: 1rem;
   font-family: inherit;
+  background: var(--input-bg);
+  color: var(--text);
   transition: border-color 0.3s ease;
 }
 
@@ -1117,7 +1117,7 @@ export default {
 
 .success-message {
   font-size: 1.1rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 1.5rem;
   font-weight: 500;
 }
@@ -1133,7 +1133,7 @@ export default {
   display: block;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   margin-bottom: 0.75rem;
 }
 
@@ -1151,7 +1151,7 @@ export default {
   border-radius: 6px;
   font-size: 1.1rem;
   font-family: 'Courier New', monospace;
-  color: var(--primary-dark);
+  color: var(--text);
   border: 2px solid var(--primary-light);
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -1184,7 +1184,7 @@ export default {
 
 .invite-code-hint {
   font-size: 0.875rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.8;
   margin: 0;
   line-height: 1.5;
@@ -1207,7 +1207,7 @@ export default {
 
 .warning-text {
   font-size: 0.95rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   margin-bottom: 1.5rem;
   line-height: 1.6;
 }
@@ -1236,17 +1236,18 @@ export default {
 
 .checkbox-label span {
   font-size: 0.95rem;
-  color: var(--text-dark);
+  color: var(--text);
 }
 
 /* Button Styles */
 .btn-secondary {
-  background-color: var(--text-dark);
-  color: var(--text-light);
+  background-color: var(--surface-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
 .btn-secondary:hover {
-  background-color: #555;
+  background-color: var(--border);
 }
 
 .btn-danger {

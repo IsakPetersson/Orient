@@ -531,7 +531,7 @@ export default {
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text);
   margin-bottom: 0.4rem;
 }
 

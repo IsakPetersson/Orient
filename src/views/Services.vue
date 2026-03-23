@@ -2677,14 +2677,14 @@ export default {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: var(--text-dark);
+  color: var(--text-secondary);
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
   border: 4px solid var(--background);
-  border-top-color: var(--primary-dark);
+  border-top-color: var(--primary-light);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -2763,7 +2763,7 @@ export default {
 
 .welcome-text h1 {
   font-size: 1.625rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0;
   line-height: 1.2;
 }
@@ -2785,7 +2785,7 @@ export default {
 
 .org-title {
   font-size: 1.25rem;
-  color: var(--primary-dark);
+  color: var(--text);
   font-weight: 600;
   margin: 0;
 }
@@ -2798,7 +2798,7 @@ export default {
 .org-name p,
 .welcome-text p {
   font-size: 1rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   margin: 0;
   opacity: 0.8;
 }
@@ -2865,7 +2865,7 @@ export default {
 
 .section-title {
   font-size: 1.0625rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0 0 0.75rem 0;
   font-weight: 600;
   text-transform: uppercase;
@@ -2883,7 +2883,7 @@ export default {
 
 .stat-label {
   font-size: 0.9375rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.7;
   font-weight: 500;
   margin-bottom: 0.25rem;
@@ -2892,7 +2892,7 @@ export default {
 .stat-amount {
   font-size: 1.875rem;
   font-weight: 700;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .stat-card-compact.income .stat-amount {
@@ -2913,7 +2913,7 @@ export default {
 
 .actions-panel h3 {
   font-size: 0.9rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0 0 0.75rem 0;
   font-weight: 600;
 }
@@ -2935,14 +2935,14 @@ export default {
 
 .member-label {
   font-size: 1.0625rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .member-value {
   font-size: 1.375rem;
   font-weight: 700;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .member-value.paid {
@@ -2965,7 +2965,7 @@ export default {
 
 .breakdown-panel h3 {
   font-size: 1.125rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0 0 0.75rem 0;
   font-weight: 600;
 }
@@ -2987,14 +2987,14 @@ export default {
 
 .breakdown-label {
   font-size: 1rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .breakdown-value {
   font-size: 1.0625rem;
   font-weight: 700;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .member-stats-compact {
@@ -3005,7 +3005,7 @@ export default {
 
 .panel-header-title {
   font-size: 1.125rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0 0 0.75rem 0;
   font-weight: 600;
   padding-bottom: 0.75rem;
@@ -3058,7 +3058,7 @@ export default {
 
 .panel-header h3 {
   font-size: 1.25rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0;
   font-weight: 600;
 }
@@ -3088,7 +3088,7 @@ export default {
 
 .quick-action-card:hover {
   background: var(--primary-light);
-  border-color: var(--primary-dark);
+  border-color: var(--primary-medium);
   transform: translateY(-2px);
 }
 
@@ -3121,13 +3121,13 @@ export default {
 .action-icon {
   font-size: 1.625rem;
   font-weight: 700;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .action-text {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   text-align: center;
   line-height: 1.2;
 }
@@ -3164,7 +3164,7 @@ export default {
 .activity-name {
   font-size: 1.125rem;
   font-weight: 500;
-  color: var(--primary-dark);
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3172,7 +3172,7 @@ export default {
 
 .activity-date {
   font-size: 0.9375rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.7;
 }
 
@@ -3295,12 +3295,12 @@ export default {
 .alert-icon {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .alert-text {
   font-size: 1.0625rem;
-  color: var(--primary-dark);
+  color: var(--text);
   font-weight: 500;
   flex: 1;
 }
@@ -3547,14 +3547,14 @@ export default {
 .modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .close-btn {
   background: none;
   border: none;
   font-size: 2rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0;
   width: 36px;
@@ -3568,7 +3568,7 @@ export default {
 
 .close-btn:hover {
   background: var(--background);
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .upload-area {
@@ -3686,13 +3686,13 @@ export default {
 .upload-text {
   font-size: 1.2rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0.5rem 0;
 }
 
 .upload-subtext {
   font-size: 0.9rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   margin: 0.5rem 0;
 }
 
@@ -3717,7 +3717,7 @@ export default {
 
 .upload-hint {
   font-size: 0.75rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.7;
   margin: 0.5rem 0 0 0;
 }
@@ -3731,7 +3731,7 @@ export default {
 
 .file-list h3 {
   font-size: 0.9rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0 0 1rem 0;
   font-weight: 600;
 }
@@ -3757,7 +3757,7 @@ export default {
 .file-name {
   flex: 1;
   font-size: 0.9rem;
-  color: var(--primary-dark);
+  color: var(--text);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -3766,7 +3766,7 @@ export default {
 
 .file-size {
   font-size: 0.8rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.7;
 }
 
@@ -3774,7 +3774,7 @@ export default {
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0;
   width: 28px;
@@ -3812,7 +3812,7 @@ export default {
 
 .cancel-btn {
   background: var(--background);
-  color: var(--text-dark);
+  color: var(--text-secondary);
 }
 
 .cancel-btn:hover {
@@ -3873,7 +3873,7 @@ export default {
   display: block;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 0.5rem;
 }
 
@@ -3922,7 +3922,7 @@ export default {
 
 .checkbox-group span {
   font-size: 0.95rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
 }
 
 .form-group textarea {
@@ -3960,7 +3960,7 @@ export default {
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--primary-dark);
+  color: var(--text);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -3981,8 +3981,7 @@ export default {
   display: block;
   text-align: right;
   font-size: 0.8rem;
-  color: var(--text-dark);
-  opacity: 0.6;
+  color: var(--text-secondary);
   margin-top: 0.25rem;
 }
 
@@ -4013,13 +4012,13 @@ export default {
 
 .auth-modal-content h2 {
   font-size: 1.75rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 1rem;
 }
 
 .auth-modal-content p {
   font-size: 1.1rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   margin-bottom: 2rem;
   line-height: 1.6;
 }
@@ -4040,10 +4039,10 @@ export default {
 .members-section .section-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 1rem;
   padding-left: 1rem;
-  border-left: 4px solid var(--primary);
+  border-left: 4px solid var(--primary-medium);
 }
 
 .members-list {
@@ -4093,13 +4092,13 @@ export default {
 .member-name {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 0.25rem;
 }
 
 .member-email {
   font-size: 0.875rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.7;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4108,8 +4107,7 @@ export default {
 
 .member-meta {
   font-size: 0.75rem;
-  color: var(--text-dark);
-  opacity: 0.6;
+  color: var(--text-secondary);
   text-transform: capitalize;
   margin-top: 0.25rem;
 }
@@ -4166,8 +4164,7 @@ export default {
 
 .member-joined {
   font-size: 0.875rem;
-  color: var(--text-dark);
-  opacity: 0.6;
+  color: var(--text-secondary);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -4175,8 +4172,7 @@ export default {
 .no-members {
   text-align: center;
   padding: 3rem 2rem;
-  color: var(--text-dark);
-  opacity: 0.7;
+  color: var(--text-secondary);
 }
 
 .no-members p {
@@ -4253,7 +4249,7 @@ export default {
 .member-detail-name {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0;
 }
 
@@ -4276,7 +4272,7 @@ export default {
 .detail-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.8;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -4285,7 +4281,7 @@ export default {
 .detail-value {
   font-size: 1rem;
   font-weight: 500;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .payment-status-section {
@@ -4297,7 +4293,7 @@ export default {
 .payment-status-section h4 {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0 0 1rem 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -4363,12 +4359,12 @@ export default {
 .toggle-text {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .payment-note {
   font-size: 0.875rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.7;
   text-align: center;
   margin: 0;
