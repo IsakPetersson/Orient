@@ -20,6 +20,7 @@ model User {
   password           String
   phone              String?
   avatarUrl          String?
+  theme              String   @default("light")
   emailVerified      Boolean  @default(false)
   emailVerifyToken   String?  @unique
   createdAt          DateTime @default(now())

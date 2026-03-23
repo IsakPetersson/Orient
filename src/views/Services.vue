@@ -2716,7 +2716,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
-  background: white;
+  background: var(--surface);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -2805,12 +2805,12 @@ export default {
 
 .org-selector {
   padding: 0.5rem 1rem;
-  border: 2px solid var(--background);
+  border: 2px solid var(--border);
   border-radius: 6px;
   font-size: 0.95rem;
   font-family: inherit;
-  color: var(--text-dark);
-  background-color: var(--text-light);
+  color: var(--text);
+  background-color: var(--input-bg);
   cursor: pointer;
   transition: border-color 0.3s ease;
   max-width: 250px;
@@ -2854,7 +2854,7 @@ export default {
 }
 
 .stats-compact {
-  background: white;
+  background: var(--surface);
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -2904,7 +2904,7 @@ export default {
 }
 
 .actions-panel {
-  background: white;
+  background: var(--surface);
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -2954,7 +2954,7 @@ export default {
 }
 
 .breakdown-panel {
-  background: white;
+  background: var(--surface);
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -3036,7 +3036,7 @@ export default {
 }
 
 .panel {
-  background: white;
+  background: var(--surface);
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -3497,7 +3497,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3515,7 +3515,7 @@ export default {
 }
 
 .modal-content {
-  background: white;
+  background: var(--surface);
   border-radius: 12px;
   width: 90%;
   max-width: 600px;
@@ -3741,7 +3741,7 @@ export default {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: white;
+  background: var(--surface);
   border-radius: 6px;
   margin-bottom: 0.5rem;
 }
@@ -3882,8 +3882,10 @@ export default {
   width: 100%;
   padding: 0.75rem;
   font-size: 1rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border);
   border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--text);
   transition: all 0.2s ease;
   font-family: inherit;
 }
@@ -3896,7 +3898,7 @@ export default {
 }
 
 .form-group input::placeholder {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 
 .checkbox-group {
@@ -4158,8 +4160,8 @@ export default {
 }
 
 .member-role-badge.viewer {
-  background: #e5e7eb;
-  color: #374151;
+  background: var(--border);
+  color: var(--text);
 }
 
 .member-joined {
@@ -4427,7 +4429,7 @@ export default {
 }
 
 .alert-body-centered p {
-  color: #4b5563;
+  color: var(--text-secondary);
   line-height: 1.6;
   font-size: 1.1rem;
 }
@@ -4445,15 +4447,15 @@ export default {
 
 .voucher-id {
   display: inline-block;
-  background-color: #f3f4f6;
-  color: #6b7280;
+  background-color: var(--surface-alt);
+  color: var(--text-secondary);
   border-radius: 4px;
   padding: 2px 6px;
   font-size: 0.75rem;
   font-weight: 600;
   margin-right: 8px;
   vertical-align: middle;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
 }
 
 
@@ -4470,7 +4472,7 @@ export default {
 }
 
 .invoice-preview-card {
-  border: 1px solid var(--border, #e5e7eb);
+  border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
   font-size: 0.9rem;
@@ -4480,8 +4482,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  background: #1e293b;
-  color: #fff;
+  background: var(--btn-dark);
+  color: var(--btn-dark-text);
   padding: 1.1rem 1.4rem;
 }
 
@@ -4508,13 +4510,13 @@ export default {
   display: flex;
   gap: 2rem;
   padding: 0.9rem 1.4rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .preview-meta-label {
   display: block;
   font-size: 0.72rem;
-  color: #9ca3af;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 2px;
@@ -4522,17 +4524,17 @@ export default {
 
 .preview-meta-value {
   font-weight: 600;
-  color: #111827;
+  color: var(--text);
 }
 
 .invoice-preview-desc {
   padding: 0.75rem 1.4rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .invoice-preview-desc p {
   margin: 4px 0 0;
-  color: #374151;
+  color: var(--text);
 }
 
 .invoice-preview-total {
@@ -4540,15 +4542,15 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 0.9rem 1.4rem;
-  background: #f8fafc;
+  background: var(--surface-alt);
   font-weight: 600;
-  color: #374151;
+  color: var(--text);
 }
 
 .preview-total-amount {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text);
 }
 
 .invoice-preview-actions {
@@ -4581,8 +4583,8 @@ export default {
 }
 
 .invoice-action-btn.pdf-btn {
-  background: #1e293b;
-  color: #fff;
+  background: var(--btn-dark);
+  color: var(--btn-dark-text);
 }
 
 .invoice-action-btn.send-btn {
@@ -4592,7 +4594,7 @@ export default {
 
 .invoice-no-email-note {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -4610,7 +4612,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-light);
   flex-wrap: wrap;
   gap: 0.5rem;
 }
@@ -4623,13 +4625,13 @@ export default {
 
 .cal-nav-btn {
   background: none;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 6px;
   width: 28px;
   height: 28px;
   cursor: pointer;
   font-size: 1.1rem;
-  color: #374151;
+  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4637,13 +4639,13 @@ export default {
 }
 
 .cal-nav-btn:hover {
-  background: #f3f4f6;
+  background: var(--surface-alt);
 }
 
 .cal-month-label {
   font-weight: 600;
   font-size: 0.9rem;
-  color: #111827;
+  color: var(--text);
   min-width: 130px;
   text-align: center;
 }
@@ -4654,19 +4656,19 @@ export default {
 }
 
 .cal-today-btn {
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.3rem 0.7rem;
   font-size: 0.78rem;
   cursor: pointer;
-  color: #374151;
+  color: var(--text);
   font-weight: 500;
   transition: background 0.15s;
 }
 
 .cal-today-btn:hover {
-  background: #e5e7eb;
+  background: var(--border);
 }
 
 .cal-add-btn {
@@ -4696,7 +4698,7 @@ export default {
   text-align: center;
   font-size: 0.7rem;
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--text-secondary);
   text-transform: uppercase;
 }
 
@@ -4721,18 +4723,18 @@ export default {
 }
 
 .cal-day:hover {
-  background: #f3f4f6;
+  background: var(--surface-alt);
 }
 
 .cal-day-num {
   font-size: 0.78rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--text);
   line-height: 1;
 }
 
 .cal-day.cal-other-month .cal-day-num {
-  color: #d1d5db;
+  color: var(--border);
 }
 
 .cal-day.cal-today {
@@ -4774,7 +4776,7 @@ export default {
 .day-modal-date {
   font-size: 1rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text);
   text-transform: capitalize;
 }
 
@@ -4785,7 +4787,7 @@ export default {
 
 .day-modal-empty {
   text-align: center;
-  color: #9ca3af;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   padding: 1.5rem 0;
 }
@@ -4795,14 +4797,14 @@ export default {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 0.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-light);
   cursor: pointer;
   border-radius: 6px;
   transition: background 0.12s;
 }
 
 .day-modal-event-row:hover {
-  background: #f9fafb;
+  background: var(--surface-alt);
 }
 
 .day-modal-event-row:last-child {
@@ -4818,17 +4820,17 @@ export default {
 .day-modal-event-title {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--text);
 }
 
 .day-modal-event-type {
   font-size: 0.78rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-top: 1px;
 }
 
 .day-modal-event-chevron {
-  color: #9ca3af;
+  color: var(--text-secondary);
   font-size: 1.25rem;
   line-height: 1;
 }
@@ -4850,7 +4852,7 @@ export default {
 .cal-event-delete {
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 1rem;
   padding: 0 2px;
@@ -4882,7 +4884,7 @@ export default {
 .event-detail-title {
   font-size: 1.35rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text);
   margin: 0 0 1rem;
   line-height: 1.3;
 }
@@ -4908,24 +4910,24 @@ export default {
 .event-detail-type-badge.type-competition { background: #fee2e2; color: #b91c1c; }
 .event-detail-type-badge.type-training { background: #dbeafe; color: #1d4ed8; }
 .event-detail-type-badge.type-meeting { background: #fef3c7; color: #b45309; }
-.event-detail-type-badge.type-other { background: #f3f4f6; color: #4b5563; }
+.event-detail-type-badge.type-other { background: var(--surface-alt); color: var(--text-secondary); }
 
 .event-detail-date {
   font-size: 0.95rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .event-detail-section {
   padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border);
 }
 
 .event-detail-section label {
   display: block;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.5rem;
@@ -4933,7 +4935,7 @@ export default {
 
 .event-detail-desc {
   font-size: 1rem;
-  color: #374151;
+  color: var(--text);
   line-height: 1.6;
   margin: 0;
   white-space: pre-wrap;
@@ -4942,7 +4944,7 @@ export default {
 
 .event-detail-empty {
   font-size: 0.95rem;
-  color: #9ca3af;
+  color: var(--text-secondary);
   font-style: italic;
   margin: 0;
 }

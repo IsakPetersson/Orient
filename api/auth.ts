@@ -158,7 +158,7 @@ async function handleMe(req: VercelRequest, res: VercelResponse) {
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true, email: true, name: true, phone: true, avatarUrl: true, emailVerified: true, createdAt: true }
+        select: { id: true, email: true, name: true, phone: true, avatarUrl: true, theme: true, emailVerified: true, createdAt: true }
     })
 
     return res.status(200).json(user)
@@ -172,15 +172,19 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
     const userId = requireAuth(req, res)
     if (!userId) return
 
-    const { name, phone, avatarUrl } = req.body ?? {}
+    const { name, phone, avatarUrl, theme } = req.body ?? {}
 
     if (name !== undefined && String(name).trim().length < 1) {
         return res.status(400).json({ error: 'Name cannot be empty' })
     }
 
-    // Limit avatar data URL size to ~1MB
     if (avatarUrl !== undefined && avatarUrl !== null && String(avatarUrl).length > 1_100_000) {
         return res.status(400).json({ error: 'Avatar image is too large. Please use a smaller image.' })
+    }
+
+    const validThemes = ['light', 'dark', 'midnight']
+    if (theme !== undefined && !validThemes.includes(theme)) {
+        return res.status(400).json({ error: 'Invalid theme' })
     }
 
     const updated = await prisma.user.update({
@@ -188,9 +192,10 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
         data: {
             ...(name !== undefined ? { name: String(name).trim() } : {}),
             ...(phone !== undefined ? { phone: phone ? String(phone).trim() : null } : {}),
-            ...(avatarUrl !== undefined ? { avatarUrl: avatarUrl || null } : {})
+            ...(avatarUrl !== undefined ? { avatarUrl: avatarUrl || null } : {}),
+            ...(theme !== undefined ? { theme } : {})
         },
-        select: { id: true, email: true, name: true, phone: true, avatarUrl: true, emailVerified: true, createdAt: true }
+        select: { id: true, email: true, name: true, phone: true, avatarUrl: true, theme: true, emailVerified: true, createdAt: true }
     })
 
     return res.status(200).json(updated)

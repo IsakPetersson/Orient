@@ -324,6 +324,10 @@ export default {
     }
   },
   async mounted() {
+    const cached = localStorage.getItem('techship-theme')
+    if (cached && cached !== 'light') {
+      document.documentElement.setAttribute('data-theme', cached)
+    }
     await this.checkAuth()
   },
   watch: {
@@ -361,9 +365,17 @@ export default {
         this.resendLoading = false
       }
     },
+    applyTheme(theme) {
+      const t = theme || 'light'
+      localStorage.setItem('techship-theme', t)
+      document.documentElement.setAttribute('data-theme', t === 'light' ? '' : t)
+    },
     async checkAuth() {
       const user = await getCurrentUser()
       this.user = user
+      if (user?.theme) {
+        this.applyTheme(user.theme)
+      }
     },
     async handleLogout() {
       try {
@@ -758,7 +770,7 @@ export default {
   background: var(--background, #f4f4f5);
 }
 .verify-gate-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.10);
   padding: 48px 40px;
@@ -777,12 +789,12 @@ export default {
 .verify-gate-card h2 {
   margin: 0;
   font-size: 22px;
-  color: #111827;
+  color: var(--text);
 }
 .verify-gate-card p {
   margin: 0;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -876,7 +888,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -885,7 +897,7 @@ export default {
 }
 
 .modal-content {
-  background-color: var(--text-light);
+  background-color: var(--surface);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   width: 100%;
@@ -969,7 +981,7 @@ export default {
 }
 
 .organization-item {
-  background-color: var(--text-light);
+  background-color: var(--surface);
   border-radius: 6px;
   padding: 1rem;
   margin-bottom: 0.75rem;
@@ -1134,7 +1146,7 @@ export default {
 
 .invite-code-display code {
   flex: 1;
-  background-color: var(--text-light);
+  background-color: var(--surface);
   padding: 0.75rem 1rem;
   border-radius: 6px;
   font-size: 1.1rem;

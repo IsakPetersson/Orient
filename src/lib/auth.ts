@@ -4,6 +4,7 @@ export type SafeUser = {
     name: string
     phone: string | null
     avatarUrl: string | null
+    theme: string
     emailVerified: boolean
     createdAt: string
 }
@@ -42,7 +43,7 @@ export async function logout(): Promise<void> {
     await jsonOrThrow(res)
 }
 
-export async function updateProfile(data: { name?: string; phone?: string | null; avatarUrl?: string | null }): Promise<SafeUser> {
+export async function updateProfile(data: { name?: string; phone?: string | null; avatarUrl?: string | null; theme?: string }): Promise<SafeUser> {
     const res = await fetch('/api/auth?action=update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

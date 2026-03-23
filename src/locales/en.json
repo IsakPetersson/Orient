@@ -625,7 +625,16 @@
         "passwordError": "Could not change password. Check your current password.",
         "passwordTooShort": "Password must be at least 8 characters.",
         "passwordMismatch": "Passwords do not match.",
-        "fillAllFields": "Please fill in all fields."
+        "fillAllFields": "Please fill in all fields.",
+        "theme": "Appearance",
+        "themeDesc": "Choose a theme that suits you. The setting is saved and synced across devices.",
+        "themeLight": "Light",
+        "themeLightDesc": "Classic light appearance",
+        "themeDark": "Dark",
+        "themeDarkDesc": "Dark and easy on the eyes",
+        "themeMidnight": "Midnight",
+        "themeMidnightDesc": "Dark with colorful accents",
+        "themeSaved": "Theme changed!"
     },
     "calendar": {
         "title": "Calendar",

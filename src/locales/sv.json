@@ -625,7 +625,16 @@
         "passwordError": "Kunde inte byta lösenord. Kontrollera ditt nuvarande lösenord.",
         "passwordTooShort": "Lösenordet måste vara minst 8 tecken.",
         "passwordMismatch": "Lösenorden matchar inte.",
-        "fillAllFields": "Fyll i alla fält."
+        "fillAllFields": "Fyll i alla fält.",
+        "theme": "Utseende",
+        "themeDesc": "Välj ett tema som passar dig. Inställningen sparas och synkas mellan enheter.",
+        "themeLight": "Ljust",
+        "themeLightDesc": "Klassiskt ljust utseende",
+        "themeDark": "Mörkt",
+        "themeDarkDesc": "Mörkt och behagligt för ögonen",
+        "themeMidnight": "Midnatt",
+        "themeMidnightDesc": "Mörkt med färgrika accenter",
+        "themeSaved": "Tema ändrat!"
     },
     "calendar": {
         "title": "Kalender",

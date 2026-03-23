@@ -105,6 +105,61 @@
             </button>
           </div>
         </div>
+        <!-- Theme card -->
+        <div class="profile-card theme-card">
+          <h2 class="card-title">{{ $t('profile.theme') }}</h2>
+          <p class="card-desc">{{ $t('profile.themeDesc') }}</p>
+
+          <div class="theme-options">
+            <button
+              class="theme-option"
+              :class="{ active: selectedTheme === 'light' }"
+              @click="selectTheme('light')"
+            >
+              <div class="theme-preview theme-preview-light">
+                <div class="tp-sidebar"></div>
+                <div class="tp-body">
+                  <div class="tp-card"></div>
+                  <div class="tp-card"></div>
+                </div>
+              </div>
+              <span class="theme-label">{{ $t('profile.themeLight') }}</span>
+              <span class="theme-desc">{{ $t('profile.themeLightDesc') }}</span>
+            </button>
+
+            <button
+              class="theme-option"
+              :class="{ active: selectedTheme === 'dark' }"
+              @click="selectTheme('dark')"
+            >
+              <div class="theme-preview theme-preview-dark">
+                <div class="tp-sidebar"></div>
+                <div class="tp-body">
+                  <div class="tp-card"></div>
+                  <div class="tp-card"></div>
+                </div>
+              </div>
+              <span class="theme-label">{{ $t('profile.themeDark') }}</span>
+              <span class="theme-desc">{{ $t('profile.themeDarkDesc') }}</span>
+            </button>
+
+            <button
+              class="theme-option"
+              :class="{ active: selectedTheme === 'midnight' }"
+              @click="selectTheme('midnight')"
+            >
+              <div class="theme-preview theme-preview-midnight">
+                <div class="tp-sidebar"></div>
+                <div class="tp-body">
+                  <div class="tp-card"></div>
+                  <div class="tp-card"></div>
+                </div>
+              </div>
+              <span class="theme-label">{{ $t('profile.themeMidnight') }}</span>
+              <span class="theme-desc">{{ $t('profile.themeMidnightDesc') }}</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Toast notification -->
@@ -137,6 +192,7 @@ export default {
         newPass: '',
         confirm: ''
       },
+      selectedTheme: 'light',
       toast: {
         show: false,
         message: '',
@@ -155,6 +211,7 @@ export default {
     this.form.name = user.name || ''
     this.form.phone = user.phone || ''
     this.form.avatarUrl = user.avatarUrl || null
+    this.selectedTheme = user.theme || 'light'
     this.loading = false
   },
   methods: {
@@ -250,6 +307,17 @@ export default {
         this.changingPassword = false
       }
     },
+    async selectTheme(theme) {
+      this.selectedTheme = theme
+      document.documentElement.setAttribute('data-theme', theme === 'light' ? '' : theme)
+      localStorage.setItem('techship-theme', theme)
+      try {
+        await updateProfile({ theme })
+        this.showToast(this.$t('profile.themeSaved'), 'success')
+      } catch {
+        // theme is applied locally even if save fails
+      }
+    },
     showToast(message, type = 'success') {
       this.toast = { show: true, message, type }
       setTimeout(() => { this.toast.show = false }, 3000)
@@ -261,7 +329,7 @@ export default {
 <style scoped>
 .profile-page {
   min-height: 100vh;
-  background: var(--background, #f8fafc);
+  background: var(--background);
   font-family: inherit;
 }
 
@@ -272,14 +340,14 @@ export default {
   justify-content: center;
   min-height: 60vh;
   gap: 1rem;
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
 }
 
 .loading-spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #4f46e5;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary-light);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -301,24 +369,24 @@ export default {
 
 .back-btn {
   background: none;
-  border: 1px solid var(--border, #e5e7eb);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
   cursor: pointer;
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
   transition: all 0.15s;
 }
 
 .back-btn:hover {
-  background: var(--surface, #fff);
-  color: var(--text, #111827);
+  background: var(--surface);
+  color: var(--text);
 }
 
 .profile-header h1 {
   font-size: 1.6rem;
   font-weight: 700;
-  color: var(--text, #111827);
+  color: var(--text);
   margin: 0;
 }
 
@@ -334,8 +402,8 @@ export default {
 }
 
 .profile-card {
-  background: var(--surface, #fff);
-  border: 1px solid var(--border, #e5e7eb);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.75rem;
 }
@@ -343,13 +411,13 @@ export default {
 .card-title {
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--text, #111827);
+  color: var(--text);
   margin: 0 0 1.25rem;
 }
 
 .card-desc {
   font-size: 0.875rem;
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
   margin: -0.75rem 0 1.25rem;
 }
 
@@ -450,7 +518,7 @@ export default {
 
 .avatar-hint {
   font-size: 0.75rem;
-  color: var(--text-secondary, #9ca3af);
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -463,50 +531,50 @@ export default {
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text-secondary, #374151);
+  color: var(--text-secondary);
   margin-bottom: 0.4rem;
 }
 
 .form-group input {
   width: 100%;
   padding: 0.65rem 0.875rem;
-  border: 1px solid var(--border, #e5e7eb);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 0.95rem;
-  background: var(--surface, #fff);
-  color: var(--text, #111827);
+  background: var(--input-bg);
+  color: var(--text);
   box-sizing: border-box;
   transition: border-color 0.15s;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: var(--primary-light);
 }
 
 .input-disabled {
-  background: var(--background, #f8fafc) !important;
-  color: var(--text-secondary, #9ca3af) !important;
+  background: var(--background) !important;
+  color: var(--text-secondary) !important;
   cursor: not-allowed;
 }
 
 .field-hint {
   display: block;
   font-size: 0.75rem;
-  color: var(--text-secondary, #9ca3af);
+  color: var(--text-secondary);
   margin-top: 0.3rem;
 }
 
 .card-footer {
   margin-top: 1.5rem;
   padding-top: 1.25rem;
-  border-top: 1px solid var(--border, #f1f5f9);
+  border-top: 1px solid var(--border-light);
 }
 
 .save-btn {
   padding: 0.7rem 1.75rem;
-  background: #1e293b;
-  color: #fff;
+  background: var(--btn-dark);
+  color: var(--btn-dark-text);
   border: none;
   border-radius: 8px;
   font-size: 0.95rem;
@@ -517,6 +585,94 @@ export default {
 
 .save-btn:hover:not(:disabled) { opacity: 0.85; }
 .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Theme picker */
+.theme-card {
+  grid-column: 1 / -1;
+}
+
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.theme-option:hover {
+  border-color: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.theme-option.active {
+  border-color: var(--primary-light);
+  background: var(--surface-alt);
+  box-shadow: 0 0 0 3px rgba(69, 104, 130, 0.18);
+}
+
+.theme-preview {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 8px;
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.tp-sidebar {
+  width: 28%;
+  min-height: 100%;
+}
+
+.tp-body {
+  flex: 1;
+  padding: 8%;
+  display: flex;
+  flex-direction: column;
+  gap: 6%;
+}
+
+.tp-card {
+  flex: 1;
+  border-radius: 4px;
+}
+
+.theme-preview-light .tp-sidebar { background: #1B3C53; }
+.theme-preview-light .tp-body { background: #E3E3E3; }
+.theme-preview-light .tp-card { background: #ffffff; }
+
+.theme-preview-dark .tp-sidebar { background: #0d1b2a; }
+.theme-preview-dark .tp-body { background: #111827; }
+.theme-preview-dark .tp-card { background: #1e293b; }
+
+.theme-preview-midnight .tp-sidebar { background: #152238; }
+.theme-preview-midnight .tp-body { background: #0f1a2e; }
+.theme-preview-midnight .tp-card { background: #182842; }
+
+.theme-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.theme-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
 
 /* Toast */
 .toast {
@@ -532,7 +688,7 @@ export default {
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
-.toast.success { background: #1e293b; color: #fff; }
+.toast.success { background: var(--btn-dark); color: var(--btn-dark-text); }
 .toast.error   { background: #ef4444; color: #fff; }
 
 .toast-enter-active, .toast-leave-active { transition: all 0.25s ease; }
@@ -545,6 +701,9 @@ export default {
   }
   .avatar-card {
     grid-row: auto;
+  }
+  .theme-options {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -560,7 +719,7 @@ export default {
 }
 
 .modal-content {
-  background: var(--surface, #fff);
+  background: var(--surface);
   border-radius: 16px;
   padding: 2.5rem;
   max-width: 420px;
@@ -569,7 +728,7 @@ export default {
 }
 
 .auth-modal-body h2 { margin: 0 0 0.75rem; font-size: 1.4rem; }
-.auth-modal-body p  { margin: 0 0 1.5rem; color: var(--text-secondary, #6b7280); }
+.auth-modal-body p  { margin: 0 0 1.5rem; color: var(--text-secondary); }
 
 .btn {
   display: inline-block;
