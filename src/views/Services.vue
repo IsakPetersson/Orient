@@ -1539,9 +1539,10 @@ export default {
             const dateStr = t.date ? new Date(t.date).toLocaleDateString('sv-SE') : ''
             const desc = (t.description || '').substring(0, 38)
             const cat = (t.category || '').substring(0, 18)
-            const amount = t.type === 'INCOME'
-              ? `+${Number(t.amount).toLocaleString('sv-SE')} kr`
-              : `-${Number(t.amount).toLocaleString('sv-SE')} kr`
+            const absAmt = Math.abs(Number(t.amount)).toLocaleString('sv-SE')
+            const amount = t.type === 'income'
+              ? `+${absAmt} kr`
+              : `-${absAmt} kr`
             doc.text(dateStr, margin, y)
             doc.text(desc, margin + 25, y)
             doc.text(cat, margin + 95, y)
