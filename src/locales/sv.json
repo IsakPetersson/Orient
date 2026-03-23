@@ -337,13 +337,15 @@
         },
         "uploadModal": {
             "title": "Ladda upp Kvitto",
-            "dropText": "Dra och släpp filer här",
+            "dropText": "Dra och släpp ett kvitto här",
             "or": "eller",
-            "browse": "Bläddra efter filer",
-            "hint": "Stödda format: Bilder (JPG, PNG) och PDF",
-            "selectedFiles": "Valda filer ({count})",
+            "browse": "Välj fil",
+            "hint": "Stödda format: JPG, PNG, WEBP",
+            "selectedFiles": "Vald fil ({count})",
             "cancel": "Avbryt",
-            "upload": "Ladda upp ({count})"
+            "upload": "Analysera kvitto",
+            "analyzing": "Läser kvitto...",
+            "analyzeError": "Kunde inte läsa kvittot. Försök med en tydligare bild."
         },
         "addMemberModal": {
             "title": "Lägg till Medlem",

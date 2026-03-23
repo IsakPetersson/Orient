@@ -337,13 +337,15 @@
         },
         "uploadModal": {
             "title": "Upload Receipt",
-            "dropText": "Drag and drop files here",
+            "dropText": "Drag and drop a receipt here",
             "or": "or",
-            "browse": "Browse files",
-            "hint": "Supported formats: Images (JPG, PNG) and PDF",
-            "selectedFiles": "Selected files ({count})",
+            "browse": "Choose file",
+            "hint": "Supported formats: JPG, PNG, WEBP",
+            "selectedFiles": "Selected file ({count})",
             "cancel": "Cancel",
-            "upload": "Upload ({count})"
+            "upload": "Analyze receipt",
+            "analyzing": "Reading receipt...",
+            "analyzeError": "Could not read the receipt. Try a clearer image."
         },
         "addMemberModal": {
             "title": "Add Member",

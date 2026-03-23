@@ -389,8 +389,7 @@
             type="file" 
             ref="fileInput" 
             @change="handleFileSelect" 
-            multiple 
-            accept="image/*,.pdf"
+            accept="image/*"
             style="display: none;"
           />
           <button class="browse-btn" @click="$refs.fileInput.click()">{{ $t('dashboard.uploadModal.browse') }}</button>
@@ -410,9 +409,9 @@
           <button 
             class="upload-btn" 
             @click="uploadFiles" 
-            :disabled="selectedFiles.length === 0"
+            :disabled="selectedFiles.length === 0 || parsingReceipt"
           >
-            {{ $t('dashboard.uploadModal.upload', { count: selectedFiles.length }) }}
+            {{ parsingReceipt ? $t('dashboard.uploadModal.analyzing') : $t('dashboard.uploadModal.upload', { count: selectedFiles.length }) }}
           </button>
         </div>
       </div>
@@ -1132,6 +1131,7 @@ export default {
       showUploadModal: false,
       isDragging: false,
       selectedFiles: [],
+      parsingReceipt: false,
       showAddMemberModal: false,
       newMember: {
         name: '',
@@ -2360,12 +2360,11 @@ export default {
       this.addFiles(files)
     },
     addFiles(files) {
-      const validFiles = files.filter(file => {
-        const isImage = file.type.startsWith('image/')
-        const isPDF = file.type === 'application/pdf'
-        return isImage || isPDF
-      })
-      this.selectedFiles = [...this.selectedFiles, ...validFiles]
+      const validFiles = files.filter(file => file.type.startsWith('image/'))
+      // Only one receipt at a time
+      if (validFiles.length > 0) {
+        this.selectedFiles = [validFiles[0]]
+      }
     },
     removeFile(index) {
       this.selectedFiles.splice(index, 1)
@@ -2392,10 +2391,56 @@ export default {
       if (!type) return ''
       return this.$t(`memberTypes.${type}`)
     },
-    uploadFiles() {
-      console.log('Uploading files:', this.selectedFiles)
-      // Here you would typically send files to a backend server
-      this.closeUploadModal()
+    async uploadFiles() {
+      if (!this.selectedFiles.length) return
+      this.parsingReceipt = true
+      try {
+        const file = this.selectedFiles[0]
+        const { createWorker } = await import('tesseract.js')
+        const worker = await createWorker(['swe', 'eng'])
+        const { data: { text } } = await worker.recognize(file)
+        await worker.terminate()
+        const parsed = this.parseReceiptText(text)
+        this.newExpense = {
+          description: parsed.description,
+          amount: parsed.amount,
+          category: '',
+          date: parsed.date || new Date().toISOString().split('T')[0],
+          notes: ''
+        }
+        this.closeUploadModal()
+        this.showExpenseModal = true
+      } catch (e) {
+        console.error('Receipt OCR failed:', e)
+        this.showAlert(
+          this.$t('dashboard.alerts.errorTitle'),
+          this.$t('dashboard.uploadModal.analyzeError'),
+          'error'
+        )
+      } finally {
+        this.parsingReceipt = false
+      }
+    },
+    parseReceiptText(text) {
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+      // Find all currency-like numbers and take the largest (most likely the total)
+      const amounts = [...text.matchAll(/(\d+[.,]\d{2})/g)]
+        .map(m => parseFloat(m[1].replace(',', '.')))
+      const amount = amounts.length ? Math.max(...amounts) : 0
+      // First non-trivial line that doesn't start with a digit = merchant name
+      const description = lines.find(l => l.length > 3 && !/^\d/.test(l)) || lines[0] || ''
+      // Look for date patterns YYYY-MM-DD or DD/MM/YYYY or DD.MM.YYYY
+      const dateMatch = text.match(/(\d{4}-\d{2}-\d{2})|(\d{2}[\/\.]\d{2}[\/\.]\d{4})/)
+      let date = ''
+      if (dateMatch) {
+        if (dateMatch[1]) {
+          date = dateMatch[1]
+        } else {
+          const parts = dateMatch[2].split(/[\/\.]/)
+          date = `${parts[2]}-${parts[1]}-${parts[0]}`
+        }
+      }
+      return { description, amount, date }
     },
     closeAddMemberModal() {
       this.showAddMemberModal = false
