@@ -378,7 +378,7 @@ export default {
 <style scoped>
 .legal-page {
   padding: 2rem;
-  background-color: #f8fafc;
+  background-color: var(--marketing-band-muted);
   min-height: 100vh;
 }
 
@@ -387,19 +387,21 @@ export default {
   max-width: 1200px;
   margin: 0 auto;
   gap: 2rem;
-  background: white;
+  background: var(--surface);
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
   overflow: hidden;
   min-height: 600px;
 }
 
 .legal-sidebar {
   width: 300px;
-  background: #f1f5f9;
+  background: var(--surface-alt);
   padding: 2rem;
   display: flex;
   flex-direction: column;
+  border-right: 1px solid var(--border);
 }
 
 .legal-nav {
@@ -414,22 +416,22 @@ export default {
   cursor: pointer;
   border-radius: 8px;
   margin-bottom: 0.5rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   font-weight: 500;
   transition: all 0.2s;
 }
 
 .legal-nav li:hover {
-  background: white;
-  color: var(--primary-dark);
+  background: var(--surface);
+  color: var(--text);
 }
 
 .legal-nav li.active {
-  background: white;
-  color: var(--primary-dark);
+  background: var(--surface);
+  color: var(--text);
   font-weight: 700;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border-left: 4px solid var(--primary-dark);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid var(--primary-light);
 }
 
 .lang-switch {
@@ -441,18 +443,18 @@ export default {
 .lang-switch button {
   flex: 1;
   padding: 0.5rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: white;
+  background: var(--input-bg);
   cursor: pointer;
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .lang-switch button.active {
-  background: #e0f2fe;
-  color: var(--primary-dark);
-  border-color: #bae6fd;
+  background: var(--surface-alt);
+  color: var(--text);
+  border-color: var(--primary-light);
   font-weight: 600;
 }
 
@@ -464,33 +466,33 @@ export default {
 
 .legal-section h1 {
   margin-top: 0;
-  color: var(--primary-dark);
+  color: var(--text);
   font-size: 2rem;
 }
 
 .last-updated {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .legal-text h2 {
-  color: #334155;
+  color: var(--text);
   font-size: 1.25rem;
   margin-top: 2rem;
   margin-bottom: 1rem;
 }
 
 .legal-text p {
-  color: #475569;
+  color: var(--text-secondary);
   line-height: 1.7;
   margin-bottom: 1rem;
 }
 
 .legal-text ul {
-  color: #475569;
+  color: var(--text-secondary);
   line-height: 1.7;
   margin-bottom: 1rem;
   padding-left: 1.5rem;
@@ -499,7 +501,7 @@ export default {
 .back-btn {
   background: none;
   border: none;
-  color: #64748b;
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 0.9rem;
   display: flex;
@@ -510,7 +512,7 @@ export default {
 }
 
 .back-btn:hover {
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 @media (max-width: 768px) {

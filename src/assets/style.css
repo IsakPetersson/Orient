@@ -19,6 +19,9 @@
     --overlay-bg: rgba(0, 0, 0, 0.5);
     /* Icons on neutral / gray surfaces (feature cards, contact methods) */
     --icon-on-surface: #1b4561;
+    /* Home / About / Contact: alternating stripes (light = white vs gray; dark = elevated vs page) */
+    --marketing-band: var(--surface);
+    --marketing-band-muted: var(--background);
 }
 
 [data-theme="dark"] {
@@ -167,7 +170,7 @@ body {
 /* Features Section */
 .features {
     padding: 5rem 0;
-    background-color: var(--text-light);
+    background-color: var(--marketing-band);
 }
 
 .features-grid {
@@ -210,7 +213,7 @@ body {
 /* About Section */
 .about {
     padding: 5rem 0;
-    background-color: var(--background);
+    background-color: var(--marketing-band-muted);
 }
 
 .about-text {
@@ -301,7 +304,7 @@ footer p {
 }
 
 .service-item {
-    background-color: var(--text-light);
+    background-color: var(--marketing-band);
     margin-bottom: 3rem;
     border-radius: 12px;
     padding: 3rem;
@@ -356,11 +359,11 @@ footer p {
 }
 
 .about-section {
-    background-color: var(--text-light);
+    background-color: var(--marketing-band);
 }
 
 .story-section {
-    background-color: var(--background);
+    background-color: var(--marketing-band-muted);
 }
 
 .about-content-page {
@@ -383,7 +386,7 @@ footer p {
 
 .values-section {
     padding: 5rem 0;
-    background-color: var(--text-light);
+    background-color: var(--marketing-band);
 }
 
 .values-grid {
@@ -439,7 +442,7 @@ footer p {
 /* Contact Page Styles */
 .contact-form-section {
     padding: 5rem 0;
-    background-color: var(--background);
+    background-color: var(--marketing-band-muted);
 }
 
 .contact-grid {
@@ -473,8 +476,9 @@ footer p {
     gap: 1rem;
     align-items: center;
     padding: 1.5rem;
-    background-color: var(--text-light);
+    background-color: var(--surface);
     border-radius: 8px;
+    border: 1px solid var(--border);
 }
 
 .method-icon {
@@ -497,10 +501,11 @@ footer p {
 
 /* Contact Form */
 .contact-form-wrapper {
-    background-color: var(--text-light);
+    background-color: var(--surface);
     padding: 2.5rem;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border);
 }
 
 .contact-form {
@@ -552,7 +557,7 @@ footer p {
 /* FAQ Section */
 .faq-section {
     padding: 5rem 0;
-    background-color: var(--text-light);
+    background-color: var(--marketing-band);
 }
 
 .faq-grid {
