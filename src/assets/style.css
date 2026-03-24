@@ -81,6 +81,22 @@ body {
     padding: 0;
 }
 
+/* Scrollable modals: hide scrollbar; wheel / touch / keyboard scrolling still works */
+.modal-overlay,
+.modal-content,
+.organizations-list,
+.members-list {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.modal-overlay::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar,
+.organizations-list::-webkit-scrollbar,
+.members-list::-webkit-scrollbar {
+    display: none;
+}
+
 /* Hero Section */
 .hero {
     background-image:
