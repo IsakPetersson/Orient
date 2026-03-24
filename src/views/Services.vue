@@ -4962,3 +4962,20 @@ export default {
 }
 </style>
 
+<style>
+/* PNG quick-action / header icons don't inherit color — make them white on dark themes and on hover */
+[data-theme="dark"] .quick-action-card .action-icon-img,
+[data-theme="midnight"] .quick-action-card .action-icon-img,
+[data-theme="dark"] .header-btn .action-icon-img,
+[data-theme="midnight"] .header-btn .action-icon-img {
+  filter: brightness(0) invert(1);
+  opacity: 0.95;
+}
+
+.quick-action-card:hover .action-icon-img,
+.header-btn:hover .action-icon-img {
+  filter: brightness(0) invert(1);
+  opacity: 1;
+}
+</style>
+
