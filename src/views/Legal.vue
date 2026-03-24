@@ -515,7 +515,7 @@ export default {
   color: var(--text);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .legal-container {
     flex-direction: column;
     min-height: auto;
@@ -542,11 +542,21 @@ export default {
   }
 
   .legal-content {
-    padding: 1.5rem;
+    padding: 2rem;
   }
 
   .legal-section h1 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .legal-page {
+    padding: 1rem;
+  }
+
+  .legal-content {
+    padding: 1.5rem;
   }
 }
 

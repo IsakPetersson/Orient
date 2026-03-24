@@ -822,16 +822,6 @@ export default {
 }
 
 @media (max-width: 1024px) {
-  .sidebar {
-    width: clamp(180px, 20vw, 220px);
-  }
-
-  .main-content {
-    margin-left: clamp(180px, 20vw, 220px);
-  }
-}
-
-@media (max-width: 768px) {
   .mobile-menu-btn {
     display: flex;
     align-items: center;
@@ -840,8 +830,8 @@ export default {
     top: 0.75rem;
     left: 0.75rem;
     z-index: 1100;
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 10px;
     border: none;
     background: var(--primary-dark);

@@ -770,13 +770,28 @@ export default {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .login-container {
     flex-direction: column;
   }
 
   .login-hero {
-    min-height: 30vh;
+    min-height: 35vh;
+  }
+
+  .login-hero h1 {
+    font-size: 2.25rem;
+  }
+
+  .login-section {
+    min-height: auto;
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-hero {
+    min-height: 28vh;
   }
 
   .login-hero h1 {
@@ -784,7 +799,6 @@ export default {
   }
 
   .login-section {
-    min-height: auto;
     padding: 1.5rem 1rem;
   }
 

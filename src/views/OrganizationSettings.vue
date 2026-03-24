@@ -1168,13 +1168,15 @@ export default {
   line-height: 1.5;
 }
 
+@media (max-width: 1024px) {
+  .settings-header {
+    margin-top: 2.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .settings-page {
     padding: 0.75rem;
-  }
-
-  .settings-header {
-    margin-top: 2.5rem;
   }
 
   .settings-section {

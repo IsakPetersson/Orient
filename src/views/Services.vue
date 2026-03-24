@@ -3338,52 +3338,11 @@ export default {
 }
 
 @media (max-width: 1024px) {
-  .main-grid {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto;
-  }
-
-  .left-column {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .center-column {
-    grid-column: 2;
-    grid-row: 1 / 3;
-  }
-
-  .right-column {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .bottom-left {
-    grid-column: 1;
-    grid-row: 3;
-  }
-
-  .bottom-center {
-    grid-column: 2;
-    grid-row: 3;
-  }
-
-  .bottom-right-2 {
-    grid-column: 1 / 3;
-    grid-row: 4;
-  }
-
-  .quick-actions-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
   .dashboard-page {
     height: auto;
     min-height: 100vh;
     overflow: auto;
-    padding: 0.75rem;
+    padding: 1rem;
   }
 
   .dashboard-compact {
@@ -3392,15 +3351,84 @@ export default {
   }
 
   .container-full {
-    padding: 0.5rem 0.5rem;
+    padding: 0.5rem 0.75rem;
     height: auto;
+  }
+
+  .header-bar {
+    margin-top: 2.5rem;
+  }
+
+  .main-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    gap: 1rem;
+  }
+
+  .left-column {
+    grid-column: 1;
+    grid-row: 1;
+    overflow: visible;
+    min-height: auto;
+  }
+
+  .center-column {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    overflow: visible;
+    min-height: auto;
+  }
+
+  .right-column {
+    grid-column: 1;
+    grid-row: 2;
+    overflow: visible;
+    min-height: auto;
+  }
+
+  .bottom-left {
+    grid-column: 1;
+    grid-row: 3;
+    overflow: visible;
+    min-height: auto;
+  }
+
+  .bottom-center {
+    grid-column: 2;
+    grid-row: 3;
+    overflow: visible;
+    min-height: auto;
+  }
+
+  .bottom-right-2 {
+    grid-column: 1 / 3;
+    grid-row: 4;
+    overflow: visible;
+    min-height: auto;
+  }
+
+  .panel {
+    max-height: none !important;
+  }
+
+  .quick-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .welcome-text h1 {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-page {
+    padding: 0.75rem;
   }
 
   .header-bar {
     flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.75rem 1rem;
-    margin-top: 2.5rem;
   }
 
   .welcome-text {
@@ -3427,12 +3455,6 @@ export default {
   .bottom-right-2 {
     grid-column: 1;
     grid-row: auto;
-    overflow: visible;
-    min-height: auto;
-  }
-
-  .panel {
-    max-height: none !important;
   }
 
   .center-split {
@@ -4991,10 +5013,20 @@ export default {
   background: #fecaca;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .modal-content {
     width: 95%;
     max-width: 95%;
+  }
+
+  .invoice-modal-content,
+  .members-modal {
+    max-width: 95%;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-content {
     border-radius: 10px;
   }
 
@@ -5014,14 +5046,6 @@ export default {
   .modal-body,
   .modal-footer {
     padding: 1rem 1.25rem;
-  }
-
-  .invoice-modal-content {
-    max-width: 95%;
-  }
-
-  .members-modal {
-    max-width: 95%;
   }
 
   .day-modal-content {

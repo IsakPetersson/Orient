@@ -695,6 +695,12 @@ export default {
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, 1rem); }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .profile-header {
+    margin-top: 2.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .profile-container {
     padding: 1.5rem 1rem 3rem;
@@ -704,7 +710,6 @@ export default {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
-    margin-top: 2.5rem;
   }
 
   .profile-content {
