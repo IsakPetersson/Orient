@@ -308,31 +308,31 @@
         <div class="help-modal-body">
           <p>{{ $t('settings.certGuideIntro') }}</p>
           
-          <div style="background-color: #f0f9ff; border-left: 4px solid #0284c7; padding: 1rem; margin-bottom: 2rem;">
-            <h3 style="margin-top: 0; color: #0284c7;">{{ $t('settings.option1Title') }}</h3>
+          <div class="help-callout">
+            <h3 class="help-callout-title">{{ $t('settings.option1Title') }}</h3>
             <p>{{ $t('settings.option1Text') }}</p>
-            <textarea readonly style="width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: none; font-size: 0.9em;">{{ $t('settings.helpRequestText') }}</textarea>
+            <textarea readonly class="help-textarea">{{ $t('settings.helpRequestText') }}</textarea>
           </div>
 
-          <h3 style="color: #666;">{{ $t('settings.option2Title') }}</h3>
+          <h3 class="help-section-title">{{ $t('settings.option2Title') }}</h3>
           <p>{{ $t('settings.option2Text') }}</p>
 
-          <ol style="padding-left: 1.5rem;">
+          <ol class="help-numbered-list">
             <li v-html="$t('settings.certStep1')"></li>
             <li v-html="$t('settings.certStep2')"></li>
             <li v-html="$t('settings.certStep3')"></li>
             <li v-html="$t('settings.certStep4')"></li>
           </ol>
 
-          <details style="margin-top: 2rem; cursor: pointer;">
-            <summary style="color: #666; font-weight: 500;">{{ $t('settings.technicalInstructions') }}</summary>
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+          <details class="help-details">
+            <summary class="help-details-summary">{{ $t('settings.technicalInstructions') }}</summary>
+            <div class="help-details-inner">
               <p>{{ $t('settings.techStep1') }}</p>
-              <code style="display:block; background:#f5f5f5; padding:10px; border-radius:4px; font-family:monospace; margin-bottom:1rem; word-break:break-all; font-size: 0.85em;">
+              <code class="help-code-block">
                 openssl req -new -newkey rsa:2048 -nodes -keyout swish.key -out swish.csr
               </code>
               <p>{{ $t('settings.techStep2') }}</p>
-              <code style="display:block; background:#f5f5f5; padding:10px; border-radius:4px; font-family:monospace; margin-bottom:1rem; word-break:break-all; font-size: 0.85em;">
+              <code class="help-code-block">
                 openssl pkcs12 -export -out swish_certificate.p12 -inkey swish.key -in swish_signed.pem
               </code>
             </div>
@@ -395,17 +395,16 @@
         </div>
         <div class="alert-body-centered">
           <p><strong>{{ $t('settings.deleteWarning', { orgName: organizationName }) }}</strong></p>
-          <p style="color: #6b7280; font-size: 0.95rem;">{{ $t('settings.deleteConfirm') }}</p>
-          <div style="text-align: left; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 1rem; margin: 1rem 0;">
-            <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #991b1b; margin-bottom: 0.5rem;">
+          <p class="delete-confirm-hint">{{ $t('settings.deleteConfirm') }}</p>
+          <div class="delete-confirm-box">
+            <label class="delete-confirm-label">
               {{ $t('settings.alerts.deleteDoubleConfirm', { name: organizationName }) }}
             </label>
             <input
               v-model="deleteConfirmName"
               type="text"
-              class="setting-input"
+              class="setting-input delete-confirm-input"
               :placeholder="organizationName"
-              style="border-color: #fca5a5;"
               :disabled="deleting"
             />
           </div>
@@ -839,7 +838,7 @@ export default {
   align-items: center;
   justify-content: center;
   height: 100vh;
-  color: var(--text-dark);
+  color: var(--text-secondary);
 }
 
 .loading-spinner {
@@ -879,23 +878,23 @@ export default {
 }
 
 .back-btn:hover {
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .settings-header h1 {
   font-size: 2rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 1rem;
 }
 
 .org-selector {
   padding: 0.5rem 1rem;
-  border: 2px solid var(--background);
+  border: 2px solid var(--border);
   border-radius: 6px;
   font-size: 0.95rem;
   font-family: inherit;
-  color: var(--text-dark);
-  background-color: white;
+  color: var(--text);
+  background-color: var(--input-bg);
   cursor: pointer;
   transition: border-color 0.3s ease;
   max-width: 300px;
@@ -908,8 +907,7 @@ export default {
 
 .current-org {
   font-size: 1.125rem;
-  color: var(--text-dark);
-  opacity: 0.8;
+  color: var(--text-secondary);
 }
 
 .settings-content {
@@ -919,7 +917,8 @@ export default {
 }
 
 .settings-section {
-  background: white;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -927,9 +926,9 @@ export default {
 
 .settings-section h2 {
   font-size: 1.5rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 1.5rem;
-  border-bottom: 2px solid var(--background);
+  border-bottom: 2px solid var(--border);
   padding-bottom: 0.75rem;
 }
 
@@ -945,17 +944,19 @@ export default {
   display: block;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 0.5rem;
 }
 
 .setting-input {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid var(--background);
+  border: 2px solid var(--border);
   border-radius: 6px;
   font-size: 1rem;
   font-family: inherit;
+  background: var(--input-bg);
+  color: var(--text);
   transition: border-color 0.3s;
 }
 
@@ -965,21 +966,20 @@ export default {
 }
 
 .setting-input:disabled {
-  background-color: #f5f5f5;
+  background-color: var(--surface-alt);
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 .setting-hint {
   margin-top: 0.5rem;
   font-size: 0.875rem;
-  color: var(--text-dark);
-  opacity: 0.7;
+  color: var(--text-secondary);
   line-height: 1.4;
 }
 
 .info-box {
-  background: #e0f2fe;
+  background: var(--surface-alt);
   border-left: 4px solid var(--primary-light);
   padding: 1.5rem;
   border-radius: 6px;
@@ -988,7 +988,7 @@ export default {
 
 .info-box h3 {
   font-size: 1.125rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 1rem;
 }
 
@@ -999,16 +999,16 @@ export default {
 
 .info-box li {
   margin-bottom: 0.5rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
 .info-box .note {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--border);
   font-size: 0.875rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
 }
 
 .save-btn {
@@ -1039,10 +1039,11 @@ export default {
   font-family: 'Courier New', monospace;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--primary-dark);
-  background: white;
+  color: var(--text);
+  background: var(--input-bg);
   padding: 0.75rem 1rem;
   border-radius: 4px;
+  border: 1px solid var(--border);
 }
 
 .copy-btn {
@@ -1069,13 +1070,13 @@ export default {
 }
 
 .danger-zone {
-  border: 2px solid #fee;
+  border: 2px solid rgba(220, 38, 38, 0.45);
   margin-top: 3rem;
 }
 
 .danger-zone h2 {
-  color: #dc2626;
-  border-bottom-color: #fee;
+  color: #ef4444;
+  border-bottom-color: rgba(220, 38, 38, 0.35);
 }
 
 .btn {
@@ -1129,7 +1130,8 @@ export default {
 }
 
 .modal-content {
-  background: white;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   width: 90%;
   max-width: 500px;
@@ -1156,12 +1158,12 @@ export default {
 
 .auth-modal-body h2 {
   font-size: 1.5rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 1rem;
 }
 
 .auth-modal-body p {
-  color: var(--text-dark);
+  color: var(--text-secondary);
   margin-bottom: 1.5rem;
   line-height: 1.5;
 }
@@ -1227,7 +1229,7 @@ export default {
 }
 
 .file-input:hover:not(:disabled) {
-  background: #f0f9ff;
+  background: var(--surface-alt);
   border-color: var(--primary-medium);
 }
 
@@ -1260,7 +1262,7 @@ export default {
 }
 
 .help-link:hover {
-  color: var(--primary-dark);
+  color: var(--primary-light);
 }
 
 .help-modal-overlay {
@@ -1274,11 +1276,13 @@ export default {
   overflow-y: auto;
   padding: 0;
   border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
 .help-modal-header {
   padding: 1.5rem 2rem 1rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1286,7 +1290,7 @@ export default {
 
 .help-modal-header h2 {
   margin: 0;
-  color: var(--primary-dark);
+  color: var(--text);
   font-size: 1.5rem;
 }
 
@@ -1296,7 +1300,7 @@ export default {
   font-size: 2rem;
   line-height: 1;
   cursor: pointer;
-  color: #666;
+  color: var(--text-secondary);
   padding: 0;
 }
 
@@ -1308,13 +1312,13 @@ export default {
 .help-modal-body h3 {
   font-size: 1.1rem;
   margin: 1.5rem 0 0.5rem;
-  color: #333;
+  color: var(--text);
 }
 
 .help-modal-body p {
   margin-bottom: 1rem;
   line-height: 1.6;
-  color: #444;
+  color: var(--text-secondary);
 }
 
 .help-modal-body ul, .help-modal-body ol {
@@ -1324,14 +1328,77 @@ export default {
 
 .help-modal-body li {
   margin-bottom: 0.5rem;
-  color: #444;
+  color: var(--text-secondary);
 }
 
 .help-modal-footer {
   padding: 1rem 2rem;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border);
   display: flex;
   justify-content: flex-end;
+}
+
+.help-callout {
+  background: var(--surface-alt);
+  border-left: 4px solid var(--primary-light);
+  padding: 1rem;
+  margin-bottom: 2rem;
+  border-radius: 6px;
+}
+
+.help-callout-title {
+  margin-top: 0;
+  color: var(--primary-light);
+}
+
+.help-textarea {
+  width: 100%;
+  height: 100px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  resize: none;
+  font-size: 0.9em;
+  font-family: inherit;
+  background: var(--input-bg);
+  color: var(--text);
+}
+
+.help-section-title {
+  color: var(--text-secondary);
+}
+
+.help-numbered-list {
+  padding-left: 1.5rem;
+}
+
+.help-details {
+  margin-top: 2rem;
+  cursor: pointer;
+}
+
+.help-details-summary {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.help-details-inner {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.help-code-block {
+  display: block;
+  background: var(--surface-alt);
+  color: var(--text);
+  padding: 10px;
+  border-radius: 4px;
+  font-family: monospace;
+  margin-bottom: 1rem;
+  word-break: break-all;
+  font-size: 0.85em;
+  border: 1px solid var(--border);
 }
 
 .file-selected {
@@ -1360,6 +1427,36 @@ export default {
 
 .alert-header-centered {
   padding: 2rem 2rem 1rem;
+}
+
+.alert-header-centered h2 {
+  color: var(--text);
+}
+
+.delete-confirm-hint {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.delete-confirm-box {
+  text-align: left;
+  background: rgba(220, 38, 38, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.delete-confirm-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin-bottom: 0.5rem;
+}
+
+.delete-confirm-input {
+  border-color: rgba(248, 113, 113, 0.5) !important;
 }
 
 .alert-icon-circle {
@@ -1399,7 +1496,7 @@ export default {
 }
 
 .alert-body-centered p {
-  color: #4b5563;
+  color: var(--text-secondary);
   line-height: 1.6;
   font-size: 1rem;
 }
@@ -1422,9 +1519,9 @@ export default {
 }
 
 .cancel-btn {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: var(--surface-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
   padding: 0.6rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;
@@ -1433,6 +1530,6 @@ export default {
 }
 
 .cancel-btn:hover {
-  background: #e5e7eb;
+  background: var(--background);
 }
 </style>

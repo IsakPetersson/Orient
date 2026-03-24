@@ -81,11 +81,12 @@ body {
     padding: 0;
 }
 
-/* Scrollable modals: hide scrollbar; wheel / touch / keyboard scrolling still works */
+/* Scrollable modals & panels: hide scrollbar; wheel / touch / keyboard scrolling still works */
 .modal-overlay,
 .modal-content,
 .organizations-list,
-.members-list {
+.members-list,
+.activity-compact {
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -93,7 +94,8 @@ body {
 .modal-overlay::-webkit-scrollbar,
 .modal-content::-webkit-scrollbar,
 .organizations-list::-webkit-scrollbar,
-.members-list::-webkit-scrollbar {
+.members-list::-webkit-scrollbar,
+.activity-compact::-webkit-scrollbar {
     display: none;
 }
 
