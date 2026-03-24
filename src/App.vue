@@ -350,11 +350,10 @@ export default {
     async resendVerificationEmail() {
       this.resendLoading = true
       try {
-        // Re-trigger verification by calling register with existing user is not possible,
-        // so we use a dedicated resend endpoint
         const res = await fetch('/api/auth?action=resend-verify', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
         })
         if (res.ok) {
           this.resendSent = true

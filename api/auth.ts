@@ -130,9 +130,23 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
             data: { usedAt: new Date(), usedByEmail: normalizedEmail }
         })
 
+        // Confirm the token was actually persisted (defensive check)
+        const stored = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { emailVerifyToken: true }
+        })
+        const tokenToSend = stored?.emailVerifyToken ?? emailVerifyToken
+        if (!stored?.emailVerifyToken) {
+            // Token wasn't stored — write it now
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { emailVerifyToken }
+            })
+        }
+
         // Send verification email
         try {
-            await sendVerificationEmail(normalizedEmail, normalizedName, emailVerifyToken)
+            await sendVerificationEmail(normalizedEmail, normalizedName, tokenToSend)
         } catch (err) {
             console.error('Failed to send verification email:', err)
         }
@@ -237,7 +251,8 @@ async function handleVerifyEmail(req: VercelRequest, res: VercelResponse) {
     const { token } = req.body ?? {}
     if (!token) return res.status(400).json({ error: 'Missing token' })
 
-    const user = await prisma.user.findUnique({ where: { emailVerifyToken: String(token) } })
+    const tokenStr = String(token).trim()
+    const user = await prisma.user.findFirst({ where: { emailVerifyToken: tokenStr } })
     if (!user) return res.status(400).json({ error: 'Invalid or expired verification link' })
     if (user.emailVerified) return res.status(200).json({ ok: true, alreadyVerified: true })
 
@@ -261,16 +276,15 @@ async function handleResendVerify(req: VercelRequest, res: VercelResponse) {
     if (!user) return res.status(404).json({ error: 'User not found' })
     if (user.emailVerified) return res.status(200).json({ ok: true, alreadyVerified: true })
 
-    // Generate a fresh token (or reuse existing one)
-    const token = user.emailVerifyToken ?? randomBytes(32).toString('hex')
-    if (!user.emailVerifyToken) {
-        await prisma.user.update({ where: { id: userId }, data: { emailVerifyToken: token } })
-    }
+    // Always generate a fresh token so old or missing tokens don't block verification
+    const token = randomBytes(32).toString('hex')
+    await prisma.user.update({ where: { id: userId }, data: { emailVerifyToken: token } })
 
     try {
         await sendVerificationEmail(user.email, user.name, token)
     } catch (err) {
         console.error('Failed to resend verification email:', err)
+        return res.status(500).json({ error: 'Failed to send email. Please try again.' })
     }
 
     return res.status(200).json({ ok: true })
