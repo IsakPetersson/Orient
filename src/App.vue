@@ -561,6 +561,13 @@ export default {
 #app {
   display: flex;
   min-height: 100vh;
+  /* Faux-column: paints the sidebar background colour for the full page height
+     so the left strip never shows the body background on long scrollable pages. */
+  background-image: linear-gradient(
+    to right,
+    var(--primary-dark) clamp(200px, 15vw, 240px),
+    transparent clamp(200px, 15vw, 240px)
+  );
 }
 
 .sidebar {
@@ -822,6 +829,10 @@ export default {
 }
 
 @media (max-width: 1024px) {
+  #app {
+    background-image: none;
+  }
+
   .mobile-menu-btn {
     display: flex;
     align-items: center;
