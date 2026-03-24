@@ -1,6 +1,11 @@
 <template>
   <div id="app">
-    <aside class="sidebar">
+    <button class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
+      <svg v-if="!mobileMenuOpen" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <svg v-else xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div v-if="mobileMenuOpen" class="sidebar-backdrop" @click="mobileMenuOpen = false"></div>
+    <aside class="sidebar" :class="{ 'sidebar-open': mobileMenuOpen }">
       <div class="sidebar-header">
         <div>
           <span class="logo-text">Orient</span>
@@ -320,7 +325,8 @@ export default {
       deleteLoading: false,
       verifyBannerDismissed: false,
       resendLoading: false,
-      resendSent: false
+      resendSent: false,
+      mobileMenuOpen: false
     }
   },
   async mounted() {
@@ -333,6 +339,7 @@ export default {
   watch: {
     '$route'() {
       this.checkAuth()
+      this.mobileMenuOpen = false
     }
   },
   computed: {
@@ -805,6 +812,15 @@ export default {
   transition: margin-left 0.3s ease;
 }
 
+/* Hamburger button — hidden on desktop */
+.mobile-menu-btn {
+  display: none;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
 @media (max-width: 1024px) {
   .sidebar {
     width: clamp(180px, 20vw, 220px);
@@ -816,66 +832,44 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 1100;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: var(--primary-dark);
+    color: var(--text-light);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 999;
+  }
+
   .sidebar {
-    width: clamp(160px, 25vw, 200px);
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
   }
 
   .main-content {
-    margin-left: clamp(160px, 25vw, 200px);
-  }
-
-  .logo-text {
-    font-size: clamp(0.9rem, 2vh, 1.1rem);
-  }
-
-  .nav-text {
-    font-size: clamp(0.8rem, 1.3vh, 0.9rem);
-  }
-
-  .nav-icon {
-    font-size: clamp(0.9rem, 1.5vh, 1.1rem);
-    width: clamp(18px, 4vw, 22px);
-  }
-
-  .sidebar-header {
-    padding: clamp(0.75rem, 1.5vh, 1rem) clamp(0.5rem, 1vw, 0.75rem);
-  }
-
-  .nav-links a {
-    padding: clamp(0.5rem, 1.2vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
-  }
-}
-
-@media (max-width: 480px) {
-  .sidebar {
-    width: clamp(140px, 30vw, 180px);
-  }
-
-  .main-content {
-    margin-left: clamp(140px, 30vw, 180px);
-  }
-
-  .logo-text {
-    font-size: clamp(0.8rem, 1.8vh, 1rem);
-    letter-spacing: clamp(0.01em, 0.2vh, 0.03em);
-  }
-
-  .nav-text {
-    font-size: clamp(0.75rem, 1.2vh, 0.85rem);
-  }
-
-  .nav-icon {
-    font-size: clamp(0.8rem, 1.3vh, 1rem);
-    width: clamp(16px, 5vw, 20px);
-  }
-
-  .sidebar-header {
-    padding: clamp(0.5rem, 1.2vh, 0.75rem) clamp(0.5rem, 1vw, 0.75rem);
-  }
-
-  .nav-links a {
-    padding: clamp(0.5rem, 1vh, 0.65rem) clamp(0.5rem, 1.2vw, 0.75rem);
-    gap: clamp(0.4rem, 1.2vw, 0.6rem);
+    margin-left: 0;
   }
 }
 
@@ -1270,15 +1264,15 @@ export default {
   }
   
   .modal-header {
-    padding: 1rem 1.5rem;
+    padding: 1rem 1.25rem;
   }
   
   .modal-header h2 {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
   }
   
   .modal-body {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
   
   .organizations-actions {
@@ -1303,6 +1297,14 @@ export default {
   
   .invite-code-display code {
     font-size: 1rem;
+  }
+
+  .verify-gate-card {
+    padding: 32px 24px;
+  }
+
+  .verify-gate-card h2 {
+    font-size: 18px;
   }
 }
 .language-switcher-sidebar {

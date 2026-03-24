@@ -776,26 +776,51 @@ export default {
   }
 
   .login-hero {
-    min-height: 50vh;
+    min-height: 30vh;
   }
 
   .login-hero h1 {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .login-section {
-    min-height: 50vh;
+    min-height: auto;
+    padding: 1.5rem 1rem;
   }
 
   .login-form-wrapper {
-    padding: 2rem 1.5rem;
-    margin: 0 1rem;
+    padding: 1.75rem 1.25rem;
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .login-title {
+    font-size: 1.75rem;
   }
 
   .form-options {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-hero {
+    min-height: 25vh;
+    padding: 1.5rem 1rem;
+  }
+
+  .login-hero h1 {
+    font-size: 1.5rem;
+  }
+
+  .login-title {
+    font-size: 1.5rem;
+  }
+
+  .login-form-wrapper {
+    padding: 1.25rem 1rem;
   }
 }
 

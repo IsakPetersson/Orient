@@ -1170,15 +1170,27 @@ export default {
 
 @media (max-width: 768px) {
   .settings-page {
-    padding: 10px;
+    padding: 0.75rem;
+  }
+
+  .settings-header {
+    margin-top: 2.5rem;
   }
 
   .settings-section {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 
   .settings-header h1 {
     font-size: 1.5rem;
+  }
+
+  .settings-section h2 {
+    font-size: 1.2rem;
+  }
+
+  .setting-item label {
+    font-size: 0.9rem;
   }
 
   .invite-code-display {
@@ -1187,6 +1199,21 @@ export default {
 
   .copy-btn {
     width: 100%;
+  }
+
+  .btn {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-section {
+    padding: 1rem;
+  }
+
+  .org-selector {
+    max-width: 100%;
   }
 }
 

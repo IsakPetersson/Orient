@@ -3379,8 +3379,38 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .dashboard-page {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+    padding: 0.75rem;
+  }
+
+  .dashboard-compact {
+    height: auto;
+    overflow: visible;
+  }
+
   .container-full {
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.5rem;
+    height: auto;
+  }
+
+  .header-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-top: 2.5rem;
+  }
+
+  .welcome-text {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .org-name-container {
+    margin-left: 0;
   }
 
   .main-grid {
@@ -3397,6 +3427,12 @@ export default {
   .bottom-right-2 {
     grid-column: 1;
     grid-row: auto;
+    overflow: visible;
+    min-height: auto;
+  }
+
+  .panel {
+    max-height: none !important;
   }
 
   .center-split {
@@ -3434,11 +3470,25 @@ export default {
   .activity-amount {
     font-size: 1rem;
   }
+
+  .cal-weekdays,
+  .cal-grid {
+    font-size: 0.75rem;
+  }
+
+  .cal-day {
+    min-height: 32px;
+    padding: 2px;
+  }
+
+  .cal-day-num {
+    font-size: 0.7rem;
+  }
 }
 
 @media (max-width: 480px) {
   .quick-actions-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .header-bar {
@@ -3462,6 +3512,11 @@ export default {
 
   .action-text {
     font-size: 0.75rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
   }
 }
 
@@ -4934,6 +4989,49 @@ export default {
 
 .event-detail-delete-btn:hover {
   background: #fecaca;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+    border-radius: 10px;
+  }
+
+  .modal-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .upload-area {
+    margin: 1rem;
+    padding: 2rem 1rem;
+  }
+
+  .modal-body,
+  .modal-footer {
+    padding: 1rem 1.25rem;
+  }
+
+  .invoice-modal-content {
+    max-width: 95%;
+  }
+
+  .members-modal {
+    max-width: 95%;
+  }
+
+  .day-modal-content {
+    max-width: 95%;
+  }
+
+  .event-modal-content,
+  .event-detail-modal {
+    max-width: 95%;
+  }
 }
 </style>
 

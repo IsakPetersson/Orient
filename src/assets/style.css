@@ -118,14 +118,14 @@ body {
 }
 
 .hero h1 {
-    font-size: 4rem;
+    font-size: clamp(1.75rem, 5vw, 4rem);
     color: var(--text-light);
     margin-bottom: 1rem;
     font-weight: 700;
 }
 
 .hero-subtitle {
-    font-size: 1.5rem;
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
     color: rgba(255, 255, 255, 0.92);
     margin-bottom: 2rem;
 }
@@ -179,7 +179,7 @@ body {
 
 /* Section Title */
 .section-title {
-    font-size: 2.5rem;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
     text-align: center;
     margin-bottom: 3rem;
     color: var(--text);
@@ -241,7 +241,7 @@ body {
 }
 
 .about-text h2 {
-    font-size: 2.5rem;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
     margin-bottom: 1.5rem;
     color: var(--text);
 }
@@ -390,7 +390,7 @@ footer p {
 }
 
 .about-content-page h2 {
-    font-size: 2.5rem;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
     color: var(--text);
     margin-bottom: 1.5rem;
 }
@@ -446,7 +446,7 @@ footer p {
 }
 
 .cta-section h2 {
-    font-size: 2.5rem;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
     color: var(--text-light);
     margin-bottom: 1rem;
 }
@@ -471,7 +471,7 @@ footer p {
 }
 
 .contact-info h2 {
-    font-size: 2.5rem;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
     color: var(--text);
     margin-bottom: 1rem;
 }
@@ -604,13 +604,61 @@ footer p {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .hero h1 {
-        font-size: 2.5rem;
+        font-size: 3rem;
     }
 
     .hero-subtitle {
-        font-size: 1.2rem;
+        font-size: 1.25rem;
+    }
+
+    .section-title {
+        font-size: 2.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .about-text h2 {
+        font-size: 2rem;
+    }
+
+    .features,
+    .about,
+    .faq-section,
+    .values-section,
+    .about-section,
+    .story-section {
+        padding: 3.5rem 0;
+    }
+
+    .container {
+        padding: 0 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero {
+        min-height: 50vh;
+        padding: 3rem 1rem;
+    }
+
+    .hero h1 {
+        font-size: 2.25rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.05rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .hero-buttons .btn {
+        width: 100%;
+        max-width: 280px;
     }
 
     .nav-links {
@@ -619,11 +667,38 @@ footer p {
     }
 
     .section-title {
-        font-size: 2rem;
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .features,
+    .about,
+    .faq-section,
+    .values-section,
+    .about-section,
+    .story-section,
+    .contact {
+        padding: 2.5rem 0;
+    }
+
+    .container {
+        padding: 0 1rem;
     }
 
     .feature-card {
-        padding: 2rem 1.5rem;
+        padding: 1.75rem 1.25rem;
+    }
+
+    .feature-card h3 {
+        font-size: 1.25rem;
+    }
+
+    .about-text h2 {
+        font-size: 1.75rem;
+    }
+
+    .about-text p {
+        font-size: 1rem;
     }
 
     .contact-grid {
@@ -633,5 +708,98 @@ footer p {
 
     .service-features {
         grid-template-columns: 1fr;
+    }
+
+    .page-hero {
+        min-height: 35vh;
+        padding: 2rem 1rem;
+    }
+
+    .page-hero h1 {
+        font-size: clamp(1.75rem, 5vw, 2.5rem);
+    }
+
+    .faq-item,
+    .value-card {
+        padding: 1.5rem;
+    }
+
+    .contact-method {
+        padding: 1.5rem;
+    }
+
+    .contact-form-wrapper {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero {
+        min-height: 40vh;
+        padding: 2rem 0.75rem;
+    }
+
+    .hero h1 {
+        font-size: 1.75rem;
+    }
+
+    .hero-subtitle {
+        font-size: 0.95rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .faq-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .about-content-page h2 {
+        font-size: 1.5rem;
+    }
+
+    .about-content-page p {
+        font-size: 0.95rem;
+    }
+
+    .cta-section h2 {
+        font-size: 1.5rem;
+    }
+
+    .cta-section p {
+        font-size: 1rem;
+    }
+
+    .contact-info h2 {
+        font-size: 1.5rem;
+    }
+
+    .value-card h3 {
+        font-size: 1.2rem;
+    }
+
+    .value-card {
+        padding: 1.25rem;
+    }
+
+    .contact-form-section,
+    .features,
+    .about,
+    .faq-section,
+    .values-section,
+    .about-section,
+    .story-section,
+    .cta-section {
+        padding: 2rem 0;
     }
 }

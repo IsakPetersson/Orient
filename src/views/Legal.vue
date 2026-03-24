@@ -515,14 +515,53 @@ export default {
   color: var(--text);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .legal-container {
     flex-direction: column;
+    min-height: auto;
   }
   
   .legal-sidebar {
     width: 100%;
     padding: 1rem;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .legal-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .legal-nav li {
+    padding: 0.6rem 1rem;
+    margin-bottom: 0;
+    font-size: 0.9rem;
+  }
+
+  .legal-content {
+    padding: 1.5rem;
+  }
+
+  .legal-section h1 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .legal-page {
+    padding: 0.75rem;
+  }
+
+  .legal-content {
+    padding: 1rem;
+  }
+
+  .legal-nav li {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
   }
 }
 </style>
