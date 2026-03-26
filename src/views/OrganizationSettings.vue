@@ -248,7 +248,7 @@
               </button>
               <button
                 type="button"
-                class="btn btn-secondary sie-action-btn"
+                class="btn btn-primary sie-action-btn"
                 @click="openSieImportModal"
               >
                 {{ $t('settings.sieImportLabel') }}
