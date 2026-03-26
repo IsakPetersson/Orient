@@ -6,7 +6,9 @@
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
-        "postinstall": "prisma generate"
+        "postinstall": "prisma generate",
+        "prisma:studio": "prisma studio",
+        "prisma:studio:dev": "node scripts/prisma-studio-dev.mjs"
     },
     "dependencies": {
         "@prisma/adapter-pg": "^7.4.0",
