@@ -113,7 +113,7 @@
                 <div class="calendar-nav">
                   <button class="cal-nav-btn" @click="calendarPrevMonth">&#8249;</button>
                   <span class="cal-month-label">
-                    {{ $t('calendar.months')[calendarMonth] }} {{ calendarYear }}
+                    {{ calendarMonthName }} {{ calendarYear }}
                   </span>
                   <button class="cal-nav-btn" @click="calendarNextMonth">&#8250;</button>
                 </div>
@@ -1232,6 +1232,10 @@ export default {
       return this.$i18n.locale === 'sv'
         ? ['M', 'T', 'O', 'T', 'F', 'L', 'S']
         : ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+    },
+    calendarMonthName() {
+      const months = this.$tm('calendar.months')
+      return Array.isArray(months) ? months[this.calendarMonth] ?? '' : ''
     },
     calendarDays() {
       const year = this.calendarYear
