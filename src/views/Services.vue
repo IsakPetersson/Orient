@@ -59,6 +59,10 @@
                   <img src="../assets/images/arrow-icon.png" alt="Download" class="action-icon-img" />
                   <span class="action-text">{{ downloadingSie ? $t('dashboard.downloadingSie') : $t('dashboard.downloadSie') }}</span>
                 </button>
+                <button class="quick-action-card" @click="handleAction('import-sie')">
+                  <img src="../assets/images/arrow-icon.png" alt="Import" class="action-icon-img arrow-up" />
+                  <span class="action-text">{{ $t('dashboard.importSie') }}</span>
+                </button>
                 <button class="quick-action-card" @click="handleAction('swish-payment')">
                   <span class="action-icon">$</span>
                   <span class="action-text">{{ $t('dashboard.swishPay') }}</span>
@@ -974,6 +978,98 @@
       </div>
     </div>
 
+    <!-- SIE4 Import Modal -->
+    <div v-if="showSieImportModal" class="modal-overlay" @click.self="closeSieImportModal">
+      <div class="modal-content sie-import-modal" @click.stop>
+        <div class="modal-header">
+          <h2>{{ $t('dashboard.sieImport.title') }}</h2>
+          <button class="close-btn" @click="closeSieImportModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <!-- File upload area -->
+          <div v-if="!sieImportParsed" class="sie-upload-section">
+            <div
+              class="upload-area"
+              :class="{ 'drag-active': sieImportDragging }"
+              @dragover.prevent="sieImportDragging = true"
+              @dragleave.prevent="sieImportDragging = false"
+              @drop.prevent="handleSieFileDrop"
+              @click="$refs.sieFileInput.click()"
+            >
+              <span class="upload-icon">📂</span>
+              <p v-if="sieImportParsing">{{ $t('dashboard.sieImport.parsing') }}</p>
+              <p v-else>{{ $t('dashboard.sieImport.dropHint') }}</p>
+            </div>
+            <input
+              ref="sieFileInput"
+              type="file"
+              accept=".se,.si,.sie"
+              style="display: none"
+              @change="handleSieFileSelect"
+            />
+          </div>
+
+          <!-- Preview -->
+          <div v-if="sieImportParsed" class="sie-preview">
+            <div class="sie-summary-grid">
+              <div class="sie-summary-item">
+                <span class="sie-summary-label">{{ $t('dashboard.sieImport.vouchers') }}</span>
+                <span class="sie-summary-value">{{ sieImportParsed.voucherCount }}</span>
+              </div>
+              <div class="sie-summary-item">
+                <span class="sie-summary-label">{{ $t('dashboard.sieImport.transactions') }}</span>
+                <span class="sie-summary-value">{{ sieImportParsed.transactions.length }}</span>
+              </div>
+              <div class="sie-summary-item">
+                <span class="sie-summary-label">{{ $t('dashboard.sieImport.totalIncome') }}</span>
+                <span class="sie-summary-value income">+{{ sieImportParsed.totalIncome.toLocaleString() }} kr</span>
+              </div>
+              <div class="sie-summary-item">
+                <span class="sie-summary-label">{{ $t('dashboard.sieImport.totalExpenses') }}</span>
+                <span class="sie-summary-value expense">-{{ sieImportParsed.totalExpenses.toLocaleString() }} kr</span>
+              </div>
+            </div>
+
+            <h4>{{ $t('dashboard.sieImport.details') }}</h4>
+            <div class="sie-preview-table-wrapper">
+              <table class="sie-preview-table">
+                <thead>
+                  <tr>
+                    <th>{{ $t('dashboard.sieImport.date') }}</th>
+                    <th>{{ $t('dashboard.sieImport.description') }}</th>
+                    <th>{{ $t('dashboard.sieImport.category') }}</th>
+                    <th>{{ $t('dashboard.sieImport.amount') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(t, i) in sieImportParsed.transactions" :key="i">
+                    <td>{{ t.date ? new Date(t.date).toLocaleDateString($i18n.locale === 'sv' ? 'sv-SE' : 'en-GB') : '—' }}</td>
+                    <td>{{ t.description || '—' }}</td>
+                    <td>{{ t.category || $t('dashboard.sieImport.noCategory') }}</td>
+                    <td :class="t.amount >= 0 ? 'income' : 'expense'">
+                      {{ t.amount >= 0 ? '+' : '' }}{{ t.amount.toLocaleString() }} kr
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <button class="sie-replace-btn" @click="resetSieImport">{{ $t('dashboard.sieImport.replaceFile') }}</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-btn" @click="closeSieImportModal">{{ $t('dashboard.sieImport.cancel') }}</button>
+          <button
+            class="submit-btn"
+            :disabled="!sieImportParsed || sieImporting"
+            @click="submitSieImport"
+          >
+            {{ sieImporting ? $t('dashboard.sieImport.importing') : $t('dashboard.sieImport.import') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- No Organization Modal -->
     <div v-if="showNoOrgModal" class="modal-overlay auth-modal-overlay">
       <div class="modal-content auth-modal-content">
@@ -1206,7 +1302,14 @@ export default {
       },
       selectedEvent: null,
       showEventDetailModal: false,
-      showDayModal: false
+      showDayModal: false,
+      // SIE Import
+      showSieImportModal: false,
+      sieImportFile: null,
+      sieImportParsing: false,
+      sieImportParsed: null,
+      sieImporting: false,
+      sieImportDragging: false
     }
   },
   async mounted() {
@@ -1407,6 +1510,183 @@ export default {
         this.downloadingSie = false
       }
     },
+
+    // ── SIE4 Import ──────────────────────────────────────
+    closeSieImportModal() {
+      this.showSieImportModal = false
+      this.resetSieImport()
+    },
+    resetSieImport() {
+      this.sieImportFile = null
+      this.sieImportParsed = null
+      this.sieImportParsing = false
+      this.sieImporting = false
+      this.sieImportDragging = false
+      if (this.$refs.sieFileInput) this.$refs.sieFileInput.value = ''
+    },
+    handleSieFileDrop(e) {
+      this.sieImportDragging = false
+      const file = e.dataTransfer?.files?.[0]
+      if (file) this.parseSieFile(file)
+    },
+    handleSieFileSelect(e) {
+      const file = e.target.files?.[0]
+      if (file) this.parseSieFile(file)
+    },
+    async parseSieFile(file) {
+      this.sieImportParsing = true
+      this.sieImportFile = file
+      try {
+        const raw = await file.arrayBuffer()
+        const bytes = new Uint8Array(raw)
+        const text = this.decodeSieBytes(bytes)
+        const parsed = this.parseSie4Text(text)
+
+        if (!parsed.transactions.length) {
+          this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.sieImport.noTransactions'), 'error')
+          this.sieImportParsing = false
+          return
+        }
+
+        this.sieImportParsed = parsed
+      } catch (err) {
+        console.error('SIE parse error:', err)
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.sieImport.parseError'), 'error')
+      } finally {
+        this.sieImportParsing = false
+      }
+    },
+    decodeSieBytes(bytes) {
+      const cp437Swedish = { 0x8F: 'Å', 0x8E: 'Ä', 0x99: 'Ö', 0x86: 'å', 0x84: 'ä', 0x94: 'ö' }
+      let out = ''
+      for (let i = 0; i < bytes.length; i++) {
+        const b = bytes[i]
+        out += cp437Swedish[b] || String.fromCharCode(b)
+      }
+      return out
+    },
+    parseSie4Text(text) {
+      const reverseAccountMap = {
+        3010: 'Medlemsavgift',
+        3050: 'Tävlingsavgift',
+        3040: 'Träningsavgift',
+        3900: 'Sponsring',
+        5010: 'Lokalhyra',
+        4010: 'Utrustning',
+        6990: 'Övrigt'
+      }
+
+      const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
+      const transactions = []
+      let voucherCount = 0
+
+      let currentVer = null
+      let inBlock = false
+
+      for (const line of lines) {
+        const trimmed = line.trim()
+
+        if (trimmed.startsWith('#VER')) {
+          const m = trimmed.match(/#VER\s+"?([^"\s]+)"?\s+(\d+)\s+(\d{8})\s+("([^"]*)")?/)
+          if (m) {
+            currentVer = {
+              series: m[1],
+              number: parseInt(m[2]),
+              date: m[3],
+              description: m[5] || ''
+            }
+            voucherCount++
+          }
+          continue
+        }
+
+        if (trimmed === '{') {
+          inBlock = true
+          continue
+        }
+
+        if (trimmed === '}') {
+          if (inBlock && currentVer && currentVer._transLines) {
+            const bankLine = currentVer._transLines.find(t => t.account === 1930)
+            const contraLine = currentVer._transLines.find(t => t.account !== 1930)
+
+            if (bankLine) {
+              transactions.push({
+                amount: bankLine.amount,
+                description: currentVer.description || null,
+                category: contraLine ? (reverseAccountMap[contraLine.account] || null) : null,
+                date: this.sieDate(currentVer.date),
+                voucherSeries: currentVer.series
+              })
+            }
+          }
+          inBlock = false
+          currentVer = null
+          continue
+        }
+
+        if (inBlock && trimmed.startsWith('#TRANS')) {
+          const tm = trimmed.match(/#TRANS\s+(\d+)\s+\{[^}]*\}\s+(-?[\d.]+)/)
+          if (tm && currentVer) {
+            if (!currentVer._transLines) currentVer._transLines = []
+            currentVer._transLines.push({
+              account: parseInt(tm[1]),
+              amount: parseFloat(tm[2])
+            })
+          }
+        }
+      }
+
+      const totalIncome = transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0)
+      const totalExpenses = transactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0)
+
+      return { transactions, voucherCount, totalIncome, totalExpenses }
+    },
+    sieDate(yyyymmdd) {
+      if (!yyyymmdd || yyyymmdd.length !== 8) return null
+      return `${yyyymmdd.slice(0,4)}-${yyyymmdd.slice(4,6)}-${yyyymmdd.slice(6,8)}`
+    },
+    async submitSieImport() {
+      if (!this.sieImportParsed?.transactions?.length) return
+      if (!this.accounts?.length) {
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.sieImport.error'), 'error')
+        return
+      }
+
+      this.sieImporting = true
+      try {
+        const accountId = this.accounts[0].id
+        const response = await fetch('/api/finance?action=import-sie', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-org-id': String(this.organizationId)
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            accountId,
+            transactions: this.sieImportParsed.transactions
+          })
+        })
+
+        if (!response.ok) throw new Error('Import failed')
+
+        const result = await response.json()
+        this.closeSieImportModal()
+        this.showAlert(
+          '✓',
+          this.$t('dashboard.sieImport.success', { count: result.imported }),
+          'success'
+        )
+        await this.loadDashboard()
+      } catch (err) {
+        console.error('SIE import failed:', err)
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.sieImport.error'), 'error')
+      } finally {
+        this.sieImporting = false
+      }
+    },
+
     async downloadPdfFile() {
       try {
         this.downloadingPdf = true
@@ -1933,6 +2213,8 @@ export default {
         this.showIncomeModal = true
       } else if (action === 'record-expense') {
         this.showExpenseModal = true
+      } else if (action === 'import-sie') {
+        this.showSieImportModal = true
       } else if (action === 'download-accounting') {
         await this.downloadSieFile()
       } else if (action === 'download-pdf') {
@@ -5059,6 +5341,161 @@ export default {
   .event-modal-content,
   .event-detail-modal {
     max-width: 95%;
+  }
+}
+
+/* ── SIE Import Modal ──────────────────────────────────── */
+.sie-import-modal {
+  max-width: 680px;
+  width: 95%;
+}
+
+.sie-upload-section .upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: var(--surface);
+}
+
+.sie-upload-section .upload-area:hover,
+.sie-upload-section .upload-area.drag-active {
+  border-color: var(--primary-light);
+  background: var(--background);
+}
+
+.sie-upload-section .upload-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.sie-upload-section .upload-area p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.sie-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.sie-summary-item {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.sie-summary-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sie-summary-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sie-summary-value.income { color: #22c55e; }
+.sie-summary-value.expense { color: #ef4444; }
+
+.sie-preview h4 {
+  margin-bottom: 0.5rem;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.sie-preview-table-wrapper {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sie-preview-table-wrapper::-webkit-scrollbar { display: none; }
+
+.sie-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.sie-preview-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sie-preview-table th {
+  background: var(--primary-dark);
+  color: var(--text-light);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sie-preview-table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.sie-preview-table tbody tr:hover {
+  background: var(--background);
+}
+
+.sie-preview-table .income { color: #22c55e; font-weight: 600; }
+.sie-preview-table .expense { color: #ef4444; font-weight: 600; }
+
+.sie-replace-btn {
+  margin-top: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--primary-light);
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.sie-replace-btn:hover {
+  color: var(--primary-medium);
+}
+
+@media (max-width: 768px) {
+  .sie-import-modal {
+    max-width: 95%;
+  }
+
+  .sie-summary-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .sie-preview-table {
+    font-size: 0.8rem;
+  }
+
+  .sie-preview-table th,
+  .sie-preview-table td {
+    padding: 0.45rem 0.5rem;
   }
 }
 </style>
