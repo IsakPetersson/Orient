@@ -595,9 +595,12 @@
             "noTransactions": "No transactions found in the file.",
             "fileRequired": "Please select a SIE file first.",
             "replaceFile": "Replace file",
-            "targetAccount": "Import into account",
-            "targetAccountHint": "Choose which ledger account the imported vouchers should be posted to.",
-            "noAccounts": "There is no account to import into. Create an account from the dashboard first."
+            "targetOrganization": "Import into organization",
+            "targetOrganizationHint": "Choose which organization the vouchers should be imported into. You must be owner or administrator for that organization.",
+            "targetAccount": "Ledger account",
+            "targetAccountHint": "Choose which ledger (book) account the transactions should be posted to.",
+            "noAccounts": "There is no account to import into for this organization. Create an account from the dashboard first.",
+            "noOrgsForImport": "You do not have permission to import accounting data into any organization (owner or administrator required)."
         },
         "roles": {
             "OWNER": "Owner",

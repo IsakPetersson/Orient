@@ -249,6 +249,8 @@
               <button
                 type="button"
                 class="btn btn-primary sie-action-btn"
+                :disabled="!sieImportOrgs.length"
+                :title="!sieImportOrgs.length ? $t('dashboard.sieImport.noOrgsForImport') : ''"
                 @click="openSieImportModal"
               >
                 {{ $t('settings.sieImportLabel') }}
@@ -442,24 +444,40 @@
           <button class="close-btn" type="button" @click="closeSieImportModal">&times;</button>
         </div>
         <div class="modal-body">
+          <div class="sie-import-org-row">
+            <label for="sie-import-org">{{ $t('dashboard.sieImport.targetOrganization') }}</label>
+            <select
+              id="sie-import-org"
+              v-model.number="sieImportOrganizationId"
+              class="sie-import-select setting-input"
+              :disabled="sieImporting || sieImportAccountsLoading"
+              @change="onSieImportOrganizationChange"
+            >
+              <option v-for="m in sieImportOrgs" :key="m.organization.id" :value="m.organization.id">
+                {{ m.organization.name }}
+              </option>
+            </select>
+            <p class="sie-import-account-hint">{{ $t('dashboard.sieImport.targetOrganizationHint') }}</p>
+          </div>
+
           <div class="sie-import-account-row">
             <label for="sie-import-account">{{ $t('dashboard.sieImport.targetAccount') }}</label>
             <select
               id="sie-import-account"
               v-model.number="sieImportAccountId"
               class="sie-import-select setting-input"
-              :disabled="!accounts.length || sieImporting"
+              :disabled="!sieImportAccounts.length || sieImporting || sieImportAccountsLoading"
             >
-              <option v-for="a in accounts" :key="a.id" :value="a.id">{{ a.name }}</option>
+              <option v-for="a in sieImportAccounts" :key="a.id" :value="a.id">{{ a.name }}</option>
             </select>
             <p class="sie-import-account-hint">{{ $t('dashboard.sieImport.targetAccountHint') }}</p>
-            <p v-if="!accounts.length" class="sie-import-warning">{{ $t('dashboard.sieImport.noAccounts') }}</p>
+            <p v-if="sieImportOrganizationId && !sieImportAccounts.length && !sieImportAccountsLoading" class="sie-import-warning">{{ $t('dashboard.sieImport.noAccounts') }}</p>
           </div>
 
           <div v-if="!sieImportParsed" class="sie-upload-section">
             <div
               class="upload-area sie-upload-area"
-              :class="{ 'drag-active': sieImportDragging, 'sie-upload-disabled': !accounts.length }"
+              :class="{ 'drag-active': sieImportDragging, 'sie-upload-disabled': !canSieImportProceed }"
               @dragover.prevent="onSieUploadDragOver"
               @dragleave.prevent="sieImportDragging = false"
               @drop.prevent="handleSieFileDrop"
@@ -530,7 +548,7 @@
           <button
             type="button"
             class="submit-btn"
-            :disabled="!sieImportParsed || sieImporting || !sieImportAccountId || !accounts.length"
+            :disabled="!sieImportParsed || sieImporting || !canSubmitSieImport"
             @click="submitSieImport"
           >
             {{ sieImporting ? $t('dashboard.sieImport.importing') : $t('dashboard.sieImport.import') }}
@@ -587,17 +605,41 @@ export default {
       deleting: false,
       deleteCountdown: 5,
       deleteTimer: null,
-      accounts: [],
       showSieImportModal: false,
       sieImportFile: null,
       sieImportParsing: false,
       sieImportParsed: null,
       sieImporting: false,
       sieImportDragging: false,
-      sieImportAccountId: null
+      sieImportAccountId: null,
+      sieImportOrganizationId: null,
+      sieImportAccounts: [],
+      sieImportAccountsLoading: false
     }
   },
   computed: {
+    /** Organizations the user may import bookkeeping into (OWNER or ADMIN). */
+    sieImportOrgs() {
+      return (this.userOrganizations || []).filter(
+        (m) => m.role === 'OWNER' || m.role === 'ADMIN'
+      )
+    },
+    canSieImportProceed() {
+      return (
+        !!this.sieImportOrganizationId &&
+        this.sieImportAccounts.length > 0 &&
+        !this.sieImportAccountsLoading
+      )
+    },
+    canSubmitSieImport() {
+      return (
+        !!this.sieImportParsed &&
+        !!this.sieImportOrganizationId &&
+        !!this.sieImportAccountId &&
+        this.sieImportAccounts.length > 0 &&
+        !this.sieImportAccountsLoading
+      )
+    },
     hasPermission() {
       return this.currentUserRole === 'OWNER' || this.currentUserRole === 'ADMIN'
     },
@@ -676,15 +718,6 @@ export default {
           console.error('Failed to get invite code:', e)
         }
 
-        const accRes = await fetch('/api/finance?action=accounts', {
-          method: 'GET',
-          headers: { 'x-org-id': String(this.organizationId) },
-          credentials: 'include'
-        })
-        if (accRes.ok) {
-          this.accounts = await accRes.json()
-        }
-
         // Load Swish configuration status
         await this.loadSwishConfig()
         
@@ -743,7 +776,7 @@ export default {
     },
 
     syncSieImportAccountSelection() {
-      const list = this.accounts || []
+      const list = this.sieImportAccounts || []
       if (!list.length) {
         this.sieImportAccountId = null
         return
@@ -753,17 +786,61 @@ export default {
         this.sieImportAccountId = list[0].id
       }
     },
-    openSieImportModal() {
-      if (!this.hasPermission) {
-        this.showAlert(this.$t('dashboard.alerts.noPermissionTitle'), this.$t('settings.alerts.noPermission'), 'error')
+    async fetchSieImportAccounts(orgId) {
+      if (!orgId) {
+        this.sieImportAccounts = []
+        this.sieImportAccountId = null
         return
       }
-      this.syncSieImportAccountSelection()
+      this.sieImportAccountsLoading = true
+      try {
+        const accRes = await fetch('/api/finance?action=accounts', {
+          method: 'GET',
+          headers: { 'x-org-id': String(orgId) },
+          credentials: 'include'
+        })
+        if (accRes.ok) {
+          this.sieImportAccounts = await accRes.json()
+          this.syncSieImportAccountSelection()
+        } else {
+          this.sieImportAccounts = []
+          this.sieImportAccountId = null
+        }
+      } catch {
+        this.sieImportAccounts = []
+        this.sieImportAccountId = null
+      } finally {
+        this.sieImportAccountsLoading = false
+      }
+    },
+    async onSieImportOrganizationChange() {
+      this.sieImportParsed = null
+      this.sieImportDragging = false
+      if (this.$refs.sieFileInput) this.$refs.sieFileInput.value = ''
+      await this.fetchSieImportAccounts(this.sieImportOrganizationId)
+    },
+    async openSieImportModal() {
+      if (!this.sieImportOrgs.length) {
+        this.showAlert(
+          this.$t('dashboard.alerts.noPermissionTitle'),
+          this.$t('dashboard.sieImport.noOrgsForImport'),
+          'error'
+        )
+        return
+      }
+      const currentOk = this.sieImportOrgs.some((m) => m.organization.id === this.organizationId)
+      this.sieImportOrganizationId = currentOk
+        ? this.organizationId
+        : this.sieImportOrgs[0].organization.id
+      await this.fetchSieImportAccounts(this.sieImportOrganizationId)
       this.showSieImportModal = true
     },
     closeSieImportModal() {
       this.showSieImportModal = false
       this.resetSieImport()
+      this.sieImportAccounts = []
+      this.sieImportOrganizationId = null
+      this.sieImportAccountId = null
     },
     resetSieImport() {
       this.sieImportFile = null
@@ -774,26 +851,26 @@ export default {
       if (this.$refs.sieFileInput) this.$refs.sieFileInput.value = ''
     },
     onSieUploadDragOver() {
-      if (!this.accounts.length) return
+      if (!this.canSieImportProceed) return
       this.sieImportDragging = true
     },
     openSieFilePicker() {
-      if (!this.accounts.length) return
+      if (!this.canSieImportProceed) return
       this.$refs.sieFileInput?.click()
     },
     handleSieFileDrop(e) {
       this.sieImportDragging = false
-      if (!this.accounts.length) return
+      if (!this.canSieImportProceed) return
       const file = e.dataTransfer?.files?.[0]
       if (file) this.parseSieFile(file)
     },
     handleSieFileSelect(e) {
-      if (!this.accounts.length) return
+      if (!this.canSieImportProceed) return
       const file = e.target.files?.[0]
       if (file) this.parseSieFile(file)
     },
     async parseSieFile(file) {
-      if (!this.accounts.length) {
+      if (!this.canSieImportProceed) {
         this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.sieImport.noAccounts'), 'error')
         return
       }
@@ -911,7 +988,7 @@ export default {
     },
     async submitSieImport() {
       if (!this.sieImportParsed?.transactions?.length) return
-      if (!this.accounts?.length || !this.sieImportAccountId) {
+      if (!this.canSubmitSieImport) {
         this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.sieImport.error'), 'error')
         return
       }
@@ -923,7 +1000,7 @@ export default {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-org-id': String(this.organizationId)
+            'x-org-id': String(this.sieImportOrganizationId)
           },
           credentials: 'include',
           body: JSON.stringify({
@@ -941,16 +1018,6 @@ export default {
           this.$t('dashboard.sieImport.success', { count: result.imported }),
           'success'
         )
-
-        const accRes = await fetch('/api/finance?action=accounts', {
-          method: 'GET',
-          headers: { 'x-org-id': String(this.organizationId) },
-          credentials: 'include'
-        })
-        if (accRes.ok) {
-          this.accounts = await accRes.json()
-          this.syncSieImportAccountSelection()
-        }
       } catch (err) {
         console.error('SIE import failed:', err)
         this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.sieImport.error'), 'error')
@@ -1975,10 +2042,12 @@ export default {
   overflow-y: auto;
 }
 
+.sie-import-org-row,
 .sie-import-account-row {
   margin-bottom: 1.1rem;
 }
 
+.sie-import-org-row label,
 .sie-import-account-row label {
   display: block;
   font-weight: 600;

@@ -595,9 +595,12 @@
             "noTransactions": "Inga transaktioner hittades i filen.",
             "fileRequired": "Välj en SIE-fil först.",
             "replaceFile": "Byt fil",
-            "targetAccount": "Importera till konto",
-            "targetAccountHint": "Välj vilket bokföringskonto transaktionerna ska bokföras på.",
-            "noAccounts": "Det finns inget konto att importera till. Skapa ett konto i dashboarden först."
+            "targetOrganization": "Importera till organisation",
+            "targetOrganizationHint": "Välj vilken organisation verifikaten ska importeras till. Du måste vara ägare eller administratör för organisationen.",
+            "targetAccount": "Bokföringskonto",
+            "targetAccountHint": "Välj vilket konto (huvudbok) transaktionerna ska bokföras på.",
+            "noAccounts": "Det finns inget konto att importera till för den här organisationen. Skapa ett konto i dashboarden först.",
+            "noOrgsForImport": "Du har inte behörighet att importera bokföring till någon organisation (krävs ägare eller administratör)."
         },
         "roles": {
             "OWNER": "Ägare",
