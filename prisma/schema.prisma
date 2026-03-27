@@ -18,6 +18,9 @@ model User {
   email              String   @unique
   name               String
   password           String
+  phone              String?
+  avatarUrl          String?
+  theme              String   @default("light")
   emailVerified      Boolean  @default(false)
   emailVerifyToken   String?  @unique
   createdAt          DateTime @default(now())
@@ -48,6 +51,8 @@ model Organization {
   invites       OrganizationInvite[]
   members       Member[]
   swishRequests SwishPaymentRequest[]
+  invoices      Invoice[]
+  events        Event[]
 }
 
 model OrganizationMembership {
@@ -127,6 +132,7 @@ model Member {
 
   organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   swishPaymentRequests SwishPaymentRequest[]
+  invoices             Invoice[]
 
   @@index([organizationId])
 }
@@ -160,6 +166,43 @@ model SwishPaymentRequest {
 
   @@index([organizationId, createdAt])
   @@index([payeePaymentReference])
+}
+
+model Event {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  title          String
+  date           DateTime
+  endDate        DateTime?
+  description    String?
+  type           String   @default("event") // event, competition, training, meeting, other
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, date])
+}
+
+model Invoice {
+  id             Int       @id @default(autoincrement())
+  organizationId Int
+  memberId       Int?
+  invoiceNumber  String
+  recipientName  String
+  recipientEmail String?
+  description    String
+  amount         Float
+  dueDate        DateTime?
+  status         String    @default("DRAFT") // DRAFT, SENT, PAID, CANCELLED
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  member       Member?      @relation(fields: [memberId], references: [id])
+
+  @@unique([organizationId, invoiceNumber])
+  @@index([organizationId])
 }
 
 model RegistrationCode {

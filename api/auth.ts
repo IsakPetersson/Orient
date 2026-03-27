@@ -27,6 +27,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return await handleForgotPassword(req, res)
             case 'reset':
                 return await handleResetPassword(req, res)
+            case 'update-profile':
+                return await handleUpdateProfile(req, res)
+            case 'change-password':
+                return await handleChangePassword(req, res)
             default:
                 return res.status(404).json({ error: 'Not found' })
         }
@@ -126,9 +130,23 @@ async function handleRegister(req: VercelRequest, res: VercelResponse) {
             data: { usedAt: new Date(), usedByEmail: normalizedEmail }
         })
 
+        // Confirm the token was actually persisted (defensive check)
+        const stored = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { emailVerifyToken: true }
+        })
+        const tokenToSend = stored?.emailVerifyToken ?? emailVerifyToken
+        if (!stored?.emailVerifyToken) {
+            // Token wasn't stored — write it now
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { emailVerifyToken }
+            })
+        }
+
         // Send verification email
         try {
-            await sendVerificationEmail(normalizedEmail, normalizedName, emailVerifyToken)
+            await sendVerificationEmail(normalizedEmail, normalizedName, tokenToSend)
         } catch (err) {
             console.error('Failed to send verification email:', err)
         }
@@ -154,10 +172,75 @@ async function handleMe(req: VercelRequest, res: VercelResponse) {
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true, email: true, name: true, emailVerified: true, createdAt: true }
+        select: { id: true, email: true, name: true, phone: true, avatarUrl: true, theme: true, emailVerified: true, createdAt: true }
     })
 
     return res.status(200).json(user)
+}
+
+async function handleUpdateProfile(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const userId = requireAuth(req, res)
+    if (!userId) return
+
+    const { name, phone, avatarUrl, theme } = req.body ?? {}
+
+    if (name !== undefined && String(name).trim().length < 1) {
+        return res.status(400).json({ error: 'Name cannot be empty' })
+    }
+
+    if (avatarUrl !== undefined && avatarUrl !== null && String(avatarUrl).length > 1_100_000) {
+        return res.status(400).json({ error: 'Avatar image is too large. Please use a smaller image.' })
+    }
+
+    const validThemes = ['light', 'dark', 'midnight']
+    if (theme !== undefined && !validThemes.includes(theme)) {
+        return res.status(400).json({ error: 'Invalid theme' })
+    }
+
+    const updated = await prisma.user.update({
+        where: { id: userId },
+        data: {
+            ...(name !== undefined ? { name: String(name).trim() } : {}),
+            ...(phone !== undefined ? { phone: phone ? String(phone).trim() : null } : {}),
+            ...(avatarUrl !== undefined ? { avatarUrl: avatarUrl || null } : {}),
+            ...(theme !== undefined ? { theme } : {})
+        },
+        select: { id: true, email: true, name: true, phone: true, avatarUrl: true, theme: true, emailVerified: true, createdAt: true }
+    })
+
+    return res.status(200).json(updated)
+}
+
+async function handleChangePassword(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const userId = requireAuth(req, res)
+    if (!userId) return
+
+    const { currentPassword, newPassword } = req.body ?? {}
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Missing required fields' })
+    }
+    if (String(newPassword).length < 8) {
+        return res.status(400).json({ error: 'New password must be at least 8 characters' })
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) return res.status(404).json({ error: 'User not found' })
+
+    const ok = await bcrypt.compare(String(currentPassword), user.password)
+    if (!ok) return res.status(401).json({ error: 'Current password is incorrect' })
+
+    const hash = await bcrypt.hash(String(newPassword), 12)
+    await prisma.user.update({ where: { id: userId }, data: { password: hash } })
+
+    return res.status(200).json({ ok: true })
 }
 
 async function handleVerifyEmail(req: VercelRequest, res: VercelResponse) {
@@ -168,7 +251,8 @@ async function handleVerifyEmail(req: VercelRequest, res: VercelResponse) {
     const { token } = req.body ?? {}
     if (!token) return res.status(400).json({ error: 'Missing token' })
 
-    const user = await prisma.user.findUnique({ where: { emailVerifyToken: String(token) } })
+    const tokenStr = String(token).trim()
+    const user = await prisma.user.findFirst({ where: { emailVerifyToken: tokenStr } })
     if (!user) return res.status(400).json({ error: 'Invalid or expired verification link' })
     if (user.emailVerified) return res.status(200).json({ ok: true, alreadyVerified: true })
 
@@ -192,16 +276,15 @@ async function handleResendVerify(req: VercelRequest, res: VercelResponse) {
     if (!user) return res.status(404).json({ error: 'User not found' })
     if (user.emailVerified) return res.status(200).json({ ok: true, alreadyVerified: true })
 
-    // Generate a fresh token (or reuse existing one)
-    const token = user.emailVerifyToken ?? randomBytes(32).toString('hex')
-    if (!user.emailVerifyToken) {
-        await prisma.user.update({ where: { id: userId }, data: { emailVerifyToken: token } })
-    }
+    // Always generate a fresh token so old or missing tokens don't block verification
+    const token = randomBytes(32).toString('hex')
+    await prisma.user.update({ where: { id: userId }, data: { emailVerifyToken: token } })
 
     try {
         await sendVerificationEmail(user.email, user.name, token)
     } catch (err) {
         console.error('Failed to resend verification email:', err)
+        return res.status(500).json({ error: 'Failed to send email. Please try again.' })
     }
 
     return res.status(200).json({ ok: true })

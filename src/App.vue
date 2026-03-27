@@ -1,6 +1,12 @@
 <template>
   <div id="app">
-    <aside class="sidebar">
+    <SpeedInsights />
+    <button class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
+      <svg v-if="!mobileMenuOpen" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <svg v-else xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div v-if="mobileMenuOpen" class="sidebar-backdrop" @click="mobileMenuOpen = false"></div>
+    <aside class="sidebar" :class="{ 'sidebar-open': mobileMenuOpen }">
       <div class="sidebar-header">
         <div>
           <span class="logo-text">Orient</span>
@@ -82,15 +88,16 @@
           <span class="nav-text">{{ $t('nav.organizations') }}</span>
         </a>
         
-        <div class="user-info">
+        <router-link to="/profile" class="user-info user-info-link">
           <div class="user-avatar">
-            <span class="avatar-initial">{{ userInitial }}</span>
+            <img v-if="user.avatarUrl" :src="user.avatarUrl" alt="Avatar" class="avatar-photo" />
+            <span v-else class="avatar-initial">{{ userInitial }}</span>
           </div>
           <div class="user-details">
             <div class="user-name">{{ user.name }}</div>
             <div class="user-email">{{ user.email }}</div>
           </div>
-        </div>
+        </router-link>
       </div>
     </aside>
 
@@ -289,11 +296,13 @@
 </template>
 
 <script>
+import { SpeedInsights } from '@vercel/speed-insights/vue'
 import { getCurrentUser, logout } from './lib/auth'
 import { getUserOrganizations, createOrganization as createOrg, joinOrganization as joinOrg, getOrganizationInvite, deleteOrganization as deleteOrg } from './lib/orgs'
 
 export default {
   name: 'App',
+  components: { SpeedInsights },
   data() {
     return {
       user: null,
@@ -319,15 +328,21 @@ export default {
       deleteLoading: false,
       verifyBannerDismissed: false,
       resendLoading: false,
-      resendSent: false
+      resendSent: false,
+      mobileMenuOpen: false
     }
   },
   async mounted() {
+    const cached = localStorage.getItem('techship-theme')
+    if (cached && cached !== 'light') {
+      document.documentElement.setAttribute('data-theme', cached)
+    }
     await this.checkAuth()
   },
   watch: {
     '$route'() {
       this.checkAuth()
+      this.mobileMenuOpen = false
     }
   },
   computed: {
@@ -345,11 +360,10 @@ export default {
     async resendVerificationEmail() {
       this.resendLoading = true
       try {
-        // Re-trigger verification by calling register with existing user is not possible,
-        // so we use a dedicated resend endpoint
         const res = await fetch('/api/auth?action=resend-verify', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
         })
         if (res.ok) {
           this.resendSent = true
@@ -360,9 +374,17 @@ export default {
         this.resendLoading = false
       }
     },
+    applyTheme(theme) {
+      const t = theme || 'light'
+      localStorage.setItem('techship-theme', t)
+      document.documentElement.setAttribute('data-theme', t === 'light' ? '' : t)
+    },
     async checkAuth() {
       const user = await getCurrentUser()
       this.user = user
+      if (user?.theme) {
+        this.applyTheme(user.theme)
+      }
     },
     async handleLogout() {
       try {
@@ -542,6 +564,13 @@ export default {
 #app {
   display: flex;
   min-height: 100vh;
+  /* Faux-column: paints the sidebar background colour for the full page height
+     so the left strip never shows the body background on long scrollable pages. */
+  background-image: linear-gradient(
+    to right,
+    var(--primary-dark) clamp(200px, 15vw, 240px),
+    transparent clamp(200px, 15vw, 240px)
+  );
 }
 
 .sidebar {
@@ -595,7 +624,7 @@ export default {
 }
 
 .logo-text:hover {
-  color: var(--background);
+  color: rgba(255, 255, 255, 0.85);
   transform: translateX(2px);
 }
 
@@ -690,6 +719,16 @@ export default {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
+.user-info-link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.user-info-link:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
 .user-avatar {
   width: clamp(36px, 6vw, 44px);
   height: clamp(36px, 6vw, 44px);
@@ -705,6 +744,13 @@ export default {
   font-size: clamp(1rem, 2vh, 1.25rem);
   font-weight: 700;
   color: var(--text-light);
+}
+
+.avatar-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .user-details {
@@ -724,8 +770,7 @@ export default {
 
 .user-email {
   font-size: clamp(0.75rem, 1.2vh, 0.85rem);
-  color: var(--background);
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.78);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -740,7 +785,7 @@ export default {
   background: var(--background, #f4f4f5);
 }
 .verify-gate-card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.10);
   padding: 48px 40px;
@@ -759,12 +804,12 @@ export default {
 .verify-gate-card h2 {
   margin: 0;
   font-size: 22px;
-  color: #111827;
+  color: var(--text);
 }
 .verify-gate-card p {
   margin: 0;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -777,77 +822,58 @@ export default {
   transition: margin-left 0.3s ease;
 }
 
+/* Hamburger button — hidden on desktop */
+.mobile-menu-btn {
+  display: none;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
 @media (max-width: 1024px) {
+  #app {
+    background-image: none;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 1100;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border: none;
+    background: var(--primary-dark);
+    color: var(--text-light);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 999;
+  }
+
   .sidebar {
-    width: clamp(180px, 20vw, 220px);
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
   }
 
   .main-content {
-    margin-left: clamp(180px, 20vw, 220px);
-  }
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    width: clamp(160px, 25vw, 200px);
-  }
-
-  .main-content {
-    margin-left: clamp(160px, 25vw, 200px);
-  }
-
-  .logo-text {
-    font-size: clamp(0.9rem, 2vh, 1.1rem);
-  }
-
-  .nav-text {
-    font-size: clamp(0.8rem, 1.3vh, 0.9rem);
-  }
-
-  .nav-icon {
-    font-size: clamp(0.9rem, 1.5vh, 1.1rem);
-    width: clamp(18px, 4vw, 22px);
-  }
-
-  .sidebar-header {
-    padding: clamp(0.75rem, 1.5vh, 1rem) clamp(0.5rem, 1vw, 0.75rem);
-  }
-
-  .nav-links a {
-    padding: clamp(0.5rem, 1.2vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
-  }
-}
-
-@media (max-width: 480px) {
-  .sidebar {
-    width: clamp(140px, 30vw, 180px);
-  }
-
-  .main-content {
-    margin-left: clamp(140px, 30vw, 180px);
-  }
-
-  .logo-text {
-    font-size: clamp(0.8rem, 1.8vh, 1rem);
-    letter-spacing: clamp(0.01em, 0.2vh, 0.03em);
-  }
-
-  .nav-text {
-    font-size: clamp(0.75rem, 1.2vh, 0.85rem);
-  }
-
-  .nav-icon {
-    font-size: clamp(0.8rem, 1.3vh, 1rem);
-    width: clamp(16px, 5vw, 20px);
-  }
-
-  .sidebar-header {
-    padding: clamp(0.5rem, 1.2vh, 0.75rem) clamp(0.5rem, 1vw, 0.75rem);
-  }
-
-  .nav-links a {
-    padding: clamp(0.5rem, 1vh, 0.65rem) clamp(0.5rem, 1.2vw, 0.75rem);
-    gap: clamp(0.4rem, 1.2vw, 0.6rem);
+    margin-left: 0;
   }
 }
 
@@ -858,7 +884,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -867,7 +893,7 @@ export default {
 }
 
 .modal-content {
-  background-color: var(--text-light);
+  background-color: var(--surface);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   width: 100%;
@@ -890,7 +916,7 @@ export default {
 
 .modal-header h2 {
   font-size: 1.75rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0;
 }
 
@@ -898,7 +924,7 @@ export default {
   background: none;
   border: none;
   font-size: 2rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0;
   width: 2rem;
@@ -910,7 +936,7 @@ export default {
 }
 
 .close-btn:hover {
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .modal-body {
@@ -923,7 +949,7 @@ export default {
 
 .organizations-section h3 {
   font-size: 1.25rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 1rem;
 }
 
@@ -941,8 +967,7 @@ export default {
   align-items: center;
   justify-content: center;
   min-height: 150px;
-  color: var(--text-dark);
-  opacity: 0.7;
+  color: var(--text-secondary);
 }
 
 .no-organizations p {
@@ -951,7 +976,7 @@ export default {
 }
 
 .organization-item {
-  background-color: var(--text-light);
+  background-color: var(--surface);
   border-radius: 6px;
   padding: 1rem;
   margin-bottom: 0.75rem;
@@ -964,7 +989,7 @@ export default {
 }
 
 .organization-item.selected {
-  background-color: #e8f4f8;
+  background-color: var(--surface-alt);
   box-shadow: 0 0 0 2px var(--primary-light);
 }
 
@@ -987,12 +1012,12 @@ export default {
 .org-name {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .org-role {
   font-size: 0.875rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   background-color: var(--background);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
@@ -1039,16 +1064,18 @@ export default {
 .form-group label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text);
   margin-bottom: 0.5rem;
 }
 
 .form-group input {
   padding: 0.875rem;
-  border: 2px solid var(--background);
+  border: 2px solid var(--border);
   border-radius: 6px;
   font-size: 1rem;
   font-family: inherit;
+  background: var(--input-bg);
+  color: var(--text);
   transition: border-color 0.3s ease;
 }
 
@@ -1087,7 +1114,7 @@ export default {
 
 .success-message {
   font-size: 1.1rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 1.5rem;
   font-weight: 500;
 }
@@ -1103,7 +1130,7 @@ export default {
   display: block;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   margin-bottom: 0.75rem;
 }
 
@@ -1116,12 +1143,12 @@ export default {
 
 .invite-code-display code {
   flex: 1;
-  background-color: var(--text-light);
+  background-color: var(--surface);
   padding: 0.75rem 1rem;
   border-radius: 6px;
   font-size: 1.1rem;
   font-family: 'Courier New', monospace;
-  color: var(--primary-dark);
+  color: var(--text);
   border: 2px solid var(--primary-light);
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -1154,7 +1181,7 @@ export default {
 
 .invite-code-hint {
   font-size: 0.875rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.8;
   margin: 0;
   line-height: 1.5;
@@ -1177,7 +1204,7 @@ export default {
 
 .warning-text {
   font-size: 0.95rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   margin-bottom: 1.5rem;
   line-height: 1.6;
 }
@@ -1206,17 +1233,18 @@ export default {
 
 .checkbox-label span {
   font-size: 0.95rem;
-  color: var(--text-dark);
+  color: var(--text);
 }
 
 /* Button Styles */
 .btn-secondary {
-  background-color: var(--text-dark);
-  color: var(--text-light);
+  background-color: var(--surface-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
 .btn-secondary:hover {
-  background-color: #555;
+  background-color: var(--border);
 }
 
 .btn-danger {
@@ -1240,15 +1268,15 @@ export default {
   }
   
   .modal-header {
-    padding: 1rem 1.5rem;
+    padding: 1rem 1.25rem;
   }
   
   .modal-header h2 {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
   }
   
   .modal-body {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
   
   .organizations-actions {
@@ -1273,6 +1301,14 @@ export default {
   
   .invite-code-display code {
     font-size: 1rem;
+  }
+
+  .verify-gate-card {
+    padding: 32px 24px;
+  }
+
+  .verify-gate-card h2 {
+    font-size: 18px;
   }
 }
 .language-switcher-sidebar {

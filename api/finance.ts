@@ -30,6 +30,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             case 'sie':
             case 'export-sie':
                 return await handleSieExport(req, res, organizationId)
+            case 'import-sie':
+                return await handleSieImport(req, res, organizationId)
             default:
                 return res.status(404).json({ error: 'Finance action not found' })
         }
@@ -431,4 +433,71 @@ function generateSIE4(org: any, transactions: any[]): string {
     })
 
     return sie
+}
+
+// ── SIE4 Import ──────────────────────────────────────────────────────────
+
+async function handleSieImport(req: VercelRequest, res: VercelResponse, organizationId: number) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    const { transactions, accountId } = req.body ?? {}
+
+    if (!Array.isArray(transactions) || transactions.length === 0) {
+        return res.status(400).json({ error: 'No transactions provided' })
+    }
+
+    if (!accountId || typeof accountId !== 'number') {
+        return res.status(400).json({ error: 'Account ID is required' })
+    }
+
+    const account = await prisma.account.findFirst({
+        where: { id: accountId, organizationId }
+    })
+
+    if (!account) {
+        return res.status(403).json({ error: 'Account not found in this organization' })
+    }
+
+    try {
+        const imported = await prisma.$transaction(async (tx: any) => {
+            const results: any[] = []
+
+            for (const t of transactions) {
+                const series = String(t.voucherSeries || 'I')
+
+                const last = await tx.transaction.findFirst({
+                    where: {
+                        account: { organizationId },
+                        voucherSeries: series
+                    },
+                    orderBy: { voucherNumber: 'desc' }
+                })
+
+                const nextNum = (last?.voucherNumber || 0) + 1
+
+                const created = await tx.transaction.create({
+                    data: {
+                        accountId,
+                        amount: Number(t.amount),
+                        description: t.description || null,
+                        category: t.category || null,
+                        voucherSeries: series,
+                        voucherNumber: nextNum,
+                        ...(t.date ? { createdAt: new Date(t.date) } : {})
+                    }
+                })
+
+                results.push(created)
+            }
+
+            return results
+        })
+
+        return res.status(201).json({ imported: imported.length, transactions: imported })
+    } catch (error) {
+        console.error('SIE import error:', error)
+        return res.status(500).json({ error: 'Failed to import transactions' })
+    }
 }

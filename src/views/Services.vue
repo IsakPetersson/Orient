@@ -47,28 +47,21 @@
                 <h3>{{ $t('dashboard.quickActions') }}</h3>
               </div>
               <div class="quick-actions-grid" style="padding-top: 10px;">
-                <button class="quick-action-card coming-soon-card" @click="handleAction('upload-receipt')">
+                <button class="quick-action-card" @click="handleAction('upload-receipt')">
                   <img src="../assets/images/arrow-icon.png" alt="Upload" class="action-icon-img arrow-up" />
                   <span class="action-text">{{ $t('dashboard.uploadReceipt') }}</span>
-                  <span class="coming-soon-badge">{{ $t('dashboard.comingSoon') }}</span>
                 </button>
-                <button class="quick-action-card coming-soon-card" @click="handleAction('start-accounting')">
-                  <span class="action-icon">▶</span>
-                  <span class="action-text">{{ $t('dashboard.startAccounting') }}</span>
-                  <span class="coming-soon-badge">{{ $t('dashboard.comingSoon') }}</span>
-                </button>
-                <button class="quick-action-card" @click="handleAction('download-accounting')" :disabled="downloadingSie">
-                  <img src="../assets/images/arrow-icon.png" alt="Download" class="action-icon-img" />
-                  <span class="action-text">{{ downloadingSie ? $t('dashboard.downloadingSie') : $t('dashboard.downloadSie') }}</span>
+                <button class="quick-action-card" @click="handleAction('create-invoice')">
+                  <span class="action-icon"><div class="thick-square"></div></span>
+                  <span class="action-text">{{ $t('dashboard.createInvoice') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('swish-payment')">
                   <span class="action-icon">$</span>
                   <span class="action-text">{{ $t('dashboard.swishPay') }}</span>
                 </button>
-                <button class="quick-action-card coming-soon-card" @click="handleAction('create-invoice')">
-                  <span class="action-icon"><div class="thick-square"></div></span>
-                  <span class="action-text">{{ $t('dashboard.createInvoice') }}</span>
-                  <span class="coming-soon-badge">{{ $t('dashboard.comingSoon') }}</span>
+                <button class="quick-action-card" @click="handleAction('download-pdf')" :disabled="downloadingPdf">
+                  <img src="../assets/images/arrow-icon.png" alt="PDF" class="action-icon-img" />
+                  <span class="action-text">{{ downloadingPdf ? $t('dashboard.downloadingPdf') : $t('dashboard.downloadPdf') }}</span>
                 </button>
                 <button class="quick-action-card" @click="handleAction('add-member')">
                   <span class="action-icon">+</span>
@@ -109,19 +102,45 @@
             </div>
           </div>
 
-          <!-- Top Right - Alerts/To Do -->
+          <!-- Right Column - Calendar -->
           <div class="right-column">
-            <div class="panel">
-              <div class="panel-header">
-                <h3>{{ $t('dashboard.todo') }}</h3>
-              </div>
-              <div class="alerts-compact">
-                <div v-for="alert in alerts" :key="alert.id" class="alert-row" :class="alert.type">
-                  <span class="alert-icon">!</span>
-                  <span class="alert-text">{{ alert.message }}</span>
+            <div class="panel calendar-panel">
+              <div class="panel-header calendar-header">
+                <div class="calendar-nav">
+                  <button class="cal-nav-btn" @click="calendarPrevMonth">&#8249;</button>
+                  <span class="cal-month-label">
+                    {{ calendarMonthName }} {{ calendarYear }}
+                  </span>
+                  <button class="cal-nav-btn" @click="calendarNextMonth">&#8250;</button>
+                </div>
+                <div class="calendar-header-actions">
+                  <button class="cal-today-btn" @click="calendarGoToday">{{ $t('calendar.today') }}</button>
+                  <button class="cal-add-btn" @click="openAddEventModal(null)">+ {{ $t('calendar.addEvent') }}</button>
                 </div>
               </div>
-              <button class="alerts-action-btn" @click="handleViewAllAlerts" style="display: none;">{{ $t('dashboard.fixAll') }}</button>
+
+              <!-- Day-of-week labels -->
+              <div class="cal-weekdays">
+                <span v-for="(wd, i) in calendarWeekdays" :key="i">{{ wd }}</span>
+              </div>
+
+              <!-- Day grid -->
+              <div class="cal-grid">
+                <div
+                  v-for="(day, i) in calendarDays"
+                  :key="i"
+                  class="cal-day"
+                  :class="{
+                    'cal-other-month': !day.currentMonth,
+                    'cal-today': calendarIsToday(day),
+                    'cal-has-event': calendarDayHasEvent(day)
+                  }"
+                  @click="calendarSelectDay(day)"
+                >
+                  <span class="cal-day-num">{{ day.date.getDate() }}</span>
+                  <span v-if="calendarDayHasEvent(day)" class="cal-dot"></span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -173,9 +192,8 @@
             </div>
           </div>
 
-          <!-- Bottom Right 1 - Empty placeholder -->
-          <div class="bottom-right-1">
-          </div>
+          <!-- Bottom Right 1 - empty -->
+          <div class="bottom-right-1"></div>
 
           <!-- Bottom Right 2 - Recent Activity -->
           <div class="bottom-right-2">
@@ -193,7 +211,7 @@
                     <span class="activity-date">{{ transaction.date }}</span>
                   </div>
                   <div class="activity-amount" :class="transaction.type">
-                    {{ transaction.type === 'income' ? '+' : '-' }}{{ transaction.amount.toLocaleString() }} kr
+                    {{ transaction.type === 'income' ? '+' : '-' }}{{ Math.abs(transaction.amount).toLocaleString() }} kr
                   </div>
                 </div>
               </div>
@@ -366,8 +384,7 @@
             type="file" 
             ref="fileInput" 
             @change="handleFileSelect" 
-            multiple 
-            accept="image/*,.pdf"
+            accept="image/*"
             style="display: none;"
           />
           <button class="browse-btn" @click="$refs.fileInput.click()">{{ $t('dashboard.uploadModal.browse') }}</button>
@@ -387,9 +404,9 @@
           <button 
             class="upload-btn" 
             @click="uploadFiles" 
-            :disabled="selectedFiles.length === 0"
+            :disabled="selectedFiles.length === 0 || parsingReceipt"
           >
-            {{ $t('dashboard.uploadModal.upload', { count: selectedFiles.length }) }}
+            {{ parsingReceipt ? $t('dashboard.uploadModal.analyzing') : $t('dashboard.uploadModal.upload', { count: selectedFiles.length }) }}
           </button>
         </div>
       </div>
@@ -702,6 +719,121 @@
       </div>
     </div>
 
+    <!-- Invoice Modal -->
+    <div v-if="showInvoiceModal" class="modal-overlay" @click.self="closeInvoiceModal">
+      <div class="modal-content invoice-modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>{{ $t('dashboard.invoiceModal.title') }}</h2>
+          <button class="close-btn" @click="closeInvoiceModal">×</button>
+        </div>
+
+        <!-- Step 1: Fill in form -->
+        <div v-if="invoiceStep === 'form'" class="modal-body">
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.selectMember') }}</label>
+            <select class="form-select" @change="onInvoiceMemberSelect($event)">
+              <option value="">{{ $t('dashboard.invoiceModal.selectMemberPlaceholder') }}</option>
+              <option v-for="m in clubMembers" :key="m.id" :value="m.id">
+                {{ m.name }} ({{ m.email }})
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.recipientName') }} *</label>
+            <input type="text" v-model="newInvoice.recipientName" :placeholder="$t('dashboard.invoiceModal.placeholderName')" />
+          </div>
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.recipientEmail') }}</label>
+            <input type="email" v-model="newInvoice.recipientEmail" :placeholder="$t('dashboard.invoiceModal.placeholderEmail')" />
+          </div>
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.description') }} *</label>
+            <div class="preset-buttons">
+              <button
+                type="button"
+                v-for="preset in descriptionPresets"
+                :key="preset"
+                class="preset-btn"
+                @click="newInvoice.description = preset"
+                :class="{ active: newInvoice.description === preset }"
+              >{{ preset }}</button>
+            </div>
+            <input type="text" v-model="newInvoice.description" :placeholder="$t('dashboard.invoiceModal.placeholderDescription')" />
+          </div>
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.amount') }} *</label>
+            <input type="number" v-model.number="newInvoice.amount" min="1" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.dueDate') }}</label>
+            <input type="date" v-model="newInvoice.dueDate" />
+          </div>
+          <div class="form-group">
+            <label>{{ $t('dashboard.invoiceModal.notes') }}</label>
+            <textarea v-model="newInvoice.notes" rows="2" :placeholder="$t('dashboard.invoiceModal.placeholderNotes')"></textarea>
+          </div>
+        </div>
+
+        <!-- Step 2: PDF preview -->
+        <div v-if="invoiceStep === 'preview'" class="modal-body invoice-preview-body">
+          <div class="invoice-preview-card">
+            <div class="invoice-preview-header">
+              <div>
+                <div class="invoice-preview-org">{{ organizationName }}</div>
+                <div class="invoice-preview-label">Faktura</div>
+              </div>
+              <div class="invoice-preview-number">{{ pendingInvoice ? pendingInvoice.invoiceNumber : '' }}</div>
+            </div>
+            <div class="invoice-preview-meta">
+              <div>
+                <span class="preview-meta-label">{{ $t('dashboard.invoiceModal.previewTo') }}</span>
+                <span class="preview-meta-value">{{ newInvoice.recipientName }}</span>
+              </div>
+              <div v-if="newInvoice.dueDate">
+                <span class="preview-meta-label">{{ $t('dashboard.invoiceModal.dueDate') }}</span>
+                <span class="preview-meta-value">{{ newInvoice.dueDate }}</span>
+              </div>
+            </div>
+            <div class="invoice-preview-desc">
+              <span class="preview-meta-label">{{ $t('dashboard.invoiceModal.description') }}</span>
+              <p>{{ newInvoice.description }}</p>
+            </div>
+            <div v-if="newInvoice.notes" class="invoice-preview-desc">
+              <span class="preview-meta-label">{{ $t('dashboard.invoiceModal.notes') }}</span>
+              <p>{{ newInvoice.notes }}</p>
+            </div>
+            <div class="invoice-preview-total">
+              <span>{{ $t('dashboard.invoiceModal.amount') }}</span>
+              <span class="preview-total-amount">{{ Number(newInvoice.amount).toLocaleString('sv-SE', { minimumFractionDigits: 2 }) }} kr</span>
+            </div>
+          </div>
+          <div class="invoice-preview-actions">
+            <button class="invoice-action-btn pdf-btn" @click="downloadInvoicePdf" :disabled="generatingInvoicePdf">
+              {{ generatingInvoicePdf ? $t('dashboard.invoiceModal.generatingPdf') : $t('dashboard.invoiceModal.downloadPdf') }}
+            </button>
+            <button
+              v-if="newInvoice.recipientEmail"
+              class="invoice-action-btn send-btn"
+              @click="sendInvoiceEmail"
+              :disabled="sendingInvoiceEmail"
+            >
+              {{ sendingInvoiceEmail ? $t('dashboard.invoiceModal.sending') : $t('dashboard.invoiceModal.sendEmail') }}
+            </button>
+            <p v-else class="invoice-no-email-note">{{ $t('dashboard.invoiceModal.noEmailNote') }}</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button v-if="invoiceStep === 'form'" class="cancel-btn" @click="closeInvoiceModal">{{ $t('dashboard.invoiceModal.cancel') }}</button>
+          <button v-if="invoiceStep === 'form'" class="upload-btn" @click="createInvoice" :disabled="creatingInvoice">
+            {{ creatingInvoice ? $t('dashboard.invoiceModal.creating') : $t('dashboard.invoiceModal.create') }}
+          </button>
+          <button v-if="invoiceStep === 'preview'" class="cancel-btn" @click="invoiceStep = 'form'">{{ $t('dashboard.invoiceModal.back') }}</button>
+          <button v-if="invoiceStep === 'preview'" class="cancel-btn" @click="closeInvoiceModal">{{ $t('dashboard.invoiceModal.done') }}</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Authentication Required Modal -->
     <div v-if="showAuthModal" class="modal-overlay auth-modal-overlay" @click.self="goToLogin">
       <div class="modal-content auth-modal-content">
@@ -713,6 +845,126 @@
           <p>{{ $t('dashboard.authModal.message') }}</p>
           <button class="btn btn-primary btn-full" @click="goToLogin">
             {{ $t('dashboard.authModal.login') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Day Modal -->
+    <div v-if="showDayModal && selectedDay" class="modal-overlay" @click.self="closeDayModal">
+      <div class="modal-content day-modal-content">
+        <div class="modal-header">
+          <h3 class="day-modal-date">
+            {{ selectedDay.toLocaleDateString($i18n.locale === 'sv' ? 'sv-SE' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) }}
+          </h3>
+          <button class="close-btn" @click="closeDayModal">×</button>
+        </div>
+        <div class="day-modal-body">
+          <div v-if="selectedDayEvents.length === 0" class="day-modal-empty">
+            {{ $t('calendar.noEvents') }}
+          </div>
+          <div
+            v-for="ev in selectedDayEvents"
+            :key="ev.id"
+            class="day-modal-event-row"
+            @click="openEventDetailModal(ev)"
+          >
+            <span class="cal-event-dot" :class="calendarEventTypeClass(ev.type)"></span>
+            <div class="day-modal-event-info">
+              <span class="day-modal-event-title">{{ ev.title }}</span>
+              <span class="day-modal-event-type">{{ $t('calendar.types.' + (ev.type || 'event')) }}</span>
+            </div>
+            <span class="day-modal-event-chevron">›</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-btn" @click="closeDayModal">{{ $t('calendar.cancel') }}</button>
+          <button class="submit-btn" @click="openAddEventModal({ date: selectedDay })">+ {{ $t('calendar.addEvent') }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Detail Modal -->
+    <div v-if="showEventDetailModal && selectedEvent" class="modal-overlay" @click.self="closeEventDetailModal">
+      <div class="modal-content event-detail-modal">
+        <div class="modal-header">
+          <h3>{{ $t('calendar.eventDetails') }}</h3>
+          <button class="close-btn" @click="closeEventDetailModal">×</button>
+        </div>
+        <div class="modal-body event-detail-body">
+          <h4 class="event-detail-title">{{ selectedEvent.title }}</h4>
+          <div class="event-detail-meta">
+            <span class="event-detail-type-badge" :class="calendarEventTypeClass(selectedEvent.type)">
+              {{ $t('calendar.types.' + (selectedEvent.type || 'event')) }}
+            </span>
+            <span class="event-detail-date">
+              {{ selectedEvent.date ? new Date(selectedEvent.date).toLocaleDateString($i18n.locale === 'sv' ? 'sv-SE' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '' }}
+            </span>
+          </div>
+          <div class="event-detail-section">
+            <label>{{ $t('calendar.eventDescription') }}</label>
+            <p v-if="selectedEvent.description" class="event-detail-desc">{{ selectedEvent.description }}</p>
+            <p v-else class="event-detail-empty">{{ $t('calendar.noDescription') }}</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-btn" @click="closeEventDetailModal">{{ $t('calendar.cancel') }}</button>
+          <button class="event-detail-delete-btn" @click="deleteCalendarEvent(selectedEvent.id); closeEventDetailModal()">{{ $t('calendar.deleteEvent') }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Event Modal -->
+    <div v-if="showAddEventModal" class="modal-overlay" @click.self="closeAddEventModal">
+      <div class="modal-content event-modal-content">
+        <div class="modal-header">
+          <h3>{{ $t('calendar.addEvent') }}</h3>
+          <button class="close-btn" @click="closeAddEventModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>{{ $t('calendar.eventTitle') }}</label>
+            <input
+              v-model="newEvent.title"
+              class="form-input"
+              :placeholder="$t('calendar.eventTitlePlaceholder')"
+              maxlength="100"
+            />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ $t('calendar.eventDate') }}</label>
+              <input v-model="newEvent.date" type="date" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label>{{ $t('calendar.eventEndDate') }}</label>
+              <input v-model="newEvent.endDate" type="date" class="form-input" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>{{ $t('calendar.eventType') }}</label>
+            <select v-model="newEvent.type" class="form-input">
+              <option value="event">{{ $t('calendar.types.event') }}</option>
+              <option value="competition">{{ $t('calendar.types.competition') }}</option>
+              <option value="training">{{ $t('calendar.types.training') }}</option>
+              <option value="meeting">{{ $t('calendar.types.meeting') }}</option>
+              <option value="other">{{ $t('calendar.types.other') }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>{{ $t('calendar.eventDescription') }}</label>
+            <textarea
+              v-model="newEvent.description"
+              class="form-input"
+              :placeholder="$t('calendar.eventDescPlaceholder')"
+              rows="2"
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-btn" @click="closeAddEventModal">{{ $t('calendar.cancel') }}</button>
+          <button class="submit-btn" :disabled="creatingEvent" @click="createCalendarEvent">
+            {{ creatingEvent ? $t('calendar.creating') : $t('calendar.create') }}
           </button>
         </div>
       </div>
@@ -839,6 +1091,7 @@
 import { getCurrentUser } from '../lib/auth'
 import { getUserOrganizations } from '../lib/orgs'
 import { getDashboardData, createTransaction, createAccount, getOrganizationMembers, createMember } from '../lib/dashboard'
+import { jsPDF } from 'jspdf'
 
 export default {
   name: 'Dashboard',
@@ -873,6 +1126,7 @@ export default {
       showUploadModal: false,
       isDragging: false,
       selectedFiles: [],
+      parsingReceipt: false,
       showAddMemberModal: false,
       newMember: {
         name: '',
@@ -909,11 +1163,45 @@ export default {
         memberId: null
       },
       recentTransactions: [],
-      downloadingSie: false,
+      currentUserAvatar: null,
+      currentUserName: '',
+      downloadingPdf: false,
+      showInvoiceModal: false,
+      invoiceStep: 'form', // 'form' | 'preview'
+      creatingInvoice: false,
+      generatingInvoicePdf: false,
+      sendingInvoiceEmail: false,
+      pendingInvoice: null,
+      newInvoice: {
+        memberId: null,
+        recipientName: '',
+        recipientEmail: '',
+        description: '',
+        amount: 0,
+        dueDate: '',
+        notes: ''
+      },
       alerts: [],
       incomeBreakdown: [],
       expenseBreakdown: [],
-      accounts: []
+      accounts: [],
+      // Calendar
+      calendarYear: new Date().getFullYear(),
+      calendarMonth: new Date().getMonth(), // 0-indexed
+      calendarEvents: [],
+      selectedDay: null,
+      showAddEventModal: false,
+      creatingEvent: false,
+      newEvent: {
+        title: '',
+        date: '',
+        endDate: '',
+        description: '',
+        type: 'event'
+      },
+      selectedEvent: null,
+      showEventDetailModal: false,
+      showDayModal: false
     }
   },
   async mounted() {
@@ -922,12 +1210,60 @@ export default {
       this.showAuthModal = true
       return
     }
-    
+
+    this.currentUserName = user.name || ''
+    this.currentUserAvatar = user.avatarUrl || null
+
     await this.loadDashboard()
   },
   computed: {
     monthlyResult() {
       return this.monthlyIncome - this.monthlyExpenses
+    },
+    currentUserInitial() {
+      return (this.currentUserName || 'U').charAt(0).toUpperCase()
+    },
+    calendarWeekdays() {
+      return this.$i18n.locale === 'sv'
+        ? ['M', 'T', 'O', 'T', 'F', 'L', 'S']
+        : ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+    },
+    calendarMonthName() {
+      const months = this.$tm('calendar.months')
+      return Array.isArray(months) ? months[this.calendarMonth] ?? '' : ''
+    },
+    calendarDays() {
+      const year = this.calendarYear
+      const month = this.calendarMonth
+      const firstDay = new Date(year, month, 1)
+      const lastDay = new Date(year, month + 1, 0)
+      // Monday-first: getDay() returns 0=Sun, so shift
+      const startDow = (firstDay.getDay() + 6) % 7
+      const days = []
+      for (let i = 0; i < startDow; i++) {
+        const d = new Date(year, month, -startDow + i + 1)
+        days.push({ date: d, currentMonth: false })
+      }
+      for (let d = 1; d <= lastDay.getDate(); d++) {
+        days.push({ date: new Date(year, month, d), currentMonth: true })
+      }
+      const remaining = 42 - days.length
+      for (let i = 1; i <= remaining; i++) {
+        days.push({ date: new Date(year, month + 1, i), currentMonth: false })
+      }
+      return days
+    },
+    selectedDayEvents() {
+      if (!this.selectedDay) return []
+      const sel = this.selectedDay.toDateString()
+      return this.calendarEvents.filter(e => new Date(e.date).toDateString() === sel)
+    },
+    upcomingEvents() {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      return this.calendarEvents
+        .filter(e => new Date(e.date) >= today)
+        .slice(0, 5)
     },
     descriptionPresets() {
       return [
@@ -977,6 +1313,7 @@ export default {
         } else {
           this.updateDashboardState(data)
         }
+        await this.loadCalendarEvents()
       } catch (error) {
         console.error('Failed to load dashboard:', error)
         this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.loadError'), 'error')
@@ -1021,50 +1358,522 @@ export default {
         this.swishPayment.memberId = null
       }
     },
-    async downloadSieFile() {
+    async downloadPdfFile() {
       try {
-        this.downloadingSie = true
-        
-        const response = await fetch(`/api/finance?action=sie`, {
-          method: 'GET',
-          headers: {
-            'x-org-id': String(this.organizationId)
-          }
+        this.downloadingPdf = true
+
+        // Ensure members are loaded
+        if (this.clubMembers.length === 0) {
+          const response = await getOrganizationMembers(this.organizationId)
+          this.teamMembers = response.teamMembers
+          this.clubMembers = response.clubMembers
+        }
+
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+        const pageW = doc.internal.pageSize.getWidth()
+        const margin = 14
+        const colRight = pageW - margin
+        let y = 18
+
+        // ── Header ──────────────────────────────────────────────────────────
+        doc.setFontSize(20)
+        doc.setFont('helvetica', 'bold')
+        doc.text(this.organizationName || 'Organisation', margin, y)
+        y += 7
+
+        doc.setFontSize(9)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(120)
+        const generated = new Date().toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' })
+        doc.text(`Genererad: ${generated}`, margin, y)
+        doc.setTextColor(0)
+        y += 8
+
+        // Divider
+        doc.setDrawColor(200)
+        doc.line(margin, y, colRight, y)
+        y += 8
+
+        // ── Financial Summary ────────────────────────────────────────────────
+        doc.setFontSize(13)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Ekonomisk Oversikt', margin, y)
+        y += 6
+
+        const summaryRows = [
+          ['Kassa & Bank', `${this.cashAndBank.toLocaleString('sv-SE')} kr`],
+          ['Manadsintakter', `+${this.monthlyIncome.toLocaleString('sv-SE')} kr`],
+          ['Manadskostnader', `-${this.monthlyExpenses.toLocaleString('sv-SE')} kr`],
+          ['Resultat', `${this.monthlyResult >= 0 ? '+' : ''}${this.monthlyResult.toLocaleString('sv-SE')} kr`],
+        ]
+
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        summaryRows.forEach(([label, value]) => {
+          doc.text(label, margin, y)
+          doc.text(value, colRight, y, { align: 'right' })
+          y += 6
         })
-        
-        if (!response.ok) {
-          throw new Error('Failed to download SIE file')
-        }
-        
-        // Handle file download
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        
-        // Extract filename from header
-        const contentDisposition = response.headers.get('Content-Disposition')
-        let filename = 'export.se'
-        if (contentDisposition) {
-          const match = contentDisposition.match(/filename="?([^"]+)"?/)
-          if (match && match[1]) {
-            filename = match[1]
+        y += 4
+
+        // ── Members ──────────────────────────────────────────────────────────
+        doc.setDrawColor(200)
+        doc.line(margin, y, colRight, y)
+        y += 6
+
+        doc.setFontSize(13)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Medlemmar', margin, y)
+        y += 6
+
+        // Member summary line
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.text(`Totalt: ${this.totalMembers}   Betalat: ${this.paidMembers}   Obetalt: ${this.unpaidMembers}`, margin, y)
+        y += 7
+
+        if (this.clubMembers.length > 0) {
+          // Table header
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(9)
+          doc.text('Namn', margin, y)
+          doc.text('E-post', margin + 55, y)
+          doc.text('Avgift', margin + 115, y)
+          doc.text('Status', colRight, y, { align: 'right' })
+          y += 1
+          doc.setDrawColor(180)
+          doc.line(margin, y, colRight, y)
+          y += 4
+
+          doc.setFont('helvetica', 'normal')
+          for (const m of this.clubMembers) {
+            if (y > 270) {
+              doc.addPage()
+              y = 18
+            }
+            doc.text((m.name || '').substring(0, 28), margin, y)
+            doc.text((m.email || '').substring(0, 35), margin + 55, y)
+            doc.text(`${(m.fee ?? 0).toLocaleString('sv-SE')} kr`, margin + 115, y)
+            doc.text(m.paid ? 'Betalt' : 'Obetalt', colRight, y, { align: 'right' })
+            y += 5
           }
         }
-        
-        a.href = url
-        a.download = filename
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        window.URL.revokeObjectURL(url)
-        
+        y += 4
+
+        // ── Transactions ─────────────────────────────────────────────────────
+        if (y > 240) { doc.addPage(); y = 18 }
+
+        doc.setDrawColor(200)
+        doc.line(margin, y, colRight, y)
+        y += 6
+
+        doc.setFontSize(13)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Senaste Transaktioner', margin, y)
+        y += 6
+
+        if (this.recentTransactions.length > 0) {
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(9)
+          doc.text('Datum', margin, y)
+          doc.text('Beskrivning', margin + 25, y)
+          doc.text('Kategori', margin + 95, y)
+          doc.text('Belopp', colRight, y, { align: 'right' })
+          y += 1
+          doc.setDrawColor(180)
+          doc.line(margin, y, colRight, y)
+          y += 4
+
+          doc.setFont('helvetica', 'normal')
+          for (const t of this.recentTransactions) {
+            if (y > 270) {
+              doc.addPage()
+              y = 18
+            }
+            const dateStr = t.date ? new Date(t.date).toLocaleDateString('sv-SE') : ''
+            const desc = (t.description || '').substring(0, 38)
+            const cat = (t.category || '').substring(0, 18)
+            const absAmt = Math.abs(Number(t.amount)).toLocaleString('sv-SE')
+            const amount = t.type === 'income'
+              ? `+${absAmt} kr`
+              : `-${absAmt} kr`
+            doc.text(dateStr, margin, y)
+            doc.text(desc, margin + 25, y)
+            doc.text(cat, margin + 95, y)
+            doc.text(amount, colRight, y, { align: 'right' })
+            y += 5
+          }
+        } else {
+          doc.setFontSize(10)
+          doc.setFont('helvetica', 'normal')
+          doc.text('Inga transaktioner registrerade.', margin, y)
+        }
+
+        // ── Footer ───────────────────────────────────────────────────────────
+        const pageCount = doc.internal.getNumberOfPages()
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i)
+          doc.setFontSize(8)
+          doc.setTextColor(160)
+          doc.text(`Sida ${i} av ${pageCount}`, pageW / 2, 290, { align: 'center' })
+          doc.setTextColor(0)
+        }
+
+        const orgSlug = (this.organizationName || 'rapport').toLowerCase().replace(/\s+/g, '-')
+        doc.save(`${orgSlug}-rapport-${new Date().toISOString().split('T')[0]}.pdf`)
       } catch (error) {
-        console.error('SIE export failed:', error)
-        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.sieError'), 'error')
+        console.error('PDF export failed:', error)
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.alerts.pdfError'), 'error')
       } finally {
-        this.downloadingSie = false
+        this.downloadingPdf = false
       }
     },
+    onInvoiceMemberSelect(event) {
+      const memberId = parseInt(event.target.value)
+      if (memberId) {
+        const member = this.clubMembers.find(m => m.id === memberId)
+        if (member) {
+          this.newInvoice.memberId = member.id
+          this.newInvoice.recipientName = member.name
+          this.newInvoice.recipientEmail = member.email || ''
+          if (!this.newInvoice.amount && member.fee) {
+            this.newInvoice.amount = member.fee
+          }
+        }
+      } else {
+        this.newInvoice.memberId = null
+      }
+    },
+    async createInvoice() {
+      if (!this.newInvoice.recipientName || !this.newInvoice.description || !this.newInvoice.amount) {
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.invoiceModal.validationError'), 'error')
+        return
+      }
+      try {
+        this.creatingInvoice = true
+        const response = await fetch('/api/invoice?action=create', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-org-id': String(this.organizationId)
+          },
+          body: JSON.stringify({
+            memberId: this.newInvoice.memberId,
+            recipientName: this.newInvoice.recipientName,
+            recipientEmail: this.newInvoice.recipientEmail || null,
+            description: this.newInvoice.description,
+            amount: this.newInvoice.amount,
+            dueDate: this.newInvoice.dueDate || null,
+            notes: this.newInvoice.notes || null
+          })
+        })
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}))
+          throw new Error(data.error || 'Failed to create invoice')
+        }
+        this.pendingInvoice = await response.json()
+        this.invoiceStep = 'preview'
+      } catch (error) {
+        console.error('Invoice creation failed:', error)
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.invoiceModal.createError'), 'error')
+      } finally {
+        this.creatingInvoice = false
+      }
+    },
+    async downloadInvoicePdf() {
+      try {
+        this.generatingInvoicePdf = true
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+        const pageW = doc.internal.pageSize.getWidth()
+        const margin = 20
+        const colRight = pageW - margin
+        let y = 20
+
+        // Header block
+        doc.setFillColor(30, 41, 59)
+        doc.rect(0, 0, pageW, 38, 'F')
+        doc.setFontSize(18)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(255, 255, 255)
+        doc.text(this.organizationName || 'Organisation', margin, 18)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(148, 163, 184)
+        doc.text('FAKTURA', margin, 28)
+        doc.setTextColor(0, 0, 0)
+        y = 52
+
+        // Invoice number + dates row
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Fakturanummer', margin, y)
+        doc.text('Förfallodatum', pageW / 2 + 10, y)
+        y += 6
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(14)
+        doc.text(this.pendingInvoice?.invoiceNumber || '', margin, y)
+        doc.text(this.newInvoice.dueDate || '–', pageW / 2 + 10, y)
+        y += 10
+
+        // Divider
+        doc.setDrawColor(229, 231, 235)
+        doc.line(margin, y, colRight, y)
+        y += 8
+
+        // Recipient
+        doc.setFontSize(9)
+        doc.setTextColor(107, 114, 128)
+        doc.text('TILL', margin, y)
+        y += 5
+        doc.setFontSize(12)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(17, 24, 39)
+        doc.text(this.newInvoice.recipientName, margin, y)
+        if (this.newInvoice.recipientEmail) {
+          y += 6
+          doc.setFontSize(10)
+          doc.setFont('helvetica', 'normal')
+          doc.setTextColor(107, 114, 128)
+          doc.text(this.newInvoice.recipientEmail, margin, y)
+        }
+        y += 10
+
+        // Description
+        doc.setFontSize(9)
+        doc.setTextColor(107, 114, 128)
+        doc.text('AVSER', margin, y)
+        y += 5
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(55, 65, 81)
+        const descLines = doc.splitTextToSize(this.newInvoice.description, colRight - margin)
+        doc.text(descLines, margin, y)
+        y += descLines.length * 6 + 4
+
+        // Notes (if any)
+        if (this.newInvoice.notes) {
+          doc.setFontSize(9)
+          doc.setTextColor(107, 114, 128)
+          doc.text('NOTERING', margin, y)
+          y += 5
+          doc.setFontSize(10)
+          doc.setTextColor(55, 65, 81)
+          const noteLines = doc.splitTextToSize(this.newInvoice.notes, colRight - margin)
+          doc.text(noteLines, margin, y)
+          y += noteLines.length * 5 + 6
+        }
+
+        // Amount box
+        doc.setFillColor(248, 250, 252)
+        doc.roundedRect(margin, y, colRight - margin, 18, 3, 3, 'F')
+        doc.setFontSize(11)
+        doc.setTextColor(107, 114, 128)
+        doc.setFont('helvetica', 'normal')
+        doc.text('Belopp att betala', margin + 5, y + 11)
+        doc.setFontSize(16)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(17, 24, 39)
+        const amountStr = Number(this.newInvoice.amount).toLocaleString('sv-SE', { minimumFractionDigits: 2 }) + ' kr'
+        doc.text(amountStr, colRight - 4, y + 11, { align: 'right' })
+        y += 26
+
+        // Generated line
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(156, 163, 175)
+        doc.text(`Skapad ${new Date().toLocaleDateString('sv-SE')} via Orient`, margin, y)
+
+        const filename = `faktura-${this.pendingInvoice?.invoiceNumber || 'draft'}.pdf`
+        doc.save(filename)
+      } catch (error) {
+        console.error('Invoice PDF failed:', error)
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.invoiceModal.pdfError'), 'error')
+      } finally {
+        this.generatingInvoicePdf = false
+      }
+    },
+    async sendInvoiceEmail() {
+      if (!this.pendingInvoice) return
+      try {
+        this.sendingInvoiceEmail = true
+        const response = await fetch('/api/invoice?action=send-email', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-org-id': String(this.organizationId)
+          },
+          body: JSON.stringify({ invoiceId: this.pendingInvoice.id })
+        })
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}))
+          throw new Error(data.error || 'Failed to send email')
+        }
+        this.showAlert(this.$t('dashboard.alerts.successTitle'), this.$t('dashboard.invoiceModal.emailSent', { email: this.newInvoice.recipientEmail }), 'success')
+        this.pendingInvoice = { ...this.pendingInvoice, status: 'SENT' }
+      } catch (error) {
+        console.error('Invoice email failed:', error)
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.invoiceModal.emailError'), 'error')
+      } finally {
+        this.sendingInvoiceEmail = false
+      }
+    },
+    closeInvoiceModal() {
+      this.showInvoiceModal = false
+      this.invoiceStep = 'form'
+      this.pendingInvoice = null
+      this.creatingInvoice = false
+      this.generatingInvoicePdf = false
+      this.sendingInvoiceEmail = false
+      this.newInvoice = {
+        memberId: null,
+        recipientName: '',
+        recipientEmail: '',
+        description: '',
+        amount: 0,
+        dueDate: '',
+        notes: ''
+      }
+    },
+
+    // --- Calendar methods ---
+    async loadCalendarEvents() {
+      if (!this.organizationId) return
+      try {
+        const res = await fetch(
+          `/api/events?year=${this.calendarYear}&month=${this.calendarMonth + 1}`,
+          { headers: { 'x-org-id': String(this.organizationId) } }
+        )
+        if (res.ok) {
+          const data = await res.json()
+          this.calendarEvents = data.events || []
+        }
+      } catch (e) {
+        console.error('Failed to load calendar events:', e)
+      }
+    },
+    async calendarPrevMonth() {
+      if (this.calendarMonth === 0) {
+        this.calendarMonth = 11
+        this.calendarYear--
+      } else {
+        this.calendarMonth--
+      }
+      this.selectedDay = null
+      await this.loadCalendarEvents()
+    },
+    async calendarNextMonth() {
+      if (this.calendarMonth === 11) {
+        this.calendarMonth = 0
+        this.calendarYear++
+      } else {
+        this.calendarMonth++
+      }
+      this.selectedDay = null
+      await this.loadCalendarEvents()
+    },
+    calendarGoToday() {
+      const now = new Date()
+      this.calendarYear = now.getFullYear()
+      this.calendarMonth = now.getMonth()
+      this.selectedDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      this.loadCalendarEvents()
+    },
+    calendarSelectDay(day) {
+      this.selectedDay = day.date
+      this.selectedEvent = null
+      this.showDayModal = true
+    },
+    closeDayModal() {
+      this.showDayModal = false
+    },
+    calendarDayHasEvent(day) {
+      const ds = day.date.toDateString()
+      return this.calendarEvents.some(e => new Date(e.date).toDateString() === ds)
+    },
+    calendarIsToday(day) {
+      return day.date.toDateString() === new Date().toDateString()
+    },
+    calendarIsSelected(day) {
+      return this.selectedDay && day.date.toDateString() === this.selectedDay.toDateString()
+    },
+    openAddEventModal(day) {
+      const dateStr = day
+        ? (day.date instanceof Date ? day.date : new Date(day.date)).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0]
+      this.newEvent = { title: '', date: dateStr, endDate: '', description: '', type: 'event' }
+      this.showDayModal = false
+      this.showAddEventModal = true
+    },
+    closeAddEventModal() {
+      this.showAddEventModal = false
+      this.newEvent = { title: '', date: '', endDate: '', description: '', type: 'event' }
+    },
+    async createCalendarEvent() {
+      if (!this.newEvent.title.trim()) {
+        this.showAlert(this.$t('calendar.titleRequired'), '', 'error')
+        return
+      }
+      if (!this.newEvent.date) {
+        this.showAlert(this.$t('calendar.dateRequired'), '', 'error')
+        return
+      }
+      this.creatingEvent = true
+      try {
+        const res = await fetch('/api/events?action=create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-org-id': String(this.organizationId) },
+          body: JSON.stringify(this.newEvent)
+        })
+        if (res.ok) {
+          await this.loadCalendarEvents()
+          this.closeAddEventModal()
+          if (this.selectedDay) this.showDayModal = true
+        } else {
+          this.showAlert(this.$t('calendar.createError'), '', 'error')
+        }
+      } catch (e) {
+        this.showAlert(this.$t('calendar.createError'), '', 'error')
+      } finally {
+        this.creatingEvent = false
+      }
+    },
+    async deleteCalendarEvent(id) {
+      try {
+        const res = await fetch('/api/events?action=delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-org-id': String(this.organizationId) },
+          body: JSON.stringify({ id })
+        })
+        if (res.ok) {
+          await this.loadCalendarEvents()
+          if (this.selectedDay) this.showDayModal = true
+        } else {
+          this.showAlert(this.$t('calendar.deleteError'), '', 'error')
+        }
+      } catch (e) {
+        this.showAlert(this.$t('calendar.deleteError'), '', 'error')
+      }
+    },
+    openEventDetailModal(ev) {
+      this.selectedEvent = ev
+      this.showDayModal = false
+      this.showEventDetailModal = true
+    },
+    closeEventDetailModal() {
+      this.showEventDetailModal = false
+      this.selectedEvent = null
+    },
+    calendarEventTypeClass(type) {
+      const map = { competition: 'type-competition', training: 'type-training', meeting: 'type-meeting', other: 'type-other' }
+      return map[type] || 'type-event'
+    },
+    formatCalendarDate(dateStr) {
+      const d = new Date(dateStr)
+      return d.toLocaleDateString(this.$i18n.locale === 'sv' ? 'sv-SE' : 'en-GB', { day: 'numeric', month: 'short' })
+    },
+
     async handleAction(action) {
       console.log('Action:', action)
       if (action === 'upload-receipt') {
@@ -1075,8 +1884,19 @@ export default {
         this.showIncomeModal = true
       } else if (action === 'record-expense') {
         this.showExpenseModal = true
-      } else if (action === 'download-accounting') {
-        await this.downloadSieFile()
+      } else if (action === 'download-pdf') {
+        await this.downloadPdfFile()
+      } else if (action === 'create-invoice') {
+        if (this.clubMembers.length === 0) {
+          try {
+            const response = await getOrganizationMembers(this.organizationId)
+            this.teamMembers = response.teamMembers
+            this.clubMembers = response.clubMembers
+          } catch (error) {
+            console.error('Failed to load members for invoice:', error)
+          }
+        }
+        this.showInvoiceModal = true
       } else if (action === 'swish-payment') {
         // Load members if not already loaded, so we can pick from the list
         if (this.clubMembers.length === 0) {
@@ -1493,12 +2313,11 @@ export default {
       this.addFiles(files)
     },
     addFiles(files) {
-      const validFiles = files.filter(file => {
-        const isImage = file.type.startsWith('image/')
-        const isPDF = file.type === 'application/pdf'
-        return isImage || isPDF
-      })
-      this.selectedFiles = [...this.selectedFiles, ...validFiles]
+      const validFiles = files.filter(file => file.type.startsWith('image/'))
+      // Only one receipt at a time
+      if (validFiles.length > 0) {
+        this.selectedFiles = [validFiles[0]]
+      }
     },
     removeFile(index) {
       this.selectedFiles.splice(index, 1)
@@ -1525,10 +2344,56 @@ export default {
       if (!type) return ''
       return this.$t(`memberTypes.${type}`)
     },
-    uploadFiles() {
-      console.log('Uploading files:', this.selectedFiles)
-      // Here you would typically send files to a backend server
-      this.closeUploadModal()
+    async uploadFiles() {
+      if (!this.selectedFiles.length) return
+      this.parsingReceipt = true
+      try {
+        const file = this.selectedFiles[0]
+        const { createWorker } = await import('tesseract.js')
+        const worker = await createWorker(['swe', 'eng'])
+        const { data: { text } } = await worker.recognize(file)
+        await worker.terminate()
+        const parsed = this.parseReceiptText(text)
+        this.newExpense = {
+          description: parsed.description,
+          amount: parsed.amount,
+          category: '',
+          date: parsed.date || new Date().toISOString().split('T')[0],
+          notes: ''
+        }
+        this.closeUploadModal()
+        this.showExpenseModal = true
+      } catch (e) {
+        console.error('Receipt OCR failed:', e)
+        this.showAlert(
+          this.$t('dashboard.alerts.errorTitle'),
+          this.$t('dashboard.uploadModal.analyzeError'),
+          'error'
+        )
+      } finally {
+        this.parsingReceipt = false
+      }
+    },
+    parseReceiptText(text) {
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+      // Find all currency-like numbers and take the largest (most likely the total)
+      const amounts = [...text.matchAll(/(\d+[.,]\d{2})/g)]
+        .map(m => parseFloat(m[1].replace(',', '.')))
+      const amount = amounts.length ? Math.max(...amounts) : 0
+      // First non-trivial line that doesn't start with a digit = merchant name
+      const description = lines.find(l => l.length > 3 && !/^\d/.test(l)) || lines[0] || ''
+      // Look for date patterns YYYY-MM-DD or DD/MM/YYYY or DD.MM.YYYY
+      const dateMatch = text.match(/(\d{4}-\d{2}-\d{2})|(\d{2}[\/\.]\d{2}[\/\.]\d{4})/)
+      let date = ''
+      if (dateMatch) {
+        if (dateMatch[1]) {
+          date = dateMatch[1]
+        } else {
+          const parts = dateMatch[2].split(/[\/\.]/)
+          date = `${parts[2]}-${parts[1]}-${parts[0]}`
+        }
+      }
+      return { description, amount, date }
     },
     closeAddMemberModal() {
       this.showAddMemberModal = false
@@ -1764,14 +2629,14 @@ export default {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: var(--text-dark);
+  color: var(--text-secondary);
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
   border: 4px solid var(--background);
-  border-top-color: var(--primary-dark);
+  border-top-color: var(--primary-light);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -1803,7 +2668,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
-  background: white;
+  background: var(--surface);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -1850,7 +2715,7 @@ export default {
 
 .welcome-text h1 {
   font-size: 1.625rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0;
   line-height: 1.2;
 }
@@ -1872,7 +2737,7 @@ export default {
 
 .org-title {
   font-size: 1.25rem;
-  color: var(--primary-dark);
+  color: var(--text);
   font-weight: 600;
   margin: 0;
 }
@@ -1885,19 +2750,19 @@ export default {
 .org-name p,
 .welcome-text p {
   font-size: 1rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   margin: 0;
   opacity: 0.8;
 }
 
 .org-selector {
   padding: 0.5rem 1rem;
-  border: 2px solid var(--background);
+  border: 2px solid var(--border);
   border-radius: 6px;
   font-size: 0.95rem;
   font-family: inherit;
-  color: var(--text-dark);
-  background-color: var(--text-light);
+  color: var(--text);
+  background-color: var(--input-bg);
   cursor: pointer;
   transition: border-color 0.3s ease;
   max-width: 250px;
@@ -1941,7 +2806,7 @@ export default {
 }
 
 .stats-compact {
-  background: white;
+  background: var(--surface);
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -1952,7 +2817,7 @@ export default {
 
 .section-title {
   font-size: 1.0625rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0 0 0.75rem 0;
   font-weight: 600;
   text-transform: uppercase;
@@ -1970,7 +2835,7 @@ export default {
 
 .stat-label {
   font-size: 0.9375rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.7;
   font-weight: 500;
   margin-bottom: 0.25rem;
@@ -1979,7 +2844,7 @@ export default {
 .stat-amount {
   font-size: 1.875rem;
   font-weight: 700;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .stat-card-compact.income .stat-amount {
@@ -1991,7 +2856,7 @@ export default {
 }
 
 .actions-panel {
-  background: white;
+  background: var(--surface);
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -2000,7 +2865,7 @@ export default {
 
 .actions-panel h3 {
   font-size: 0.9rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0 0 0.75rem 0;
   font-weight: 600;
 }
@@ -2022,14 +2887,14 @@ export default {
 
 .member-label {
   font-size: 1.0625rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .member-value {
   font-size: 1.375rem;
   font-weight: 700;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .member-value.paid {
@@ -2041,7 +2906,7 @@ export default {
 }
 
 .breakdown-panel {
-  background: white;
+  background: var(--surface);
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -2052,7 +2917,7 @@ export default {
 
 .breakdown-panel h3 {
   font-size: 1.125rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0 0 0.75rem 0;
   font-weight: 600;
 }
@@ -2074,14 +2939,14 @@ export default {
 
 .breakdown-label {
   font-size: 1rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .breakdown-value {
   font-size: 1.0625rem;
   font-weight: 700;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .member-stats-compact {
@@ -2092,7 +2957,7 @@ export default {
 
 .panel-header-title {
   font-size: 1.125rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0 0 0.75rem 0;
   font-weight: 600;
   padding-bottom: 0.75rem;
@@ -2123,7 +2988,7 @@ export default {
 }
 
 .panel {
-  background: white;
+  background: var(--surface);
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -2145,7 +3010,7 @@ export default {
 
 .panel-header h3 {
   font-size: 1.25rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0;
   font-weight: 600;
 }
@@ -2175,7 +3040,7 @@ export default {
 
 .quick-action-card:hover {
   background: var(--primary-light);
-  border-color: var(--primary-dark);
+  border-color: var(--primary-medium);
   transform: translateY(-2px);
 }
 
@@ -2184,37 +3049,16 @@ export default {
   color: white;
 }
 
-.coming-soon-card {
-  opacity: 0.75;
-}
-
-.coming-soon-badge {
-  font-size: 0.6rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  background: #fef3c7;
-  color: #92400e;
-  border-radius: 100px;
-  padding: 1px 7px;
-  pointer-events: none;
-}
-
-.quick-action-card:hover .coming-soon-badge {
-  background: rgba(255,255,255,0.25);
-  color: white;
-}
-
 .action-icon {
   font-size: 1.625rem;
   font-weight: 700;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .action-text {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   text-align: center;
   line-height: 1.2;
 }
@@ -2226,9 +3070,6 @@ export default {
   overflow-y: auto;
   flex: 1;
   min-height: 0;
-  /* Scrollbar styling */
-  scrollbar-width: thin;
-  padding-right: 5px;
 }
 
 .activity-row {
@@ -2251,7 +3092,7 @@ export default {
 .activity-name {
   font-size: 1.125rem;
   font-weight: 500;
-  color: var(--primary-dark);
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2259,7 +3100,7 @@ export default {
 
 .activity-date {
   font-size: 0.9375rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.7;
 }
 
@@ -2283,7 +3124,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-height: 100%;
+  min-height: 0;
   overflow: hidden;
   grid-column: 4;
   grid-row: 1;
@@ -2382,12 +3223,12 @@ export default {
 .alert-icon {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .alert-text {
   font-size: 1.0625rem;
-  color: var(--primary-dark);
+  color: var(--text);
   font-weight: 500;
   flex: 1;
 }
@@ -2450,49 +3291,107 @@ export default {
 }
 
 @media (max-width: 1024px) {
+  .dashboard-page {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+    padding: 1rem;
+  }
+
+  .dashboard-compact {
+    height: auto;
+    overflow: visible;
+  }
+
+  .container-full {
+    padding: 0.5rem 0.75rem;
+    height: auto;
+  }
+
+  .header-bar {
+    margin-top: 2.5rem;
+  }
+
   .main-grid {
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto;
+    gap: 1rem;
   }
 
   .left-column {
     grid-column: 1;
     grid-row: 1;
+    overflow: visible;
+    min-height: auto;
   }
 
   .center-column {
     grid-column: 2;
     grid-row: 1 / 3;
+    overflow: visible;
+    min-height: auto;
   }
 
   .right-column {
     grid-column: 1;
     grid-row: 2;
+    overflow: visible;
+    min-height: auto;
   }
 
   .bottom-left {
     grid-column: 1;
     grid-row: 3;
+    overflow: visible;
+    min-height: auto;
   }
 
   .bottom-center {
     grid-column: 2;
     grid-row: 3;
+    overflow: visible;
+    min-height: auto;
   }
 
   .bottom-right-2 {
     grid-column: 1 / 3;
     grid-row: 4;
+    overflow: visible;
+    min-height: auto;
+  }
+
+  .panel {
+    max-height: none !important;
   }
 
   .quick-actions-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .welcome-text h1 {
+    font-size: 1.4rem;
   }
 }
 
 @media (max-width: 768px) {
-  .container-full {
-    padding: 0.5rem 1rem;
+  .dashboard-page {
+    padding: 0.75rem;
+  }
+
+  .header-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .welcome-text {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .org-name-container {
+    margin-left: 0;
   }
 
   .main-grid {
@@ -2546,11 +3445,25 @@ export default {
   .activity-amount {
     font-size: 1rem;
   }
+
+  .cal-weekdays,
+  .cal-grid {
+    font-size: 0.75rem;
+  }
+
+  .cal-day {
+    min-height: 32px;
+    padding: 2px;
+  }
+
+  .cal-day-num {
+    font-size: 0.7rem;
+  }
 }
 
 @media (max-width: 480px) {
   .quick-actions-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .header-bar {
@@ -2575,6 +3488,11 @@ export default {
   .action-text {
     font-size: 0.75rem;
   }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
 }
 
 /* Modal Styles */
@@ -2584,7 +3502,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2602,7 +3520,7 @@ export default {
 }
 
 .modal-content {
-  background: white;
+  background: var(--surface);
   border-radius: 12px;
   width: 90%;
   max-width: 600px;
@@ -2634,14 +3552,14 @@ export default {
 .modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .close-btn {
   background: none;
   border: none;
   font-size: 2rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0;
   width: 36px;
@@ -2655,7 +3573,7 @@ export default {
 
 .close-btn:hover {
   background: var(--background);
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .upload-area {
@@ -2773,13 +3691,13 @@ export default {
 .upload-text {
   font-size: 1.2rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0.5rem 0;
 }
 
 .upload-subtext {
   font-size: 0.9rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   margin: 0.5rem 0;
 }
 
@@ -2804,7 +3722,7 @@ export default {
 
 .upload-hint {
   font-size: 0.75rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.7;
   margin: 0.5rem 0 0 0;
 }
@@ -2818,7 +3736,7 @@ export default {
 
 .file-list h3 {
   font-size: 0.9rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0 0 1rem 0;
   font-weight: 600;
 }
@@ -2828,7 +3746,7 @@ export default {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: white;
+  background: var(--surface);
   border-radius: 6px;
   margin-bottom: 0.5rem;
 }
@@ -2844,7 +3762,7 @@ export default {
 .file-name {
   flex: 1;
   font-size: 0.9rem;
-  color: var(--primary-dark);
+  color: var(--text);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -2853,7 +3771,7 @@ export default {
 
 .file-size {
   font-size: 0.8rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.7;
 }
 
@@ -2861,7 +3779,7 @@ export default {
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0;
   width: 28px;
@@ -2899,11 +3817,35 @@ export default {
 
 .cancel-btn {
   background: var(--background);
-  color: var(--text-dark);
+  color: var(--text-secondary);
 }
 
 .cancel-btn:hover {
   background: #e2e8f0;
+}
+
+.submit-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--primary-light);
+  color: white;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background-color: var(--primary-medium);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.submit-btn:disabled {
+  background-color: #cbd5e1;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .upload-btn {
@@ -2936,7 +3878,7 @@ export default {
   display: block;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 0.5rem;
 }
 
@@ -2945,8 +3887,10 @@ export default {
   width: 100%;
   padding: 0.75rem;
   font-size: 1rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--border);
   border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--text);
   transition: all 0.2s ease;
   font-family: inherit;
 }
@@ -2959,7 +3903,7 @@ export default {
 }
 
 .form-group input::placeholder {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 
 .checkbox-group {
@@ -2983,7 +3927,7 @@ export default {
 
 .checkbox-group span {
   font-size: 0.95rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
 }
 
 .form-group textarea {
@@ -3021,7 +3965,7 @@ export default {
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--primary-dark);
+  color: var(--text);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -3042,8 +3986,7 @@ export default {
   display: block;
   text-align: right;
   font-size: 0.8rem;
-  color: var(--text-dark);
-  opacity: 0.6;
+  color: var(--text-secondary);
   margin-top: 0.25rem;
 }
 
@@ -3074,13 +4017,13 @@ export default {
 
 .auth-modal-content h2 {
   font-size: 1.75rem;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 1rem;
 }
 
 .auth-modal-content p {
   font-size: 1.1rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   margin-bottom: 2rem;
   line-height: 1.6;
 }
@@ -3101,10 +4044,10 @@ export default {
 .members-section .section-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 1rem;
   padding-left: 1rem;
-  border-left: 4px solid var(--primary);
+  border-left: 4px solid var(--primary-medium);
 }
 
 .members-list {
@@ -3154,13 +4097,13 @@ export default {
 .member-name {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin-bottom: 0.25rem;
 }
 
 .member-email {
   font-size: 0.875rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.7;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3169,8 +4112,7 @@ export default {
 
 .member-meta {
   font-size: 0.75rem;
-  color: var(--text-dark);
-  opacity: 0.6;
+  color: var(--text-secondary);
   text-transform: capitalize;
   margin-top: 0.25rem;
 }
@@ -3221,14 +4163,13 @@ export default {
 }
 
 .member-role-badge.viewer {
-  background: #e5e7eb;
-  color: #374151;
+  background: var(--border);
+  color: var(--text);
 }
 
 .member-joined {
   font-size: 0.875rem;
-  color: var(--text-dark);
-  opacity: 0.6;
+  color: var(--text-secondary);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -3236,8 +4177,7 @@ export default {
 .no-members {
   text-align: center;
   padding: 3rem 2rem;
-  color: var(--text-dark);
-  opacity: 0.7;
+  color: var(--text-secondary);
 }
 
 .no-members p {
@@ -3314,7 +4254,7 @@ export default {
 .member-detail-name {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0;
 }
 
@@ -3337,7 +4277,7 @@ export default {
 .detail-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.8;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -3346,7 +4286,7 @@ export default {
 .detail-value {
   font-size: 1rem;
   font-weight: 500;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .payment-status-section {
@@ -3358,7 +4298,7 @@ export default {
 .payment-status-section h4 {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
   margin: 0 0 1rem 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -3424,12 +4364,12 @@ export default {
 .toggle-text {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--primary-dark);
+  color: var(--text);
 }
 
 .payment-note {
   font-size: 0.875rem;
-  color: var(--text-dark);
+  color: var(--text-secondary);
   opacity: 0.7;
   text-align: center;
   margin: 0;
@@ -3490,7 +4430,7 @@ export default {
 }
 
 .alert-body-centered p {
-  color: #4b5563;
+  color: var(--text-secondary);
   line-height: 1.6;
   font-size: 1.1rem;
 }
@@ -3508,15 +4448,584 @@ export default {
 
 .voucher-id {
   display: inline-block;
-  background-color: #f3f4f6;
-  color: #6b7280;
+  background-color: var(--surface-alt);
+  color: var(--text-secondary);
   border-radius: 4px;
   padding: 2px 6px;
   font-size: 0.75rem;
   font-weight: 600;
   margin-right: 8px;
   vertical-align: middle;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
+}
+
+
+/* ── Invoice Modal ──────────────────────────────────────────────────────── */
+.invoice-modal-content {
+  max-width: 560px;
+  width: 100%;
+}
+
+.invoice-preview-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.invoice-preview-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+
+.invoice-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: var(--btn-dark);
+  color: var(--btn-dark-text);
+  padding: 1.1rem 1.4rem;
+}
+
+.invoice-preview-org {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.invoice-preview-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 2px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.invoice-preview-number {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.invoice-preview-meta {
+  display: flex;
+  gap: 2rem;
+  padding: 0.9rem 1.4rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.preview-meta-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.preview-meta-value {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.invoice-preview-desc {
+  padding: 0.75rem 1.4rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.invoice-preview-desc p {
+  margin: 4px 0 0;
+  color: var(--text);
+}
+
+.invoice-preview-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1.4rem;
+  background: var(--surface-alt);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.preview-total-amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.invoice-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.invoice-action-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.invoice-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.invoice-action-btn:not(:disabled):hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.invoice-action-btn.pdf-btn {
+  background: var(--btn-dark);
+  color: var(--btn-dark-text);
+}
+
+.invoice-action-btn.send-btn {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.invoice-no-email-note {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ── Calendar Panel ─────────────────────────────────────────────────────── */
+.calendar-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cal-nav-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.cal-nav-btn:hover {
+  background: var(--surface-alt);
+}
+
+.cal-month-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+  min-width: 130px;
+  text-align: center;
+}
+
+.calendar-header-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.cal-today-btn {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.cal-today-btn:hover {
+  background: var(--border);
+}
+
+.cal-add-btn {
+  background: #2d6a4f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.cal-add-btn:hover {
+  background: #1b4332;
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 0.4rem 0.75rem 0;
+  gap: 2px;
+}
+
+.cal-weekdays span {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 0.25rem 0.75rem;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.12s;
+  min-width: 0;
+}
+
+.cal-day:hover {
+  background: var(--surface-alt);
+}
+
+.cal-day-num {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1;
+}
+
+.cal-day.cal-other-month .cal-day-num {
+  color: var(--border);
+}
+
+.cal-day.cal-today {
+  background: #d1fae5;
+}
+
+.cal-day.cal-today .cal-day-num {
+  color: #065f46;
+  font-weight: 700;
+}
+
+.cal-day.cal-selected {
+  background: #2d6a4f;
+}
+
+.cal-day.cal-selected .cal-day-num {
+  color: #fff;
+  font-weight: 700;
+}
+
+.cal-day.cal-selected .cal-dot {
+  background: #a7f3d0;
+}
+
+.cal-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #2d6a4f;
+  margin-top: 2px;
+}
+
+/* Day Modal */
+.day-modal-content {
+  max-width: 420px;
+  width: 95%;
+}
+
+.day-modal-date {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.day-modal-body {
+  padding: 0.5rem 1.5rem 1rem;
+  min-height: 80px;
+}
+
+.day-modal-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  padding: 1.5rem 0;
+}
+
+.day-modal-event-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.12s;
+}
+
+.day-modal-event-row:hover {
+  background: var(--surface-alt);
+}
+
+.day-modal-event-row:last-child {
+  border-bottom: none;
+}
+
+.day-modal-event-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.day-modal-event-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.day-modal-event-type {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+.day-modal-event-chevron {
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.cal-event-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.cal-event-dot.type-event { background: #2d6a4f; }
+.cal-event-dot.type-competition { background: #dc2626; }
+.cal-event-dot.type-training { background: #2563eb; }
+.cal-event-dot.type-meeting { background: #d97706; }
+.cal-event-dot.type-other { background: #6b7280; }
+
+.cal-event-delete {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.12s;
+}
+
+.cal-event-delete:hover {
+  color: #dc2626;
+}
+
+/* Add Event Modal */
+.event-modal-content {
+  max-width: 460px;
+  width: 95%;
+}
+
+/* Event Detail Modal */
+.event-detail-modal {
+  max-width: 480px;
+  width: 95%;
+}
+
+.event-detail-body {
+  padding: 1.5rem 2rem;
+}
+
+.event-detail-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 1rem;
+  line-height: 1.3;
+}
+
+.event-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.event-detail-type-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.event-detail-type-badge.type-event { background: #d1fae5; color: #065f46; }
+.event-detail-type-badge.type-competition { background: #fee2e2; color: #b91c1c; }
+.event-detail-type-badge.type-training { background: #dbeafe; color: #1d4ed8; }
+.event-detail-type-badge.type-meeting { background: #fef3c7; color: #b45309; }
+.event-detail-type-badge.type-other { background: var(--surface-alt); color: var(--text-secondary); }
+
+.event-detail-date {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.event-detail-section {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.event-detail-section label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.event-detail-desc {
+  font-size: 1rem;
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.event-detail-empty {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 0;
+}
+
+.event-detail-delete-btn {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #fee2e2;
+  color: #b91c1c;
+  transition: background 0.2s;
+}
+
+.event-detail-delete-btn:hover {
+  background: #fecaca;
+}
+
+@media (max-width: 1024px) {
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+  }
+
+  .invoice-modal-content,
+  .members-modal {
+    max-width: 95%;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    border-radius: 10px;
+  }
+
+  .modal-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .upload-area {
+    margin: 1rem;
+    padding: 2rem 1rem;
+  }
+
+  .modal-body,
+  .modal-footer {
+    padding: 1rem 1.25rem;
+  }
+
+  .day-modal-content {
+    max-width: 95%;
+  }
+
+  .event-modal-content,
+  .event-detail-modal {
+    max-width: 95%;
+  }
+}
+</style>
+
+<style>
+/* PNG quick-action / header icons don't inherit color — make them white on dark themes and on hover */
+[data-theme="dark"] .quick-action-card .action-icon-img,
+[data-theme="midnight"] .quick-action-card .action-icon-img,
+[data-theme="dark"] .header-btn .action-icon-img,
+[data-theme="midnight"] .header-btn .action-icon-img {
+  filter: brightness(0) invert(1);
+  opacity: 0.95;
+}
+
+.quick-action-card:hover .action-icon-img,
+.header-btn:hover .action-icon-img {
+  filter: brightness(0) invert(1);
+  opacity: 1;
 }
 </style>
 
