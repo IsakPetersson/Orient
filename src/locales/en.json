@@ -594,7 +594,10 @@
             "parseError": "Could not read the SIE file. Please check the format.",
             "noTransactions": "No transactions found in the file.",
             "fileRequired": "Please select a SIE file first.",
-            "replaceFile": "Replace file"
+            "replaceFile": "Replace file",
+            "targetAccount": "Import into account",
+            "targetAccountHint": "Choose which ledger account the imported vouchers should be posted to.",
+            "noAccounts": "There is no account to import into. Create an account from the dashboard first."
         },
         "roles": {
             "OWNER": "Owner",

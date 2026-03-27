@@ -442,14 +442,28 @@
           <button class="close-btn" type="button" @click="closeSieImportModal">&times;</button>
         </div>
         <div class="modal-body">
+          <div class="sie-import-account-row">
+            <label for="sie-import-account">{{ $t('dashboard.sieImport.targetAccount') }}</label>
+            <select
+              id="sie-import-account"
+              v-model.number="sieImportAccountId"
+              class="sie-import-select setting-input"
+              :disabled="!accounts.length || sieImporting"
+            >
+              <option v-for="a in accounts" :key="a.id" :value="a.id">{{ a.name }}</option>
+            </select>
+            <p class="sie-import-account-hint">{{ $t('dashboard.sieImport.targetAccountHint') }}</p>
+            <p v-if="!accounts.length" class="sie-import-warning">{{ $t('dashboard.sieImport.noAccounts') }}</p>
+          </div>
+
           <div v-if="!sieImportParsed" class="sie-upload-section">
             <div
               class="upload-area sie-upload-area"
-              :class="{ 'drag-active': sieImportDragging }"
-              @dragover.prevent="sieImportDragging = true"
+              :class="{ 'drag-active': sieImportDragging, 'sie-upload-disabled': !accounts.length }"
+              @dragover.prevent="onSieUploadDragOver"
               @dragleave.prevent="sieImportDragging = false"
               @drop.prevent="handleSieFileDrop"
-              @click="$refs.sieFileInput.click()"
+              @click="openSieFilePicker"
             >
               <span class="upload-icon">📂</span>
               <p v-if="sieImportParsing">{{ $t('dashboard.sieImport.parsing') }}</p>
@@ -516,7 +530,7 @@
           <button
             type="button"
             class="submit-btn"
-            :disabled="!sieImportParsed || sieImporting"
+            :disabled="!sieImportParsed || sieImporting || !sieImportAccountId || !accounts.length"
             @click="submitSieImport"
           >
             {{ sieImporting ? $t('dashboard.sieImport.importing') : $t('dashboard.sieImport.import') }}
@@ -579,7 +593,8 @@ export default {
       sieImportParsing: false,
       sieImportParsed: null,
       sieImporting: false,
-      sieImportDragging: false
+      sieImportDragging: false,
+      sieImportAccountId: null
     }
   },
   computed: {
@@ -727,11 +742,23 @@ export default {
 
     },
 
+    syncSieImportAccountSelection() {
+      const list = this.accounts || []
+      if (!list.length) {
+        this.sieImportAccountId = null
+        return
+      }
+      const ok = list.some((a) => a.id === this.sieImportAccountId)
+      if (!this.sieImportAccountId || !ok) {
+        this.sieImportAccountId = list[0].id
+      }
+    },
     openSieImportModal() {
       if (!this.hasPermission) {
         this.showAlert(this.$t('dashboard.alerts.noPermissionTitle'), this.$t('settings.alerts.noPermission'), 'error')
         return
       }
+      this.syncSieImportAccountSelection()
       this.showSieImportModal = true
     },
     closeSieImportModal() {
@@ -746,16 +773,30 @@ export default {
       this.sieImportDragging = false
       if (this.$refs.sieFileInput) this.$refs.sieFileInput.value = ''
     },
+    onSieUploadDragOver() {
+      if (!this.accounts.length) return
+      this.sieImportDragging = true
+    },
+    openSieFilePicker() {
+      if (!this.accounts.length) return
+      this.$refs.sieFileInput?.click()
+    },
     handleSieFileDrop(e) {
       this.sieImportDragging = false
+      if (!this.accounts.length) return
       const file = e.dataTransfer?.files?.[0]
       if (file) this.parseSieFile(file)
     },
     handleSieFileSelect(e) {
+      if (!this.accounts.length) return
       const file = e.target.files?.[0]
       if (file) this.parseSieFile(file)
     },
     async parseSieFile(file) {
+      if (!this.accounts.length) {
+        this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.sieImport.noAccounts'), 'error')
+        return
+      }
       this.sieImportParsing = true
       this.sieImportFile = file
       try {
@@ -870,14 +911,14 @@ export default {
     },
     async submitSieImport() {
       if (!this.sieImportParsed?.transactions?.length) return
-      if (!this.accounts?.length) {
+      if (!this.accounts?.length || !this.sieImportAccountId) {
         this.showAlert(this.$t('dashboard.alerts.errorTitle'), this.$t('dashboard.sieImport.error'), 'error')
         return
       }
 
       this.sieImporting = true
       try {
-        const accountId = this.accounts[0].id
+        const accountId = this.sieImportAccountId
         const response = await fetch('/api/finance?action=import-sie', {
           method: 'POST',
           headers: {
@@ -908,6 +949,7 @@ export default {
         })
         if (accRes.ok) {
           this.accounts = await accRes.json()
+          this.syncSieImportAccountSelection()
         }
       } catch (err) {
         console.error('SIE import failed:', err)
@@ -1931,6 +1973,43 @@ export default {
   padding: 1.25rem 1.5rem;
   max-height: min(70vh, 520px);
   overflow-y: auto;
+}
+
+.sie-import-account-row {
+  margin-bottom: 1.1rem;
+}
+
+.sie-import-account-row label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.sie-import-select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.sie-import-account-hint {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 0.45rem 0 0;
+  line-height: 1.4;
+}
+
+.sie-import-warning {
+  color: #dc2626;
+  font-size: 0.88rem;
+  margin: 0.5rem 0 0;
+}
+
+.sie-upload-area.sie-upload-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .sie-import-modal .modal-footer {

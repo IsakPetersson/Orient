@@ -594,7 +594,10 @@
             "parseError": "Kunde inte läsa SIE-filen. Kontrollera att formatet är korrekt.",
             "noTransactions": "Inga transaktioner hittades i filen.",
             "fileRequired": "Välj en SIE-fil först.",
-            "replaceFile": "Byt fil"
+            "replaceFile": "Byt fil",
+            "targetAccount": "Importera till konto",
+            "targetAccountHint": "Välj vilket bokföringskonto transaktionerna ska bokföras på.",
+            "noAccounts": "Det finns inget konto att importera till. Skapa ett konto i dashboarden först."
         },
         "roles": {
             "OWNER": "Ägare",
