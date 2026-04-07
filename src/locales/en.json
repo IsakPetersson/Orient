@@ -350,6 +350,17 @@
         "unpaid": "Unpaid",
         "income": "Income",
         "expenses": "Expenses",
+        "expensePeriod": {
+            "aria": "Expense period",
+            "mtd": "Month to date",
+            "ytd": "Year to date",
+            "allTime": "All time",
+            "custom": "Custom",
+            "from": "From date",
+            "to": "To date",
+            "noExpenses": "No expenses in this period.",
+            "periodTotal": "Period total"
+        },
         "breakdown": "(Breakdown)",
         "recentActivity": "Recent Activity",
         "gotoSettings": "Go to Settings",

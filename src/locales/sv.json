@@ -350,6 +350,17 @@
         "unpaid": "Obetalt",
         "income": "Intäkter",
         "expenses": "Utgifter",
+        "expensePeriod": {
+            "aria": "Period för utgifter",
+            "mtd": "Hittills i månaden",
+            "ytd": "Hittills i år",
+            "allTime": "All tid",
+            "custom": "Anpassad",
+            "from": "Från datum",
+            "to": "Till datum",
+            "noExpenses": "Inga utgifter i denna period.",
+            "periodTotal": "Periodsumma"
+        },
         "breakdown": "(Uppdelning)",
         "recentActivity": "Senaste Aktivitet",
         "gotoSettings": "Gå till Inställningar",
