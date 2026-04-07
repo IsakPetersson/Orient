@@ -364,6 +364,7 @@
             "from": "Från datum",
             "to": "Till datum",
             "noExpenses": "Inga utgifter i denna period.",
+            "noIncome": "Inga intäkter i denna period.",
             "periodTotal": "Periodsumma"
         },
         "breakdown": "(Uppdelning)",

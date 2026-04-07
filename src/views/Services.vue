@@ -201,10 +201,17 @@
               <div class="breakdown-panel">
                 <h3>{{ $t('dashboard.income') }} {{ $t('dashboard.breakdown') }}</h3>
                 <div class="breakdown-list">
-                  <div v-for="item in incomeBreakdown" :key="item.id" class="breakdown-row">
+                  <div v-if="filteredIncomeBreakdown.length === 0" class="breakdown-empty">
+                    {{ $t('dashboard.expensePeriod.noIncome') }}
+                  </div>
+                  <div v-for="item in filteredIncomeBreakdown" :key="item.id" class="breakdown-row">
                     <span class="breakdown-label">{{ item.category }}</span>
                     <span class="breakdown-value">{{ item.amount.toLocaleString() }} kr</span>
                   </div>
+                </div>
+                <div v-if="filteredIncomeBreakdown.length > 0" class="breakdown-total-row">
+                  <span class="breakdown-total-label">{{ $t('dashboard.expensePeriod.periodTotal') }}</span>
+                  <span class="breakdown-total-value">{{ incomePeriodTotal.toLocaleString() }} kr</span>
                 </div>
               </div>
 
@@ -1348,6 +1355,31 @@ export default {
       start.setHours(0, 0, 0, 0)
       end.setHours(23, 59, 59, 999)
       return { start, end }
+    },
+    filteredIncomeBreakdown() {
+      const { start, end } = this.expensePeriodBounds
+      const byCategory = {}
+      const accounts = this.accounts || []
+      for (const acc of accounts) {
+        for (const t of acc.transactions || []) {
+          if (t.amount <= 0) continue
+          const d = new Date(t.createdAt)
+          if (start && d < start) continue
+          if (end && d > end) continue
+          const cat = t.category || 'Övrigt'
+          byCategory[cat] = (byCategory[cat] || 0) + t.amount
+        }
+      }
+      return Object.entries(byCategory)
+        .map(([category, amount], index) => ({
+          id: `inc-${category}-${index}`,
+          category,
+          amount
+        }))
+        .sort((a, b) => b.amount - a.amount)
+    },
+    incomePeriodTotal() {
+      return this.filteredIncomeBreakdown.reduce((s, row) => s + row.amount, 0)
     },
     filteredExpenseBreakdown() {
       const { start, end } = this.expensePeriodBounds

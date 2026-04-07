@@ -364,6 +364,7 @@
             "from": "From date",
             "to": "To date",
             "noExpenses": "No expenses in this period.",
+            "noIncome": "No income in this period.",
             "periodTotal": "Period total"
         },
         "breakdown": "(Breakdown)",
