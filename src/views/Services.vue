@@ -116,16 +116,16 @@
                 <div class="stat-amount">{{ cashAndBank.toLocaleString() }} kr</div>
               </div>
               <div class="stat-card-compact income">
-                <div class="stat-label">{{ $t('dashboard.monthlyIncome') }}</div>
-                <div class="stat-amount">+{{ monthlyIncome.toLocaleString() }} kr</div>
+                <div class="stat-label">{{ $t('dashboard.income') }}</div>
+                <div class="stat-amount">+{{ overviewPeriodTotals.income.toLocaleString() }} kr</div>
               </div>
               <div class="stat-card-compact expense">
-                <div class="stat-label">{{ $t('dashboard.monthlyExpenses') }}</div>
-                <div class="stat-amount">-{{ monthlyExpenses.toLocaleString() }} kr</div>
+                <div class="stat-label">{{ $t('dashboard.expenses') }}</div>
+                <div class="stat-amount">-{{ overviewPeriodTotals.expenses.toLocaleString() }} kr</div>
               </div>
-              <div class="stat-card-compact" :class="monthlyResult >= 0 ? 'income' : 'expense'">
+              <div class="stat-card-compact" :class="overviewPeriodResult >= 0 ? 'income' : 'expense'">
                 <div class="stat-label">{{ $t('dashboard.result') }}</div>
-                <div class="stat-amount">{{ monthlyResult >= 0 ? '+' : '' }}{{ monthlyResult.toLocaleString() }} kr</div>
+                <div class="stat-amount">{{ overviewPeriodResult >= 0 ? '+' : '' }}{{ overviewPeriodResult.toLocaleString() }} kr</div>
               </div>
             </div>
           </div>
@@ -1264,8 +1264,24 @@ export default {
     await this.loadDashboard()
   },
   computed: {
-    monthlyResult() {
-      return this.monthlyIncome - this.monthlyExpenses
+    overviewPeriodTotals() {
+      const { start, end } = this.expensePeriodBounds
+      let income = 0
+      let expenses = 0
+      for (const acc of this.accounts || []) {
+        for (const t of acc.transactions || []) {
+          const d = new Date(t.createdAt)
+          if (start && d < start) continue
+          if (end && d > end) continue
+          if (t.amount > 0) income += t.amount
+          else if (t.amount < 0) expenses += Math.abs(t.amount)
+        }
+      }
+      return { income, expenses }
+    },
+    overviewPeriodResult() {
+      const { income, expenses } = this.overviewPeriodTotals
+      return income - expenses
     },
     expensePeriodBounds() {
       const now = new Date()
@@ -1529,9 +1545,9 @@ export default {
 
         const summaryRows = [
           ['Kassa & Bank', `${this.cashAndBank.toLocaleString('sv-SE')} kr`],
-          ['Manadsintakter', `+${this.monthlyIncome.toLocaleString('sv-SE')} kr`],
-          ['Manadskostnader', `-${this.monthlyExpenses.toLocaleString('sv-SE')} kr`],
-          ['Resultat', `${this.monthlyResult >= 0 ? '+' : ''}${this.monthlyResult.toLocaleString('sv-SE')} kr`],
+          ['Intakter', `+${this.overviewPeriodTotals.income.toLocaleString('sv-SE')} kr`],
+          ['Kostnader', `-${this.overviewPeriodTotals.expenses.toLocaleString('sv-SE')} kr`],
+          ['Resultat', `${this.overviewPeriodResult >= 0 ? '+' : ''}${this.overviewPeriodResult.toLocaleString('sv-SE')} kr`],
         ]
 
         doc.setFontSize(10)
