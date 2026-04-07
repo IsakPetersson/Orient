@@ -162,6 +162,35 @@
         </div>
       </div>
 
+      <!-- Avatar crop modal -->
+      <div v-if="showAvatarCropModal" class="avatar-crop-overlay" @click.self="cancelAvatarCrop">
+        <div class="avatar-crop-modal" @click.stop>
+          <div class="avatar-crop-header">
+            <h2>{{ $t('profile.cropPhotoTitle') }}</h2>
+            <p class="avatar-crop-hint">{{ $t('profile.cropPhotoHint') }}</p>
+          </div>
+          <div class="avatar-crop-body">
+            <img
+              v-show="cropImageSrc"
+              :key="cropImageSrc"
+              ref="cropImage"
+              :src="cropImageSrc"
+              alt=""
+              class="avatar-crop-img"
+              @load="onCropImageLoaded"
+            />
+          </div>
+          <div class="avatar-crop-footer">
+            <button type="button" class="avatar-crop-btn secondary" @click="cancelAvatarCrop">
+              {{ $t('profile.cropCancel') }}
+            </button>
+            <button type="button" class="avatar-crop-btn primary" @click="applyAvatarCrop">
+              {{ $t('profile.cropApply') }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Toast notification -->
       <transition name="toast">
         <div v-if="toast.show" class="toast" :class="toast.type">{{ toast.message }}</div>
@@ -171,7 +200,11 @@
 </template>
 
 <script>
+import Cropper from 'cropperjs'
+import 'cropperjs/dist/cropper.css'
 import { getCurrentUser, updateProfile } from '../lib/auth'
+
+const AVATAR_EXPORT_SIZE = 256
 
 export default {
   name: 'ProfileSettings',
@@ -179,6 +212,9 @@ export default {
     return {
       loading: true,
       showAuthModal: false,
+      showAvatarCropModal: false,
+      cropImageSrc: '',
+      cropperInstance: null,
       saving: false,
       changingPassword: false,
       currentUser: null,
@@ -225,30 +261,81 @@ export default {
     triggerAvatarUpload() {
       this.$refs.avatarInput.click()
     },
+    destroyAvatarCropper() {
+      if (this.cropperInstance) {
+        this.cropperInstance.destroy()
+        this.cropperInstance = null
+      }
+    },
+    revokeCropImage() {
+      if (this.cropImageSrc) {
+        URL.revokeObjectURL(this.cropImageSrc)
+        this.cropImageSrc = ''
+      }
+    },
     onAvatarSelected(event) {
       const file = event.target.files?.[0]
       if (!file) return
 
       if (file.size > 5 * 1024 * 1024) {
         this.showToast(this.$t('profile.imageTooLarge'), 'error')
+        event.target.value = ''
         return
       }
 
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-      const img = new Image()
-      img.onload = () => {
-        const size = 256
-        canvas.width = size
-        canvas.height = size
-        const scale = Math.max(size / img.width, size / img.height)
-        const w = img.width * scale
-        const h = img.height * scale
-        ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h)
-        this.form.avatarUrl = canvas.toDataURL('image/jpeg', 0.85)
-      }
-      img.src = URL.createObjectURL(file)
+      this.destroyAvatarCropper()
+      this.revokeCropImage()
+      this.cropImageSrc = URL.createObjectURL(file)
+      this.showAvatarCropModal = true
       event.target.value = ''
+    },
+    onCropImageLoaded() {
+      this.$nextTick(() => {
+        this.initAvatarCropper()
+      })
+    },
+    initAvatarCropper() {
+      const el = this.$refs.cropImage
+      if (!el || !this.cropImageSrc) return
+      this.destroyAvatarCropper()
+      this.cropperInstance = new Cropper(el, {
+        aspectRatio: 1,
+        viewMode: 2,
+        dragMode: 'move',
+        autoCropArea: 1,
+        responsive: true,
+        background: false,
+        movable: true,
+        zoomable: true,
+        zoomOnTouch: true,
+        zoomOnWheel: true,
+        wheelZoomRatio: 0.08,
+        minCropBoxWidth: 40,
+        minCropBoxHeight: 40
+      })
+    },
+    cancelAvatarCrop() {
+      this.showAvatarCropModal = false
+      this.destroyAvatarCropper()
+      this.revokeCropImage()
+    },
+    applyAvatarCrop() {
+      if (!this.cropperInstance) {
+        this.cancelAvatarCrop()
+        return
+      }
+      const canvas = this.cropperInstance.getCroppedCanvas({
+        width: AVATAR_EXPORT_SIZE,
+        height: AVATAR_EXPORT_SIZE,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high'
+      })
+      if (!canvas) {
+        this.showToast(this.$t('profile.cropError'), 'error')
+        return
+      }
+      this.form.avatarUrl = canvas.toDataURL('image/jpeg', 0.88)
+      this.cancelAvatarCrop()
     },
     removeAvatar() {
       this.form.avatarUrl = null
@@ -322,6 +409,9 @@ export default {
       this.toast = { show: true, message, type }
       setTimeout(() => { this.toast.show = false }, 3000)
     }
+  },
+  beforeUnmount() {
+    this.cancelAvatarCrop()
   }
 }
 </script>
@@ -672,6 +762,108 @@ export default {
   font-size: 0.75rem;
   color: var(--text-secondary);
   line-height: 1.3;
+}
+
+/* Avatar crop modal */
+.avatar-crop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  background: var(--overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: avatarCropFade 0.2s ease;
+}
+
+@keyframes avatarCropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.avatar-crop-modal {
+  background: var(--surface);
+  border-radius: 12px;
+  max-width: min(100%, 520px);
+  width: 100%;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.avatar-crop-header {
+  padding: 1.25rem 1.25rem 0.75rem;
+}
+
+.avatar-crop-header h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.avatar-crop-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.avatar-crop-body {
+  padding: 0 1rem;
+  max-height: min(62vh, 440px);
+  background: #0f0f0f;
+}
+
+.avatar-crop-body :deep(.cropper-container) {
+  max-height: min(62vh, 440px);
+}
+
+.avatar-crop-body :deep(.cropper-bg) {
+  background-image: none;
+}
+
+.avatar-crop-img {
+  display: block;
+  max-width: 100%;
+}
+
+.avatar-crop-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.avatar-crop-btn {
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  border: 1px solid var(--border);
+}
+
+.avatar-crop-btn.secondary {
+  background: var(--background);
+  color: var(--text);
+}
+
+.avatar-crop-btn.secondary:hover {
+  background: var(--surface-alt);
+}
+
+.avatar-crop-btn.primary {
+  background: var(--btn-dark);
+  color: var(--btn-dark-text);
+  border-color: transparent;
+}
+
+.avatar-crop-btn.primary:hover {
+  opacity: 0.92;
 }
 
 /* Toast */
