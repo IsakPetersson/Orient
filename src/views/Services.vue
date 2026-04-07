@@ -83,16 +83,14 @@
           <div class="center-column">
             <div class="stats-compact">
               <div class="overview-top-block">
-                <h3 class="section-title">{{ $t('dashboard.overview') }}</h3>
-                <div class="overview-expense-period">
-                  <label class="overview-expense-period-label" for="expensePeriodSelect">{{
-                    $t('dashboard.expensePeriod.label')
-                  }}</label>
-                  <div class="overview-period-row">
+                <div class="overview-head-row">
+                  <h3 class="section-title overview-section-title">{{ $t('dashboard.overview') }}</h3>
+                  <div class="overview-period-select-wrap">
                     <select
                       id="expensePeriodSelect"
-                      class="overview-expense-period-select"
+                      class="overview-expense-period-select overview-expense-period-select--compact"
                       :value="expensePeriodPreset"
+                      :title="$t('dashboard.expensePeriod.label')"
                       :aria-label="$t('dashboard.expensePeriod.aria')"
                       @change="setExpensePeriodPreset($event.target.value)"
                     >
@@ -3142,38 +3140,46 @@ export default {
   border-bottom: 1px solid var(--background);
 }
 
-.overview-expense-period {
+.overview-head-row {
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem 0.5rem;
+  min-width: 0;
 }
 
-.overview-expense-period-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+.overview-section-title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
 }
 
-.overview-period-row {
+.overview-period-select-wrap {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
+  gap: 0.35rem;
+  flex-shrink: 0;
 }
 
 .overview-expense-period-select {
-  flex: 1;
-  min-width: 0;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.9375rem;
   font-family: inherit;
-  border: 2px solid var(--border);
-  border-radius: 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
   background-color: var(--input-bg);
   color: var(--text);
   cursor: pointer;
+}
+
+.overview-expense-period-select--compact {
+  flex-shrink: 0;
+  width: auto;
+  max-width: min(52vw, 11rem);
+  padding: 0.2rem 0.4rem 0.2rem 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
 }
 
 .overview-expense-period-select:focus {
@@ -3183,13 +3189,13 @@ export default {
 
 .overview-expense-custom-trigger {
   flex-shrink: 0;
-  padding: 0.5rem 0.65rem;
-  font-size: 0.8125rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   font-family: inherit;
-  line-height: 1.2;
-  border: 2px solid var(--border);
-  border-radius: 6px;
+  line-height: 1.3;
+  border: 1px solid var(--border);
+  border-radius: 4px;
   background: var(--background);
   color: var(--primary-light, #2563eb);
   cursor: pointer;
