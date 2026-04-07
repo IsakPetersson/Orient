@@ -352,6 +352,10 @@
         "expenses": "Expenses",
         "expensePeriod": {
             "label": "Expense breakdown period",
+            "customModalTitle": "Custom date range",
+            "editCustomRange": "Change date range",
+            "editCustomRangeShort": "Dates",
+            "closeModal": "Close",
             "aria": "Expense period",
             "mtd": "Month to date",
             "ytd": "Year to date",

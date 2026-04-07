@@ -85,30 +85,31 @@
               <div class="overview-top-block">
                 <div class="overview-head-row">
                   <h3 class="section-title overview-section-title">{{ $t('dashboard.overview') }}</h3>
-                  <select
-                    id="expensePeriodSelect"
-                    class="overview-expense-period-select overview-expense-period-select--compact"
-                    :value="expensePeriodPreset"
-                    :title="$t('dashboard.expensePeriod.label')"
-                    :aria-label="$t('dashboard.expensePeriod.aria')"
-                    @change="setExpensePeriodPreset($event.target.value)"
-                  >
-                    <option value="mtd">{{ $t('dashboard.expensePeriod.mtd') }}</option>
-                    <option value="ytd">{{ $t('dashboard.expensePeriod.ytd') }}</option>
-                    <option value="all">{{ $t('dashboard.expensePeriod.allTime') }}</option>
-                    <option value="custom">{{ $t('dashboard.expensePeriod.custom') }}</option>
-                  </select>
-                </div>
-                <div v-if="expensePeriodPreset === 'custom'" class="overview-expense-period-custom">
-                  <label class="overview-expense-date-label">
-                    <span class="overview-expense-date-caption">{{ $t('dashboard.expensePeriod.from') }}</span>
-                    <input v-model="expenseCustomStart" type="date" class="overview-expense-date-input" />
-                  </label>
-                  <span class="overview-expense-date-sep" aria-hidden="true">–</span>
-                  <label class="overview-expense-date-label">
-                    <span class="overview-expense-date-caption">{{ $t('dashboard.expensePeriod.to') }}</span>
-                    <input v-model="expenseCustomEnd" type="date" class="overview-expense-date-input" />
-                  </label>
+                  <div class="overview-period-select-wrap">
+                    <select
+                      id="expensePeriodSelect"
+                      class="overview-expense-period-select overview-expense-period-select--compact"
+                      :value="expensePeriodPreset"
+                      :title="$t('dashboard.expensePeriod.label')"
+                      :aria-label="$t('dashboard.expensePeriod.aria')"
+                      @change="setExpensePeriodPreset($event.target.value)"
+                    >
+                      <option value="mtd">{{ $t('dashboard.expensePeriod.mtd') }}</option>
+                      <option value="ytd">{{ $t('dashboard.expensePeriod.ytd') }}</option>
+                      <option value="all">{{ $t('dashboard.expensePeriod.allTime') }}</option>
+                      <option value="custom">{{ $t('dashboard.expensePeriod.custom') }}</option>
+                    </select>
+                    <button
+                      v-if="expensePeriodPreset === 'custom'"
+                      type="button"
+                      class="overview-expense-custom-trigger"
+                      :title="$t('dashboard.expensePeriod.editCustomRange')"
+                      :aria-label="$t('dashboard.expensePeriod.editCustomRange')"
+                      @click="openExpensePeriodCustomModal"
+                    >
+                      {{ $t('dashboard.expensePeriod.editCustomRangeShort') }}
+                    </button>
+                  </div>
                 </div>
               </div>
               <div class="stat-card-compact">
@@ -275,6 +276,35 @@
           <button :class="['btn', 'btn-lg', customAlertType === 'show-settings-link' ? 'btn-primary' : 'btn-primary']" @click="showCustomAlert = false">
             {{ customAlertType === 'show-settings-link' ? $t('dashboard.cancel') : $t('dashboard.ok') }}
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom expense period (dates) -->
+    <div
+      v-if="showExpensePeriodCustomModal"
+      class="modal-overlay"
+      @click.self="closeExpensePeriodCustomModal"
+    >
+      <div class="modal-content modal-content--narrow expense-period-custom-modal" @click.stop>
+        <div class="modal-header">
+          <h2>{{ $t('dashboard.expensePeriod.customModalTitle') }}</h2>
+          <button type="button" class="close-btn" :aria-label="$t('dashboard.expensePeriod.closeModal')" @click="closeExpensePeriodCustomModal">
+            ×
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="expensePeriodCustomStart">{{ $t('dashboard.expensePeriod.from') }}</label>
+            <input id="expensePeriodCustomStart" v-model="expenseCustomStart" type="date" />
+          </div>
+          <div class="form-group">
+            <label for="expensePeriodCustomEnd">{{ $t('dashboard.expensePeriod.to') }}</label>
+            <input id="expensePeriodCustomEnd" v-model="expenseCustomEnd" type="date" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="upload-btn" @click="closeExpensePeriodCustomModal">{{ $t('dashboard.ok') }}</button>
         </div>
       </div>
     </div>
@@ -1230,6 +1260,7 @@ export default {
       expensePeriodPreset: 'mtd',
       expenseCustomStart: defaultCustomStart,
       expenseCustomEnd: defaultCustomEnd,
+      showExpensePeriodCustomModal: false,
       _expenseFilterOrgId: null,
       accounts: [],
       // Calendar
@@ -1479,14 +1510,25 @@ export default {
       this.expensePeriodPreset = 'mtd'
       this.expenseCustomStart = localISODate(new Date(today.getFullYear(), today.getMonth(), 1))
       this.expenseCustomEnd = localISODate(today)
+      this.showExpensePeriodCustomModal = false
+    },
+    openExpensePeriodCustomModal() {
+      this.showExpensePeriodCustomModal = true
+    },
+    closeExpensePeriodCustomModal() {
+      this.showExpensePeriodCustomModal = false
     },
     setExpensePeriodPreset(preset) {
       const prev = this.expensePeriodPreset
       this.expensePeriodPreset = preset
+      if (preset !== 'custom') {
+        this.showExpensePeriodCustomModal = false
+      }
       if (preset === 'custom' && prev !== 'custom') {
         const today = new Date()
         this.expenseCustomStart = localISODate(new Date(today.getFullYear(), today.getMonth(), 1))
         this.expenseCustomEnd = localISODate(today)
+        this.showExpensePeriodCustomModal = true
       }
     },
     onSwishMemberSelect(event) {
@@ -3138,49 +3180,34 @@ export default {
   border-color: var(--primary-light);
 }
 
-.overview-expense-period-custom {
+.overview-period-select-wrap {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.overview-expense-date-label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin: 0;
-  flex: 1;
-  min-width: 8rem;
-}
-
-.overview-expense-date-caption {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.overview-expense-date-input {
-  padding: 0.4rem 0.5rem;
-  font-size: 0.875rem;
-  border-radius: 6px;
-  border: 2px solid var(--border);
-  background: var(--input-bg);
-  color: var(--text);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.overview-expense-date-input:focus {
-  outline: none;
-  border-color: var(--primary-light);
-}
-
-.overview-expense-date-sep {
-  color: var(--text-secondary);
-  padding-bottom: 0.35rem;
+  align-items: center;
+  gap: 0.35rem;
   flex-shrink: 0;
+}
+
+.overview-expense-custom-trigger {
+  padding: 0.15rem 0.45rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1.3;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--primary-light, #2563eb);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.overview-expense-custom-trigger:hover {
+  background: var(--surface-hover, rgba(0, 0, 0, 0.04));
+}
+
+.modal-content--narrow {
+  max-width: 380px;
+  width: calc(100% - 2rem);
 }
 
 .breakdown-empty {

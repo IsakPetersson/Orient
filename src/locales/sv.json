@@ -352,6 +352,10 @@
         "expenses": "Utgifter",
         "expensePeriod": {
             "label": "Period för utgiftsfördelning",
+            "customModalTitle": "Anpassat datumintervall",
+            "editCustomRange": "Ändra datumintervall",
+            "editCustomRangeShort": "Datum",
+            "closeModal": "Stäng",
             "aria": "Period för utgifter",
             "mtd": "Hittills i månaden",
             "ytd": "Hittills i år",
