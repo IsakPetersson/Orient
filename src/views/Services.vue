@@ -83,6 +83,36 @@
           <div class="center-column">
             <div class="stats-compact">
               <h3 class="section-title">{{ $t('dashboard.overview') }}</h3>
+              <div class="overview-period-controls">
+                <div class="overview-expense-period">
+                  <label class="overview-expense-period-label" for="expensePeriodSelect">{{
+                    $t('dashboard.expensePeriod.label')
+                  }}</label>
+                  <select
+                    id="expensePeriodSelect"
+                    class="overview-expense-period-select"
+                    :value="expensePeriodPreset"
+                    :aria-label="$t('dashboard.expensePeriod.aria')"
+                    @change="setExpensePeriodPreset($event.target.value)"
+                  >
+                    <option value="mtd">{{ $t('dashboard.expensePeriod.mtd') }}</option>
+                    <option value="ytd">{{ $t('dashboard.expensePeriod.ytd') }}</option>
+                    <option value="all">{{ $t('dashboard.expensePeriod.allTime') }}</option>
+                    <option value="custom">{{ $t('dashboard.expensePeriod.custom') }}</option>
+                  </select>
+                </div>
+                <div v-if="expensePeriodPreset === 'custom'" class="overview-expense-period-custom">
+                  <label class="overview-expense-date-label">
+                    <span class="overview-expense-date-caption">{{ $t('dashboard.expensePeriod.from') }}</span>
+                    <input v-model="expenseCustomStart" type="date" class="overview-expense-date-input" />
+                  </label>
+                  <span class="overview-expense-date-sep" aria-hidden="true">–</span>
+                  <label class="overview-expense-date-label">
+                    <span class="overview-expense-date-caption">{{ $t('dashboard.expensePeriod.to') }}</span>
+                    <input v-model="expenseCustomEnd" type="date" class="overview-expense-date-input" />
+                  </label>
+                </div>
+              </div>
               <div class="stat-card-compact">
                 <div class="stat-label">{{ $t('dashboard.cashBank') }}</div>
                 <div class="stat-amount">{{ cashAndBank.toLocaleString() }} kr</div>
@@ -180,57 +210,8 @@
               </div>
 
               <!-- Expense Breakdown -->
-              <div class="breakdown-panel expense-breakdown-panel">
-                <div class="breakdown-panel-header">
-                  <h3>{{ $t('dashboard.expenses') }} {{ $t('dashboard.breakdown') }}</h3>
-                  <div class="expense-period-toolbar">
-                    <div class="expense-period-presets" role="group" :aria-label="$t('dashboard.expensePeriod.aria')">
-                      <button
-                        type="button"
-                        class="expense-period-btn"
-                        :class="{ active: expensePeriodPreset === 'mtd' }"
-                        @click="setExpensePeriodPreset('mtd')"
-                      >
-                        {{ $t('dashboard.expensePeriod.mtd') }}
-                      </button>
-                      <button
-                        type="button"
-                        class="expense-period-btn"
-                        :class="{ active: expensePeriodPreset === 'ytd' }"
-                        @click="setExpensePeriodPreset('ytd')"
-                      >
-                        {{ $t('dashboard.expensePeriod.ytd') }}
-                      </button>
-                      <button
-                        type="button"
-                        class="expense-period-btn"
-                        :class="{ active: expensePeriodPreset === 'all' }"
-                        @click="setExpensePeriodPreset('all')"
-                      >
-                        {{ $t('dashboard.expensePeriod.allTime') }}
-                      </button>
-                      <button
-                        type="button"
-                        class="expense-period-btn"
-                        :class="{ active: expensePeriodPreset === 'custom' }"
-                        @click="setExpensePeriodPreset('custom')"
-                      >
-                        {{ $t('dashboard.expensePeriod.custom') }}
-                      </button>
-                    </div>
-                    <div v-if="expensePeriodPreset === 'custom'" class="expense-period-custom">
-                      <label class="expense-period-date-label">
-                        <span class="sr-only">{{ $t('dashboard.expensePeriod.from') }}</span>
-                        <input type="date" v-model="expenseCustomStart" class="expense-period-date-input" />
-                      </label>
-                      <span class="expense-period-sep" aria-hidden="true">–</span>
-                      <label class="expense-period-date-label">
-                        <span class="sr-only">{{ $t('dashboard.expensePeriod.to') }}</span>
-                        <input type="date" v-model="expenseCustomEnd" class="expense-period-date-input" />
-                      </label>
-                    </div>
-                  </div>
-                </div>
+              <div class="breakdown-panel">
+                <h3>{{ $t('dashboard.expenses') }} {{ $t('dashboard.breakdown') }}</h3>
                 <div class="breakdown-list">
                   <div v-if="filteredExpenseBreakdown.length === 0" class="breakdown-empty">
                     {{ $t('dashboard.expensePeriod.noExpenses') }}
@@ -3097,74 +3078,88 @@ export default {
   color: var(--text);
 }
 
-.expense-breakdown-panel .breakdown-panel-header {
+.overview-period-controls {
   margin-bottom: 0.75rem;
-}
-
-.expense-breakdown-panel .breakdown-panel-header h3 {
-  margin-bottom: 0.5rem;
-}
-
-.expense-period-toolbar {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--background);
   display: flex;
   flex-direction: column;
+  gap: 0.65rem;
+}
+
+.overview-expense-period {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.overview-expense-period-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.overview-expense-period-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background-color: var(--input-bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.overview-expense-period-select:focus {
+  outline: none;
+  border-color: var(--primary-light);
+}
+
+.overview-expense-period-custom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   gap: 0.5rem;
 }
 
-.expense-period-presets {
+.overview-expense-date-label {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  flex: 1;
+  min-width: 8rem;
 }
 
-.expense-period-btn {
-  padding: 0.35rem 0.6rem;
+.overview-expense-date-caption {
   font-size: 0.75rem;
   font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid var(--border, rgba(0, 0, 0, 0.12));
-  background: var(--background);
   color: var(--text-secondary);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.expense-period-btn:hover {
-  background: var(--surface-hover, rgba(0, 0, 0, 0.04));
-  color: var(--text);
-}
-
-.expense-period-btn.active {
-  background: var(--primary, #2563eb);
-  color: #fff;
-  border-color: transparent;
-}
-
-.expense-period-custom {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.expense-period-date-label {
-  margin: 0;
-  display: flex;
-  align-items: center;
-}
-
-.expense-period-date-input {
-  padding: 0.25rem 0.4rem;
-  font-size: 0.8125rem;
-  border-radius: 4px;
-  border: 1px solid var(--border, rgba(0, 0, 0, 0.12));
-  background: var(--background);
-  color: var(--text);
-}
-
-.expense-period-sep {
-  color: var(--text-secondary);
+.overview-expense-date-input {
+  padding: 0.4rem 0.5rem;
   font-size: 0.875rem;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.overview-expense-date-input:focus {
+  outline: none;
+  border-color: var(--primary-light);
+}
+
+.overview-expense-date-sep {
+  color: var(--text-secondary);
+  padding-bottom: 0.35rem;
+  flex-shrink: 0;
 }
 
 .breakdown-empty {
@@ -3193,18 +3188,6 @@ export default {
   font-size: 1.0625rem;
   font-weight: 700;
   color: var(--text);
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .member-stats-compact {

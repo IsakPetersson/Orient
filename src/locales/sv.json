@@ -351,6 +351,7 @@
         "income": "Intäkter",
         "expenses": "Utgifter",
         "expensePeriod": {
+            "label": "Period för utgiftsfördelning",
             "aria": "Period för utgifter",
             "mtd": "Hittills i månaden",
             "ytd": "Hittills i år",
