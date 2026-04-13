@@ -8,8 +8,8 @@
     <div v-if="mobileMenuOpen" class="sidebar-backdrop" @click="mobileMenuOpen = false"></div>
     <aside class="sidebar" :class="{ 'sidebar-open': mobileMenuOpen }">
       <div class="sidebar-header">
-        <div>
-          <span class="logo-text">Orient</span>
+        <div class="logo">
+          <img :src="orientLogo" alt="Orient" class="logo-image" />
         </div>
       </div>
       <nav class="sidebar-nav">
@@ -299,12 +299,14 @@
 import { SpeedInsights } from '@vercel/speed-insights/vue'
 import { getCurrentUser, logout } from './lib/auth'
 import { getUserOrganizations, createOrganization as createOrg, joinOrganization as joinOrg, getOrganizationInvite, deleteOrganization as deleteOrg } from './lib/orgs'
+import orientLogo from './assets/orient-logo.png'
 
 export default {
   name: 'App',
   components: { SpeedInsights },
   data() {
     return {
+      orientLogo,
       user: null,
       showOrganizationsModal: false,
       organizations: [],
