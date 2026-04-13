@@ -82,22 +82,51 @@
           <!-- Top Center - Financial Overview (spans 2 columns) -->
           <div class="center-column">
             <div class="stats-compact">
-              <h3 class="section-title">{{ $t('dashboard.overview') }}</h3>
+              <div class="overview-top-block">
+                <div class="overview-head-row">
+                  <h3 class="section-title overview-section-title">{{ $t('dashboard.overview') }}</h3>
+                  <div class="overview-period-select-wrap">
+                    <select
+                      id="expensePeriodSelect"
+                      class="overview-expense-period-select overview-expense-period-select--compact"
+                      :value="expensePeriodPreset"
+                      :title="$t('dashboard.expensePeriod.label')"
+                      :aria-label="$t('dashboard.expensePeriod.aria')"
+                      @change="setExpensePeriodPreset($event.target.value)"
+                    >
+                      <option value="mtd">{{ $t('dashboard.expensePeriod.mtd') }}</option>
+                      <option value="ytd">{{ $t('dashboard.expensePeriod.ytd') }}</option>
+                      <option value="all">{{ $t('dashboard.expensePeriod.allTime') }}</option>
+                      <option value="custom">{{ $t('dashboard.expensePeriod.custom') }}</option>
+                    </select>
+                    <button
+                      v-if="expensePeriodPreset === 'custom'"
+                      type="button"
+                      class="overview-expense-custom-trigger"
+                      :title="$t('dashboard.expensePeriod.editCustomRange')"
+                      :aria-label="$t('dashboard.expensePeriod.editCustomRange')"
+                      @click="openExpensePeriodCustomModal"
+                    >
+                      {{ $t('dashboard.expensePeriod.editCustomRangeShort') }}
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div class="stat-card-compact">
                 <div class="stat-label">{{ $t('dashboard.cashBank') }}</div>
                 <div class="stat-amount">{{ cashAndBank.toLocaleString() }} kr</div>
               </div>
               <div class="stat-card-compact income">
-                <div class="stat-label">{{ $t('dashboard.monthlyIncome') }}</div>
-                <div class="stat-amount">+{{ monthlyIncome.toLocaleString() }} kr</div>
+                <div class="stat-label">{{ $t('dashboard.income') }}</div>
+                <div class="stat-amount">+{{ overviewPeriodTotals.income.toLocaleString() }} kr</div>
               </div>
               <div class="stat-card-compact expense">
-                <div class="stat-label">{{ $t('dashboard.monthlyExpenses') }}</div>
-                <div class="stat-amount">-{{ monthlyExpenses.toLocaleString() }} kr</div>
+                <div class="stat-label">{{ $t('dashboard.expenses') }}</div>
+                <div class="stat-amount">-{{ overviewPeriodTotals.expenses.toLocaleString() }} kr</div>
               </div>
-              <div class="stat-card-compact" :class="monthlyResult >= 0 ? 'income' : 'expense'">
+              <div class="stat-card-compact" :class="overviewPeriodResult >= 0 ? 'income' : 'expense'">
                 <div class="stat-label">{{ $t('dashboard.result') }}</div>
-                <div class="stat-amount">{{ monthlyResult >= 0 ? '+' : '' }}{{ monthlyResult.toLocaleString() }} kr</div>
+                <div class="stat-amount">{{ overviewPeriodResult >= 0 ? '+' : '' }}{{ overviewPeriodResult.toLocaleString() }} kr</div>
               </div>
             </div>
           </div>
@@ -172,10 +201,17 @@
               <div class="breakdown-panel">
                 <h3>{{ $t('dashboard.income') }} {{ $t('dashboard.breakdown') }}</h3>
                 <div class="breakdown-list">
-                  <div v-for="item in incomeBreakdown" :key="item.id" class="breakdown-row">
+                  <div v-if="filteredIncomeBreakdown.length === 0" class="breakdown-empty">
+                    {{ $t('dashboard.expensePeriod.noIncome') }}
+                  </div>
+                  <div v-for="item in filteredIncomeBreakdown" :key="item.id" class="breakdown-row">
                     <span class="breakdown-label">{{ item.category }}</span>
                     <span class="breakdown-value">{{ item.amount.toLocaleString() }} kr</span>
                   </div>
+                </div>
+                <div v-if="filteredIncomeBreakdown.length > 0" class="breakdown-total-row">
+                  <span class="breakdown-total-label">{{ $t('dashboard.expensePeriod.periodTotal') }}</span>
+                  <span class="breakdown-total-value">{{ incomePeriodTotal.toLocaleString() }} kr</span>
                 </div>
               </div>
 
@@ -183,10 +219,17 @@
               <div class="breakdown-panel">
                 <h3>{{ $t('dashboard.expenses') }} {{ $t('dashboard.breakdown') }}</h3>
                 <div class="breakdown-list">
-                  <div v-for="item in expenseBreakdown" :key="item.id" class="breakdown-row">
+                  <div v-if="filteredExpenseBreakdown.length === 0" class="breakdown-empty">
+                    {{ $t('dashboard.expensePeriod.noExpenses') }}
+                  </div>
+                  <div v-for="item in filteredExpenseBreakdown" :key="item.id" class="breakdown-row">
                     <span class="breakdown-label">{{ item.category }}</span>
                     <span class="breakdown-value">{{ item.amount.toLocaleString() }} kr</span>
                   </div>
+                </div>
+                <div v-if="filteredExpenseBreakdown.length > 0" class="breakdown-total-row">
+                  <span class="breakdown-total-label">{{ $t('dashboard.expensePeriod.periodTotal') }}</span>
+                  <span class="breakdown-total-value">{{ expensePeriodTotal.toLocaleString() }} kr</span>
                 </div>
               </div>
             </div>
@@ -240,6 +283,35 @@
           <button :class="['btn', 'btn-lg', customAlertType === 'show-settings-link' ? 'btn-primary' : 'btn-primary']" @click="showCustomAlert = false">
             {{ customAlertType === 'show-settings-link' ? $t('dashboard.cancel') : $t('dashboard.ok') }}
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom expense period (dates) -->
+    <div
+      v-if="showExpensePeriodCustomModal"
+      class="modal-overlay"
+      @click.self="closeExpensePeriodCustomModal"
+    >
+      <div class="modal-content modal-content--narrow expense-period-custom-modal" @click.stop>
+        <div class="modal-header">
+          <h2>{{ $t('dashboard.expensePeriod.customModalTitle') }}</h2>
+          <button type="button" class="close-btn" :aria-label="$t('dashboard.expensePeriod.closeModal')" @click="closeExpensePeriodCustomModal">
+            ×
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="expensePeriodCustomStart">{{ $t('dashboard.expensePeriod.from') }}</label>
+            <input id="expensePeriodCustomStart" v-model="expenseCustomStart" type="date" />
+          </div>
+          <div class="form-group">
+            <label for="expensePeriodCustomEnd">{{ $t('dashboard.expensePeriod.to') }}</label>
+            <input id="expensePeriodCustomEnd" v-model="expenseCustomEnd" type="date" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="upload-btn" @click="closeExpensePeriodCustomModal">{{ $t('dashboard.ok') }}</button>
         </div>
       </div>
     </div>
@@ -1093,9 +1165,17 @@ import { getUserOrganizations } from '../lib/orgs'
 import { getDashboardData, createTransaction, createAccount, getOrganizationMembers, createMember } from '../lib/dashboard'
 import { jsPDF } from 'jspdf'
 
+function localISODate(d) {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 export default {
   name: 'Dashboard',
   data() {
+    const today = new Date()
+    const defaultCustomStart = localISODate(new Date(today.getFullYear(), today.getMonth(), 1))
+    const defaultCustomEnd = localISODate(today)
     return {
       showAuthModal: false,
       showNoOrgModal: false,
@@ -1184,6 +1264,11 @@ export default {
       alerts: [],
       incomeBreakdown: [],
       expenseBreakdown: [],
+      expensePeriodPreset: 'mtd',
+      expenseCustomStart: defaultCustomStart,
+      expenseCustomEnd: defaultCustomEnd,
+      showExpensePeriodCustomModal: false,
+      _expenseFilterOrgId: null,
       accounts: [],
       // Calendar
       calendarYear: new Date().getFullYear(),
@@ -1217,8 +1302,110 @@ export default {
     await this.loadDashboard()
   },
   computed: {
-    monthlyResult() {
-      return this.monthlyIncome - this.monthlyExpenses
+    overviewPeriodTotals() {
+      const { start, end } = this.expensePeriodBounds
+      let income = 0
+      let expenses = 0
+      for (const acc of this.accounts || []) {
+        for (const t of acc.transactions || []) {
+          const d = new Date(t.createdAt)
+          if (start && d < start) continue
+          if (end && d > end) continue
+          if (t.amount > 0) income += t.amount
+          else if (t.amount < 0) expenses += Math.abs(t.amount)
+        }
+      }
+      return { income, expenses }
+    },
+    overviewPeriodResult() {
+      const { income, expenses } = this.overviewPeriodTotals
+      return income - expenses
+    },
+    expensePeriodBounds() {
+      const now = new Date()
+      if (this.expensePeriodPreset === 'mtd') {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1)
+        start.setHours(0, 0, 0, 0)
+        const end = new Date(now)
+        end.setHours(23, 59, 59, 999)
+        return { start, end }
+      }
+      if (this.expensePeriodPreset === 'ytd') {
+        const start = new Date(now.getFullYear(), 0, 1)
+        start.setHours(0, 0, 0, 0)
+        const end = new Date(now)
+        end.setHours(23, 59, 59, 999)
+        return { start, end }
+      }
+      if (this.expensePeriodPreset === 'all') {
+        return { start: null, end: null }
+      }
+      let start = new Date(this.expenseCustomStart)
+      let end = new Date(this.expenseCustomEnd)
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        const fallback = new Date()
+        start = new Date(fallback.getFullYear(), fallback.getMonth(), 1)
+        end = new Date(fallback)
+      }
+      if (start > end) {
+        const t = start
+        start = end
+        end = t
+      }
+      start.setHours(0, 0, 0, 0)
+      end.setHours(23, 59, 59, 999)
+      return { start, end }
+    },
+    filteredIncomeBreakdown() {
+      const { start, end } = this.expensePeriodBounds
+      const byCategory = {}
+      const accounts = this.accounts || []
+      for (const acc of accounts) {
+        for (const t of acc.transactions || []) {
+          if (t.amount <= 0) continue
+          const d = new Date(t.createdAt)
+          if (start && d < start) continue
+          if (end && d > end) continue
+          const cat = t.category || 'Övrigt'
+          byCategory[cat] = (byCategory[cat] || 0) + t.amount
+        }
+      }
+      return Object.entries(byCategory)
+        .map(([category, amount], index) => ({
+          id: `inc-${category}-${index}`,
+          category,
+          amount
+        }))
+        .sort((a, b) => b.amount - a.amount)
+    },
+    incomePeriodTotal() {
+      return this.filteredIncomeBreakdown.reduce((s, row) => s + row.amount, 0)
+    },
+    filteredExpenseBreakdown() {
+      const { start, end } = this.expensePeriodBounds
+      const byCategory = {}
+      const accounts = this.accounts || []
+      for (const acc of accounts) {
+        for (const t of acc.transactions || []) {
+          if (t.amount >= 0) continue
+          const d = new Date(t.createdAt)
+          if (start && d < start) continue
+          if (end && d > end) continue
+          const cat = t.category || 'Övrigt'
+          byCategory[cat] = (byCategory[cat] || 0) + Math.abs(t.amount)
+        }
+      }
+      const entries = Object.entries(byCategory)
+        .map(([category, amount], index) => ({
+          id: `exp-${category}-${index}`,
+          category,
+          amount
+        }))
+        .sort((a, b) => b.amount - a.amount)
+      return entries
+    },
+    expensePeriodTotal() {
+      return this.filteredExpenseBreakdown.reduce((s, row) => s + row.amount, 0)
     },
     currentUserInitial() {
       return (this.currentUserName || 'U').charAt(0).toUpperCase()
@@ -1322,6 +1509,10 @@ export default {
       }
     },
     updateDashboardState(data) {
+      if (this._expenseFilterOrgId !== this.organizationId) {
+        this._expenseFilterOrgId = this.organizationId
+        this.resetExpensePeriodForNewOrg()
+      }
       // Update state with real data
       this.organizationName = data.organization.name
       this.organizationLogo = data.organization.logoUrl // Populate logoUrl
@@ -1344,6 +1535,32 @@ export default {
           type: 'warning',
           message: `${this.unpaidMembers} ${this.$t('dashboard.member.unpaid').toLowerCase()} ${this.$t('dashboard.membersBtn').toLowerCase()}` // Keep simple or improve alert translation later
         })
+      }
+    },
+    resetExpensePeriodForNewOrg() {
+      const today = new Date()
+      this.expensePeriodPreset = 'mtd'
+      this.expenseCustomStart = localISODate(new Date(today.getFullYear(), today.getMonth(), 1))
+      this.expenseCustomEnd = localISODate(today)
+      this.showExpensePeriodCustomModal = false
+    },
+    openExpensePeriodCustomModal() {
+      this.showExpensePeriodCustomModal = true
+    },
+    closeExpensePeriodCustomModal() {
+      this.showExpensePeriodCustomModal = false
+    },
+    setExpensePeriodPreset(preset) {
+      const prev = this.expensePeriodPreset
+      this.expensePeriodPreset = preset
+      if (preset !== 'custom') {
+        this.showExpensePeriodCustomModal = false
+      }
+      if (preset === 'custom' && prev !== 'custom') {
+        const today = new Date()
+        this.expenseCustomStart = localISODate(new Date(today.getFullYear(), today.getMonth(), 1))
+        this.expenseCustomEnd = localISODate(today)
+        this.showExpensePeriodCustomModal = true
       }
     },
     onSwishMemberSelect(event) {
@@ -1402,9 +1619,9 @@ export default {
 
         const summaryRows = [
           ['Kassa & Bank', `${this.cashAndBank.toLocaleString('sv-SE')} kr`],
-          ['Manadsintakter', `+${this.monthlyIncome.toLocaleString('sv-SE')} kr`],
-          ['Manadskostnader', `-${this.monthlyExpenses.toLocaleString('sv-SE')} kr`],
-          ['Resultat', `${this.monthlyResult >= 0 ? '+' : ''}${this.monthlyResult.toLocaleString('sv-SE')} kr`],
+          ['Intakter', `+${this.overviewPeriodTotals.income.toLocaleString('sv-SE')} kr`],
+          ['Kostnader', `-${this.overviewPeriodTotals.expenses.toLocaleString('sv-SE')} kr`],
+          ['Resultat', `${this.overviewPeriodResult >= 0 ? '+' : ''}${this.overviewPeriodResult.toLocaleString('sv-SE')} kr`],
         ]
 
         doc.setFontSize(10)
@@ -2944,6 +3161,111 @@ export default {
 }
 
 .breakdown-value {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.overview-top-block {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--background);
+}
+
+.overview-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem 0.5rem;
+  min-width: 0;
+}
+
+.overview-section-title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.overview-period-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.overview-expense-period-select {
+  font-family: inherit;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background-color: var(--input-bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.overview-expense-period-select--compact {
+  flex-shrink: 0;
+  width: auto;
+  max-width: min(52vw, 11rem);
+  padding: 0.2rem 0.4rem 0.2rem 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.overview-expense-period-select:focus {
+  outline: none;
+  border-color: var(--primary-light);
+}
+
+.overview-expense-custom-trigger {
+  flex-shrink: 0;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-family: inherit;
+  line-height: 1.3;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--primary-light, #2563eb);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.overview-expense-custom-trigger:hover {
+  background: var(--surface-hover, rgba(0, 0, 0, 0.04));
+}
+
+.modal-content--narrow {
+  max-width: 380px;
+  width: calc(100% - 2rem);
+}
+
+.breakdown-empty {
+  padding: 0.75rem 0.5rem;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.breakdown-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+}
+
+.breakdown-total-label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.breakdown-total-value {
   font-size: 1.0625rem;
   font-weight: 700;
   color: var(--text);
