@@ -1,4 +1,9 @@
 {
+    "projectStatus": {
+        "title": "Project in development",
+        "body": "Orient and this website are a work in progress. The product should not be treated as a finished commercial offering, and the text on this site, provider details (including company registration number), and other business information will be completed when the business is registered. Nothing here should be read as a final, binding contract or offer until you receive clear notice from us otherwise.",
+        "legalExtra": "The same applies to the Legal section: terms, privacy policy, and data processing agreement are preliminary until the business is established and details are completed."
+    },
     "nav": {
         "home": "Home",
         "dashboard": "Dashboard",

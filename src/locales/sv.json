@@ -1,4 +1,9 @@
 {
+    "projectStatus": {
+        "title": "Projekt under utveckling",
+        "body": "Orient och denna webbplats är i ett utvecklingsskede. Tjänsten ska inte anses vara en färdig produkt för kommersiellt bruk, och texterna här, leverantörsuppgifter (t.ex. organisationsnummer) och företagsuppgifter kompletteras när verksamheten är registrerad. Inget på sidan ska tolkas som ett färdigt, bindande avtal eller erbjudande före det att ni uttryckligen får annan information från oss.",
+        "legalExtra": "Samma gäller för innehållet under Juridik: villkor, integritetspolicy och biträdesavtal är preliminära tills verksamheten är etablerad och uppgifterna kompletterats."
+    },
     "nav": {
         "home": "Hem",
         "dashboard": "Dashboard",

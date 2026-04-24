@@ -30,6 +30,13 @@
       </div>
 
       <div class="legal-content">
+        <div
+          v-if="company.isProjectInProgress"
+          class="legal-project-note"
+          role="note"
+        >
+          <p class="legal-project-note-text">{{ $t('projectStatus.legalExtra') }}</p>
+        </div>
         <!-- Terms of Service -->
         <div v-if="currentTab === 'terms'" class="legal-section">
           <h1>{{ $i18n.locale === 'sv' ? 'Allmänna Villkor' : 'Terms of Service' }}</h1>
@@ -51,8 +58,8 @@
             <h2>2. Parter</h2>
             <p>Dessa villkor gäller mellan:</p>
             <p><strong>Orient (leverantören)</strong><br>
-            Organisationsnummer: [DITT ORGNR]<br>
-            E-post: [EMAIL]</p>
+            Organisationsnummer: {{ company.orgNumber }}<br>
+            E-post: {{ company.email }}</p>
             <p>och</p>
             <p>Den organisation som registrerar konto i systemet (“Föreningen”)</p>
 
@@ -125,8 +132,8 @@
             <h2>2. Parties</h2>
             <p>These terms apply between:</p>
             <p><strong>Orient (the Provider)</strong><br>
-            Company registration number: [YOUR ORGNR]<br>
-            Email: [EMAIL]</p>
+            Company registration number: {{ company.orgNumber }}<br>
+            Email: {{ company.email }}</p>
             <p>and</p>
             <p>The organization registering an account (“the Organization”)</p>
 
@@ -338,11 +345,14 @@
 </template>
 
 <script>
+import { COMPANY_INFO } from '@/config/company'
+
 export default {
   name: 'Legal',
   data() {
     return {
-      currentTab: 'terms'
+      currentTab: 'terms',
+      company: COMPANY_INFO,
     }
   },
   mounted() {
@@ -462,6 +472,22 @@ export default {
   flex: 1;
   padding: 3rem;
   overflow-y: auto;
+}
+
+.legal-project-note {
+  margin: -0.5rem 0 1.75rem 0;
+  padding: 0.9rem 1.1rem;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary-light);
+  border-radius: 8px;
+}
+
+.legal-project-note-text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
 }
 
 .legal-section h1 {

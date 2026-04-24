@@ -104,6 +104,16 @@
     <div class="main-content">
       <!-- Email verification gate -->
       <div v-if="user && !user.emailVerified" class="verify-gate">
+        <div class="verify-gate-inner">
+          <div
+            v-if="projectInProgress"
+            class="project-status-banner"
+            role="status"
+            aria-live="polite"
+          >
+            <p class="project-status-title">{{ $t('projectStatus.title') }}</p>
+            <p class="project-status-body">{{ $t('projectStatus.body') }}</p>
+          </div>
         <div class="verify-gate-card">
           <div class="verify-gate-icon">✉️</div>
           <h2>{{ $t('auth.verifyEmailTitle') }}</h2>
@@ -117,8 +127,15 @@
           </button>
           <button class="btn-link" style="margin-top:12px;" @click="handleLogout">{{ $t('nav.logout') }}</button>
         </div>
+        </div>
       </div>
-      <router-view v-else />
+      <template v-else>
+        <div v-if="projectInProgress" class="project-status-banner" role="status" aria-live="polite">
+          <p class="project-status-title">{{ $t('projectStatus.title') }}</p>
+          <p class="project-status-body">{{ $t('projectStatus.body') }}</p>
+        </div>
+        <router-view />
+      </template>
     </div>
 
     <!-- Organizations Modal -->
@@ -297,6 +314,7 @@
 
 <script>
 import { SpeedInsights } from '@vercel/speed-insights/vue'
+import { COMPANY_INFO } from './config/company'
 import { getCurrentUser, logout } from './lib/auth'
 import { getUserOrganizations, createOrganization as createOrg, joinOrganization as joinOrg, getOrganizationInvite, deleteOrganization as deleteOrg } from './lib/orgs'
 
@@ -351,7 +369,10 @@ export default {
     },
     userInitial() {
       return this.user?.name?.charAt(0).toUpperCase() || '?'
-    }
+    },
+    projectInProgress() {
+      return COMPANY_INFO.isProjectInProgress === true
+    },
   },
   methods: {
     translateRole(role) {
@@ -784,6 +805,33 @@ export default {
   padding: 40px 20px;
   background: var(--background, #f4f4f5);
 }
+.verify-gate-inner {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.project-status-banner {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem 0.875rem;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary-light);
+  border-radius: 8px;
+}
+.project-status-title {
+  margin: 0 0 0.4rem 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.project-status-body {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
 .verify-gate-card {
   background: var(--surface);
   border-radius: 16px;
@@ -819,7 +867,21 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-width: 0;
   transition: margin-left 0.3s ease;
+}
+.main-content > .project-status-banner {
+  border-left: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  width: 100%;
+}
+.main-content .project-status-title {
+  font-size: 0.9rem;
+}
+.main-content .project-status-body {
+  font-size: 0.8rem;
+  max-width: 72ch;
 }
 
 /* Hamburger button — hidden on desktop */
